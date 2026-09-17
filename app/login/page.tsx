@@ -11,6 +11,9 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +40,7 @@ export default function AuthPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-600 px-4">
-      <div className="w-full max-w-sm h-[400px] bg-white rounded-lg shadow-md flex flex-col">
+      <div className="w-full max-w-sm h-[450px] bg-white rounded-lg shadow-md flex flex-col">
         {/* Tabs docked at top */}
         <div className="flex justify-around border-b p-4">
           <button
@@ -110,40 +113,77 @@ export default function AuthPage() {
           )}
 
           {/* Registration Form */}
-          {activeTab === "register" && (
-            <form onSubmit={handleRegister} className="flex flex-col h-full">
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Username"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, username: e.target.value })}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                />
+{activeTab === "register" && (
+  <form onSubmit={handleRegister} className="flex flex-col h-full">
+    <div className="space-y-4">
+      <input
+        type="text"
+        placeholder="Username"
+        className="w-full border border-gray-500 p-2 rounded 
+        placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
+        onChange={e => setForm({ ...form, username: e.target.value })}
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        className="w-full border border-gray-500 p-2 rounded 
+        placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
+        onChange={e => setForm({ ...form, email: e.target.value })}
+      />
+
+        {/* Password with toggle */}
+          <div className="relative">
+                  <input
+                    type={showRegisterPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="w-full border border-gray-500 p-2 rounded 
+                    placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
+                    onChange={e => setForm({ ...form, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                    className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showRegisterPassword ? (
+                      <EyeSlashIcon className="h-5 w-5" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Confirm Password with toggle */}
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm Password"
+                    className="w-full border border-gray-500 p-2 rounded 
+                    placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
+                    onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeSlashIcon className="h-5 w-5" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
+
               <button
                 type="submit"
-                className="mt-auto bg-green-600 text-white px-4 py-3 rounded"
+                className="mt-auto w-full bg-green-600 text-white py-3 rounded-b"
               >
                 Register
               </button>
             </form>
           )}
-
           {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
         </div>
       </div>
