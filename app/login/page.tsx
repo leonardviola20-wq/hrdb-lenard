@@ -7,7 +7,7 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [form, setForm] = useState({ email: "", password: "", username: "" });
+  const [form, setForm] = useState({ email: "", password: "", username: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
