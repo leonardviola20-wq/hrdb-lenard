@@ -34,8 +34,8 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-600">
-      <div className="flex items-center justify-center min-h-screen bg-gray-600 px-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-600 px-4">
+      <div className="w-full max-w-sm h-[400px] bg-white rounded-lg shadow-md flex flex-col">
         {/* Tabs docked at top */}
         <div className="flex justify-around border-b p-4">
           <button
