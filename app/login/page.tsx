@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { users } from "@/lib/users";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ email: "", password: "", username: "" });
   const [error, setError] = useState("");
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,17 +71,38 @@ export default function AuthPage() {
                   placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
                   onChange={e => setForm({ ...form, email: e.target.value })}
                 />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full border border-gray-500 p-2 rounded 
+
+                {/* Password with toggle */}
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="w-full border border-gray-500 p-2 rounded 
                   placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                />
+                    onChange={e => setForm({ ...form, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon className="h-6 w-5" />
+                    ) : (
+                      <EyeIcon className="h-6 w-5" />
+                    )}
+                  </button>
+                </div>
+                
+                {/* Forgot password link */}
+                <a href="#" className="text-sm text-blue-600 hover:underline">
+                  Forgot password?
+                </a>
               </div>
+
               <button
                 type="submit"
-                className="mt-auto bg-blue-600 text-white px-4 py-2 rounded"
+                className="mt-auto bg-blue-600 text-white px-4 py-3 rounded"
               >
                 Login
               </button>
@@ -114,7 +137,7 @@ export default function AuthPage() {
               </div>
               <button
                 type="submit"
-                className="mt-auto bg-green-600 text-white px-4 py-2 rounded"
+                className="mt-auto bg-green-600 text-white px-4 py-3 rounded"
               >
                 Register
               </button>
