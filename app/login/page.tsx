@@ -34,8 +34,8 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-600">
-      <div className="w-96 h-[400px] bg-white rounded-lg shadow-md flex flex-col">
+    <div className="flex items-center justify-center min-h-screen bg-gray-600 px-4">
+      <div className="w-full max-w-sm bg-white rounded-lg shadow-md flex flex-col">
         {/* Tabs docked at top */}
         <div className="flex justify-around border-b p-4">
           <button
@@ -62,25 +62,10 @@ export default function AuthPage() {
           {activeTab === "login" && (
             <form onSubmit={handleLogin} className="flex flex-col h-full">
               <div className="space-y-4">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                />
+                <input type="email" placeholder="Email" className="w-full border border-gray-500 p-2 rounded focus:border-blue-500 focus:ring-2 focus:ring-blue-400" />
+                <input type="password" placeholder="Password" className="w-full border border-gray-500 p-2 rounded focus:border-blue-500 focus:ring-2 focus:ring-blue-400" />
               </div>
-              <button
-                type="submit"
-                className="mt-auto bg-blue-600 text-white px-4 py-2 rounded"
-              >
+              <button type="submit" className="mt-auto bg-blue-600 text-white px-4 py-2 rounded">
                 Login
               </button>
             </form>
@@ -90,32 +75,11 @@ export default function AuthPage() {
           {activeTab === "register" && (
             <form onSubmit={handleRegister} className="flex flex-col h-full">
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Username"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, username: e.target.value })}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full border border-gray-500 p-2 rounded 
-                  placeholder-gray-500 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-400"
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                />
+                <input type="text" placeholder="Username" className="w-full border border-gray-500 p-2 rounded focus:border-green-600 focus:ring-2 focus:ring-green-400" />
+                <input type="email" placeholder="Email" className="w-full border border-gray-500 p-2 rounded focus:border-green-600 focus:ring-2 focus:ring-green-400" />
+                <input type="password" placeholder="Password" className="w-full border border-gray-500 p-2 rounded focus:border-green-600 focus:ring-2 focus:ring-green-400" />
               </div>
-              <button
-                type="submit"
-                className="mt-auto bg-green-600 text-white px-4 py-2 rounded"
-              >
+              <button type="submit" className="mt-auto bg-green-600 text-white px-4 py-2 rounded">
                 Register
               </button>
             </form>
