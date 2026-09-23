@@ -15,22 +15,32 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const user = users.find(
-      u => u.email === form.email && u.password === form.password
-    );
+  const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(""); // clear old error
 
-    if (user) {
-      if (user.role === "ADMIN") {
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: form.email, password: form.password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Login failed");
+    } else {
+      if (data.role === "ADMIN") {
         router.push("/dashboard");
       } else {
         router.push("/tasks");
       }
-    } else {
-      setError("Invalid credentials");
     }
-  };
+  } catch (err) {
+    setError("Something went wrong");
+  }
+};
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
