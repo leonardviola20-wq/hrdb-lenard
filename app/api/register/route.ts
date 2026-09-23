@@ -1,28 +1,26 @@
+// app/api/register/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
-  const { email, password, username } = await req.json();
+  const { email, password, role } = await req.json();
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+  // Hash the password before saving
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        password: hashedPassword,
-        role: "USER",
-      },
-    });
+  const user = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword, // ✅ explicitly included
+      role,                     // ✅ explicitly included
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,               // ✅ explicitly included
+    }
+  });
 
-    return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
-  } catch (err) {
-    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
-  }
+  return NextResponse.json({ message: "User registered", user });
 }
