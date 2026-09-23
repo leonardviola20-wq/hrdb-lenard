@@ -18,9 +18,9 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",               // ✅ Added
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]              // ✅ Alias points to project root
+      "@/*": ["./*"]
     }
   },
   "include": [
