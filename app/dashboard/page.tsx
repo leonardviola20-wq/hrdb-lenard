@@ -307,36 +307,105 @@ export default function DashboardPage() {
             ) : (
               <ul className="mt-4 divide-y divide-gray-200">
                 {selectedTasks.map((task) => (
-                  <li key={task.id} className="py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={task.id}
+                    className={`py-3 first:pt-0 last:pb-0 ${
+                      selectedTask?.id === task.id ? "rounded-lg bg-gray-50" : ""
+                    }`}
+                  >
                     <button
                       type="button"
-                      onClick={() => setSelectedTask(task)}
-                      className="w-full rounded p-2 text-left hover:bg-gray-50"
+                      aria-expanded={selectedTask?.id === task.id}
+                      onClick={() =>
+                        setSelectedTask((current) =>
+                          current?.id === task.id ? null : task
+                        )
+                      }
+                      className="w-full rounded p-3 text-left hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-700"
                     >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p
-                          className={`font-medium ${
-                            task.status === "COMPLETED"
-                              ? "text-gray-400 line-through"
-                              : "text-gray-900"
-                          }`}
-                        >
-                          {task.title}
-                        </p>
-                        {task.description && (
-                          <p className="mt-1 text-sm text-gray-600">
-                            {task.description}
-                          </p>
-                        )}
-                      </div>
-                      {task.dueDate && (
-                        <span className="shrink-0 text-sm text-gray-500">
-                          Due {new Date(task.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
+                      <p
+                        className={`font-medium ${
+                          task.status === "COMPLETED"
+                            ? "text-gray-400 line-through"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {task.title}
+                      </p>
                     </button>
+                    {selectedTask?.id === task.id && (
+                      <div className="border-t border-gray-200 px-3 pb-3 pt-4">
+                        <p className="text-sm text-gray-500">Task details</p>
+                        <dl className="mt-3 grid gap-4 text-sm sm:grid-cols-2">
+                          <div>
+                            <dt className="text-gray-500">Status</dt>
+                            <dd className="mt-1 font-medium text-gray-900">
+                              {task.status === "COMPLETED" ? "Completed" : "Pending"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500">Priority</dt>
+                            <dd className="mt-1 font-medium text-gray-900">{task.priority}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500">Category</dt>
+                            <dd className="mt-1 text-gray-900">{task.category || "None"}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500">Due date</dt>
+                            <dd className="mt-1 text-gray-900">
+                              {task.dueDate
+                                ? new Date(task.dueDate).toLocaleDateString()
+                                : "No due date"}
+                            </dd>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <dt className="text-gray-500">Description</dt>
+                            <dd className="mt-1 whitespace-pre-wrap text-gray-900">
+                              {task.description || "No description"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500">Created</dt>
+                            <dd className="mt-1 text-gray-900">
+                              {new Date(task.createdAt).toLocaleString()}
+                            </dd>
+                          </div>
+                        </dl>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={busyTaskId === task.id}
+                            onClick={() =>
+                              updateTask(task, {
+                                status:
+                                  task.status === "COMPLETED" ? "PENDING" : "COMPLETED",
+                              })
+                            }
+                            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50"
+                          >
+                            {task.status === "COMPLETED"
+                              ? "Mark pending"
+                              : "Mark complete"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEdit(task)}
+                            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyTaskId === task.id}
+                            onClick={() => deleteTask(task)}
+                            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -353,44 +422,6 @@ export default function DashboardPage() {
             >
               Open full list
             </Link>
-          </section>
-        )}
-
-        {selectedTask && (
-          <section className="mt-6 rounded-lg border border-gray-300 bg-white p-6 shadow">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Task details</p>
-                <h2 className="mt-1 text-2xl font-bold text-gray-900">{selectedTask.title}</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedTask(null)}
-                className="text-sm text-gray-500 hover:text-gray-900"
-              >
-                Close
-              </button>
-            </div>
-            <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-              <div><dt className="text-gray-500">Status</dt><dd className="mt-1 font-medium text-gray-900">{selectedTask.status === "COMPLETED" ? "Completed" : "Pending"}</dd></div>
-              <div><dt className="text-gray-500">Priority</dt><dd className="mt-1 font-medium text-gray-900">{selectedTask.priority}</dd></div>
-              <div><dt className="text-gray-500">Category</dt><dd className="mt-1 text-gray-900">{selectedTask.category || "None"}</dd></div>
-              <div><dt className="text-gray-500">Due date</dt><dd className="mt-1 text-gray-900">{selectedTask.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : "No due date"}</dd></div>
-              <div className="sm:col-span-2"><dt className="text-gray-500">Description</dt><dd className="mt-1 whitespace-pre-wrap text-gray-900">{selectedTask.description || "No description"}</dd></div>
-              <div><dt className="text-gray-500">Created</dt><dd className="mt-1 text-gray-900">{new Date(selectedTask.createdAt).toLocaleString()}</dd></div>
-            </dl>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={busyTaskId === selectedTask.id}
-                onClick={() => updateTask(selectedTask, { status: selectedTask.status === "COMPLETED" ? "PENDING" : "COMPLETED" })}
-                className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50"
-              >
-                {selectedTask.status === "COMPLETED" ? "Mark pending" : "Mark complete"}
-              </button>
-              <button type="button" onClick={() => openEdit(selectedTask)} className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">Edit</button>
-              <button type="button" disabled={busyTaskId === selectedTask.id} onClick={() => deleteTask(selectedTask)} className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50">Delete</button>
-            </div>
           </section>
         )}
 
