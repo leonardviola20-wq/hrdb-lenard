@@ -39,8 +39,6 @@ export default function DashboardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingForm, setEditingForm] = useState<TaskForm | null>(null);
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
-  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
-  const [dragOverTaskId, setDragOverTaskId] = useState<number | null>(null);
   const [taskSummary, setTaskSummary] = useState({
     total: 0,
     pending: 0,
@@ -92,15 +90,16 @@ export default function DashboardPage() {
     return selectedFilter ? task.status === selectedFilter : false;
   });
 
-  const reorderTasks = async (taskId: number) => {
-    if (draggedTaskId === null || draggedTaskId === taskId) return;
-    const draggedIndex = selectedTasks.findIndex((task) => task.id === draggedTaskId);
-    const targetIndex = selectedTasks.findIndex((task) => task.id === taskId);
-    if (draggedIndex < 0 || targetIndex < 0) return;
+  const reorderTasks = async (taskId: number, direction: "up" | "down") => {
+    const currentIndex = selectedTasks.findIndex((task) => task.id === taskId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selectedTasks.length) return;
 
     const reorderedSelected = [...selectedTasks];
-    const [draggedTask] = reorderedSelected.splice(draggedIndex, 1);
-    reorderedSelected.splice(targetIndex, 0, draggedTask);
+    [reorderedSelected[currentIndex], reorderedSelected[targetIndex]] = [
+      reorderedSelected[targetIndex],
+      reorderedSelected[currentIndex],
+    ];
     let selectedIndex = 0;
     const reorderedTasks = tasks.map((task) =>
       selectedTasks.some((selected) => selected.id === task.id)
@@ -108,8 +107,6 @@ export default function DashboardPage() {
         : task
     );
     setTasks(reorderedTasks);
-    setDraggedTaskId(null);
-    setDragOverTaskId(null);
 
     try {
       const res = await fetch("/api/tasks/reorder", {
@@ -343,59 +340,55 @@ export default function DashboardPage() {
                 {selectedTasks.map((task) => (
                   <li
                     key={task.id}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      if (draggedTaskId !== task.id) setDragOverTaskId(task.id);
-                    }}
-                    onDragLeave={() => {
-                      if (dragOverTaskId === task.id) setDragOverTaskId(null);
-                    }}
-                    onDrop={() => reorderTasks(task.id)}
-                    onDragEnd={() => {
-                      setDraggedTaskId(null);
-                      setDragOverTaskId(null);
-                    }}
                     className={`py-3 first:pt-0 last:pb-0 ${
                       selectedTask?.id === task.id ? "rounded-lg bg-gray-50" : ""
-                    } ${
-                      draggedTaskId === task.id ? "opacity-50" : ""
                     }`}
                   >
-                    {dragOverTaskId === task.id && draggedTaskId !== task.id && (
-                      <div
-                        aria-hidden="true"
-                        className="mb-2 h-1 rounded-full bg-gray-700 animate-pulse"
-                      />
-                    )}
                     <div className="flex items-center gap-2">
-                      <span
-                        draggable
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Drag ${task.title}`}
-                        title="Drag to reorder"
-                        onDragStart={() => setDraggedTaskId(task.id)}
-                        onDragEnd={() => {
-                          setDraggedTaskId(null);
-                          setDragOverTaskId(null);
-                        }}
-                        className="flex shrink-0 cursor-grab touch-none rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          width="16"
-                          height="18"
-                          viewBox="0 0 16 18"
-                          fill="currentColor"
+                      <div className="flex shrink-0 flex-col gap-1">
+                        <button
+                          type="button"
+                          aria-label={`Move ${task.title} up`}
+                          title="Move up"
+                          disabled={selectedTasks.indexOf(task) === 0}
+                          onClick={() => reorderTasks(task.id, "up")}
+                          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
                         >
-                          <circle cx="4" cy="3" r="1.5" />
-                          <circle cx="12" cy="3" r="1.5" />
-                          <circle cx="4" cy="9" r="1.5" />
-                          <circle cx="12" cy="9" r="1.5" />
-                          <circle cx="4" cy="15" r="1.5" />
-                          <circle cx="12" cy="15" r="1.5" />
-                        </svg>
-                      </span>
+                          <svg
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m5 12 5-5 5 5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move ${task.title} down`}
+                          title="Move down"
+                          disabled={selectedTasks.indexOf(task) === selectedTasks.length - 1}
+                          onClick={() => reorderTasks(task.id, "down")}
+                          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m5 8 5 5 5-5" />
+                          </svg>
+                        </button>
+                      </div>
                       <button
                         type="button"
                         aria-expanded={selectedTask?.id === task.id}
@@ -496,7 +489,7 @@ export default function DashboardPage() {
             )}
             {selectedTasks.length > 1 && (
               <p className="mt-4 text-xs text-gray-500">
-                Drag the six-dot handle to change the order.
+                Use the up and down arrows to change the order.
               </p>
             )}
             <Link
