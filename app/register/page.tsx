@@ -14,10 +14,12 @@ export default function AuthPage() {
     confirmPassword: "",
   });
   const [message, setMessage] = useState("");
+  const [verificationUrl, setVerificationUrl] = useState("");
 
   // LOGIN HANDLER
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setVerificationUrl("");
     try {
       const res = await fetch("/api/login", {
         method: "POST",
@@ -62,9 +64,8 @@ export default function AuthPage() {
       if (!res.ok) {
         setMessage(data.message || "Registration failed");
       } else {
-        setMessage(
-          `${data.message} Open this local verification link: ${data.localVerificationUrl}`
-        );
+        setMessage(data.message);
+        setVerificationUrl(data.verificationUrl);
       }
     } catch {
       setMessage("Server error");
@@ -111,7 +112,7 @@ export default function AuthPage() {
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+              className="w-full rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
             >
               Login
             </button>
@@ -155,14 +156,26 @@ export default function AuthPage() {
             />
             <button
               type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded w-full"
+              className="w-full rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
             >
               Register
             </button>
           </form>
         )}
 
-        {message && <p className="mt-4 text-blue-600 text-center">{message}</p>}
+        {message && (
+          <div className="mt-4 text-center">
+            <p className="text-gray-800">{message}</p>
+            {verificationUrl && (
+              <a
+                href={verificationUrl}
+                className="mt-2 inline-block break-all font-medium text-blue-700 underline hover:text-blue-900"
+              >
+                Open verification link
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

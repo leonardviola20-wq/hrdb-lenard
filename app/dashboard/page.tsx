@@ -76,14 +76,8 @@ export default function DashboardPage() {
   });
 
   const taskCardClass = (filter: TaskFilter) => {
-    const selectedClass =
-      filter === "PENDING"
-        ? "ring-blue-500"
-        : filter === "COMPLETED"
-          ? "ring-green-500"
-          : "ring-red-500";
-    return `rounded-lg p-5 text-left shadow transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:${selectedClass} ${
-      selectedFilter === filter ? `ring-2 ${selectedClass}` : ""
+    return `rounded-lg border border-gray-300 bg-white p-5 text-left shadow transition hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-700 ${
+      selectedFilter === filter ? "ring-2 ring-gray-700" : ""
     }`;
   };
 
@@ -102,9 +96,15 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/tasks"
-            className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
           >
             View tasks
+          </Link>
+          <Link
+            href="/contacts"
+            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
+          >
+            Office contacts
           </Link>
         </header>
 
@@ -123,30 +123,30 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => setSelectedFilter("PENDING")}
-            className={taskCardClass("PENDING") + " bg-blue-50"}
+            className={taskCardClass("PENDING")}
           >
-            <p className="text-sm text-blue-700">Pending tasks</p>
-            <p className="mt-2 text-3xl font-bold text-blue-900">
+            <p className="text-sm text-gray-600">Pending tasks</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900">
               {taskSummary.pending}
             </p>
           </button>
           <button
             type="button"
             onClick={() => setSelectedFilter("COMPLETED")}
-            className={taskCardClass("COMPLETED") + " bg-green-50"}
+            className={taskCardClass("COMPLETED")}
           >
-            <p className="text-sm text-green-700">Completed tasks</p>
-            <p className="mt-2 text-3xl font-bold text-green-900">
+            <p className="text-sm text-gray-600">Completed tasks</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900">
               {taskSummary.completed}
             </p>
           </button>
           <button
             type="button"
             onClick={() => setSelectedFilter("OVERDUE")}
-            className={taskCardClass("OVERDUE") + " bg-red-50"}
+            className={taskCardClass("OVERDUE")}
           >
-            <p className="text-sm text-red-700">Overdue tasks</p>
-            <p className="mt-2 text-3xl font-bold text-red-900">
+            <p className="text-sm text-gray-600">Overdue tasks</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900">
               {taskSummary.overdue}
             </p>
           </button>
