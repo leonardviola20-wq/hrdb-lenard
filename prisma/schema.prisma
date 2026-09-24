@@ -12,11 +12,10 @@ model User {
   email     String   @unique
   username  String?
   name      String?
-  password  String   // <-- must exist
-  role      String   @default("USER") // <-- must exist
+  password  String
+  role      String   @default("USER")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   posts     Post[]
 }
 
@@ -25,56 +24,53 @@ model Post {
   title     String
   content   String?
   authorId  Int
-  author    User     @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
 }
-
 
 model employee {
   id                Int       @id @default(autoincrement())
   status            String?
-  dateStarted       DateTime? 
-  employerId        Int?      
-  address           String?   
-  age               Int?      
+  dateStarted       DateTime?
+  employerId        Int?
+  address           String?
+  age               Int?
   biometricNo       String?   @unique
-  branch            String?   
+  branch            String?
   createdAt         DateTime  @default(now())
-  dateOfBirth       DateTime? 
-  email             String?   
-  emergencyAddress  String?   
-  emergencyName     String?   
-  emergencyNumber   String?   
-  emergencyRelation String?   
+  dateOfBirth       DateTime?
+  email             String?
+  emergencyAddress  String?
+  emergencyName     String?
+  emergencyNumber   String?
+  emergencyRelation String?
   employeeCode      String    @unique
-  endDate           DateTime? 
-  firstName         String    
-  gender            String?   
-  lastName          String    
-  maritalStatus     String?   
-  middleName        String?   
-  mobileNumber      String?   
-  pagIbigNumber     String?   
-  philHealth        String?   
-  photoUrl          String?   
-  remarks           String?   
-  sssNumber         String?   
-  tinNumber         String?   
+  endDate           DateTime?
+  firstName         String
+  gender            String?
+  lastName          String
+  maritalStatus     String?
+  middleName        String?
+  mobileNumber      String?
+  pagIbigNumber     String?
+  philHealth        String?
+  photoUrl          String?
+  remarks           String?
+  sssNumber         String?
+  tinNumber         String?
   updatedAt         DateTime  @updatedAt
-  assignedBy        String?   
-  assignedAt        DateTime? 
-
-  employer employer? @relation(fields: [employerId], references: [id])
+  assignedBy        String?
+  assignedAt        DateTime?
+  employer          employer? @relation(fields: [employerId], references: [id])
 
   @@index([employerId])
 }
 
 model employer {
-  id       Int       @id @default(autoincrement())
-  name     String
-  company  String?
-  branches String?
-
+  id        Int        @id @default(autoincrement())
+  name      String
+  company   String?
+  branches  String?
   employees employee[]
 }
