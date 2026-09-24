@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/(.*)",
-        destination: "https://hrdb-lenard.vercel.app/:path*",
+        destination: "https://hrdb-lenard.vercel.app",
         permanent: true,
       },
     ];
