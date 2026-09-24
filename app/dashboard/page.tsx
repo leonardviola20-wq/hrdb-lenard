@@ -227,10 +227,16 @@ export default function DashboardPage() {
               </ul>
             )}
             <Link
-              href="/tasks"
+              href={
+                selectedFilter === "PENDING"
+                  ? "/tasks/pending"
+                  : selectedFilter === "COMPLETED"
+                    ? "/tasks/completed"
+                    : "/tasks/overdue"
+              }
               className="mt-5 inline-block text-sm font-medium text-blue-600 hover:underline"
             >
-              Manage all tasks
+              Open full list
             </Link>
           </section>
         )}
