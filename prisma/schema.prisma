@@ -14,9 +14,13 @@ model User {
   name      String?
   password  String
   role      String   @default("USER")
+  emailVerified Boolean @default(true)
+  verificationTokenHash String? @unique
+  verificationTokenExpires DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Post[]
+  tasks     Task[]
 }
 
 model Post {
@@ -27,6 +31,22 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   author    User     @relation(fields: [authorId], references: [id])
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  status      String   @default("PENDING")
+  priority    String   @default("MEDIUM")
+  category    String?
+  dueDate     DateTime?
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
 }
 
 model employee {

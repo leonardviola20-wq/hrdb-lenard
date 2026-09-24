@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { users } from "@/lib/users";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function AuthPage() {
@@ -32,20 +31,49 @@ export default function AuthPage() {
       setError(data.error || "Login failed");
     } else {
       if (data.role === "ADMIN") {
-        router.push("/dashboard");
+        router.push("/admin");
       } else {
-        router.push("/tasks");
+        router.push("/dashboard");
       }
     }
-  } catch (err) {
+  } catch {
     setError("Something went wrong");
   }
 };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registering:", form);
-    router.push("/tasks");
+    setError("");
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.username,
+          email: form.email,
+          password: form.password,
+          role: "USER",
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Registration failed");
+        return;
+      }
+
+      setError(
+        `Registration successful. Open this local verification link: ${data.localVerificationUrl}`
+      );
+    } catch {
+      setError("Something went wrong");
+    }
   };
 
   return (
