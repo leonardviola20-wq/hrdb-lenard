@@ -232,7 +232,7 @@ export default function TasksPage() {
         <form onSubmit={submitTask} className="mb-8 space-y-3 rounded-lg bg-white p-5 text-gray-900 shadow">
           <h2 className="text-lg font-semibold">Create a task</h2>
           {renderFormFields(form, setForm)}
-          <button type="submit" disabled={saving} className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="submit" disabled={saving} className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60">
             {saving ? "Saving..." : "Add task"}
           </button>
         </form>
@@ -267,9 +267,9 @@ export default function TasksPage() {
                   <span className={task.status === "COMPLETED" ? "text-sm text-green-600" : "text-sm text-orange-600"}>{task.status === "COMPLETED" ? "Completed" : "Pending"}</span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button disabled={busyTaskId === task.id} onClick={() => updateStatus(task)} className="rounded border border-blue-700 bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{busyTaskId === task.id ? "Updating..." : task.status === "COMPLETED" ? "Mark pending" : "Mark complete"}</button>
+                  <button disabled={busyTaskId === task.id} onClick={() => updateStatus(task)} className="rounded border border-gray-500 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">{busyTaskId === task.id ? "Updating..." : task.status === "COMPLETED" ? "Mark pending" : "Mark complete"}</button>
                   <button disabled={busyTaskId === task.id} onClick={() => beginEdit(task)} className="rounded border border-gray-500 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">Edit</button>
-                  <button disabled={busyTaskId === task.id} onClick={() => deleteTask(task.id)} className="rounded border border-red-700 bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">{busyTaskId === task.id ? "Deleting..." : "Delete"}</button>
+                  <button disabled={busyTaskId === task.id} onClick={() => deleteTask(task.id)} className="rounded border border-gray-500 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">{busyTaskId === task.id ? "Deleting..." : "Delete"}</button>
                 </div>
               </li>
             ))}
@@ -284,7 +284,7 @@ export default function TasksPage() {
             {renderFormFields(editingForm, setEditingForm)}
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setEditing(null)} className="rounded border px-4 py-2">Cancel</button>
-              <button type="submit" disabled={saving} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-60">{saving ? "Saving..." : "Save changes"}</button>
+              <button type="submit" disabled={saving} className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-60">{saving ? "Saving..." : "Save changes"}</button>
             </div>
           </form>
         </div>

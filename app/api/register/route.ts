@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       {
         message: "Registration successful. Verify your email before logging in.",
         user,
-        localVerificationUrl: `${origin}/api/verify-email?token=${verificationToken}`,
+        verificationUrl: `${origin}/api/verify-email?token=${verificationToken}`,
       },
       { status: 201 }
     );

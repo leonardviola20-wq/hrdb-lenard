@@ -8,6 +8,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ email: "", password: "", username: "", confirmPassword: "" });
   const [error, setError] = useState("");
+  const [verificationUrl, setVerificationUrl] = useState("");
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -44,6 +45,7 @@ export default function AuthPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setVerificationUrl("");
 
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match");
@@ -68,9 +70,8 @@ export default function AuthPage() {
         return;
       }
 
-      setError(
-        `Registration successful. Open this local verification link: ${data.localVerificationUrl}`
-      );
+      setError("Registration successful. Verify your email before logging in.");
+      setVerificationUrl(data.verificationUrl);
     } catch {
       setError("Something went wrong");
     }
@@ -143,7 +144,7 @@ export default function AuthPage() {
 
               <button
                 type="submit"
-                className="mt-auto bg-blue-600 text-white px-4 py-3 rounded"
+                className="mt-auto rounded border border-gray-500 bg-white px-4 py-3 font-medium text-gray-900 hover:bg-gray-100"
               >
                 Login
               </button>
@@ -216,13 +217,25 @@ export default function AuthPage() {
 
               <button
                 type="submit"
-                className="mt-auto w-full bg-green-600 text-white py-3 rounded-b"
+                className="mt-auto w-full rounded border border-gray-500 bg-white py-3 font-medium text-gray-900 hover:bg-gray-100"
               >
                 Register
               </button>
             </form>
           )}
-          {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
+          {error && (
+            <div className="mt-4 text-center">
+              <p className="text-gray-800">{error}</p>
+              {verificationUrl && (
+                <a
+                  href={verificationUrl}
+                  className="mt-2 inline-block break-all font-medium text-blue-700 underline hover:text-blue-900"
+                >
+                  Open verification link
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
