@@ -39,6 +39,8 @@ export default function DashboardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingForm, setEditingForm] = useState<TaskForm | null>(null);
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
+  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+  const [dragOverTaskId, setDragOverTaskId] = useState<number | null>(null);
   const [taskSummary, setTaskSummary] = useState({
     total: 0,
     pending: 0,
@@ -89,6 +91,38 @@ export default function DashboardPage() {
     }
     return selectedFilter ? task.status === selectedFilter : false;
   });
+
+  const reorderTasks = async (taskId: number) => {
+    if (draggedTaskId === null || draggedTaskId === taskId) return;
+    const draggedIndex = selectedTasks.findIndex((task) => task.id === draggedTaskId);
+    const targetIndex = selectedTasks.findIndex((task) => task.id === taskId);
+    if (draggedIndex < 0 || targetIndex < 0) return;
+
+    const reorderedSelected = [...selectedTasks];
+    const [draggedTask] = reorderedSelected.splice(draggedIndex, 1);
+    reorderedSelected.splice(targetIndex, 0, draggedTask);
+    let selectedIndex = 0;
+    const reorderedTasks = tasks.map((task) =>
+      selectedTasks.some((selected) => selected.id === task.id)
+        ? reorderedSelected[selectedIndex++]
+        : task
+    );
+    setTasks(reorderedTasks);
+    setDraggedTaskId(null);
+    setDragOverTaskId(null);
+
+    try {
+      const res = await fetch("/api/tasks/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskIds: reorderedTasks.map((task) => task.id) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to save task order");
+    } catch (reorderError) {
+      setError(reorderError instanceof Error ? reorderError.message : "Unable to save task order");
+    }
+  };
 
   const taskCardClass = (filter: TaskFilter) => {
     return `rounded-lg border border-gray-300 bg-white p-5 text-left shadow transition hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-700 ${
@@ -204,10 +238,10 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/tasks"
+            href="/tasks#add-task"
             className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
           >
-            View tasks
+            Add task
           </Link>
           <Link
             href="/contacts"
@@ -309,30 +343,80 @@ export default function DashboardPage() {
                 {selectedTasks.map((task) => (
                   <li
                     key={task.id}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      if (draggedTaskId !== task.id) setDragOverTaskId(task.id);
+                    }}
+                    onDragLeave={() => {
+                      if (dragOverTaskId === task.id) setDragOverTaskId(null);
+                    }}
+                    onDrop={() => reorderTasks(task.id)}
+                    onDragEnd={() => {
+                      setDraggedTaskId(null);
+                      setDragOverTaskId(null);
+                    }}
                     className={`py-3 first:pt-0 last:pb-0 ${
                       selectedTask?.id === task.id ? "rounded-lg bg-gray-50" : ""
+                    } ${
+                      draggedTaskId === task.id ? "opacity-50" : ""
                     }`}
                   >
-                    <button
-                      type="button"
-                      aria-expanded={selectedTask?.id === task.id}
-                      onClick={() =>
-                        setSelectedTask((current) =>
-                          current?.id === task.id ? null : task
-                        )
-                      }
-                      className="w-full rounded p-3 text-left hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-700"
-                    >
-                      <p
-                        className={`font-medium ${
-                          task.status === "COMPLETED"
-                            ? "text-gray-400 line-through"
-                            : "text-gray-900"
-                        }`}
+                    {dragOverTaskId === task.id && draggedTaskId !== task.id && (
+                      <div
+                        aria-hidden="true"
+                        className="mb-2 h-1 rounded-full bg-gray-700 animate-pulse"
+                      />
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span
+                        draggable
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Drag ${task.title}`}
+                        title="Drag to reorder"
+                        onDragStart={() => setDraggedTaskId(task.id)}
+                        onDragEnd={() => {
+                          setDraggedTaskId(null);
+                          setDragOverTaskId(null);
+                        }}
+                        className="flex shrink-0 cursor-grab touch-none rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing"
                       >
-                        {task.title}
-                      </p>
-                    </button>
+                        <svg
+                          aria-hidden="true"
+                          width="16"
+                          height="18"
+                          viewBox="0 0 16 18"
+                          fill="currentColor"
+                        >
+                          <circle cx="4" cy="3" r="1.5" />
+                          <circle cx="12" cy="3" r="1.5" />
+                          <circle cx="4" cy="9" r="1.5" />
+                          <circle cx="12" cy="9" r="1.5" />
+                          <circle cx="4" cy="15" r="1.5" />
+                          <circle cx="12" cy="15" r="1.5" />
+                        </svg>
+                      </span>
+                      <button
+                        type="button"
+                        aria-expanded={selectedTask?.id === task.id}
+                        onClick={() =>
+                          setSelectedTask((current) =>
+                            current?.id === task.id ? null : task
+                          )
+                        }
+                        className="min-w-0 flex-1 rounded p-3 text-left hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                      >
+                        <p
+                          className={`font-medium ${
+                            task.status === "COMPLETED"
+                              ? "text-gray-400 line-through"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {task.title}
+                        </p>
+                      </button>
+                    </div>
                     {selectedTask?.id === task.id && (
                       <div className="border-t border-gray-200 px-3 pb-3 pt-4">
                         <p className="text-sm text-gray-500">Task details</p>
@@ -409,6 +493,11 @@ export default function DashboardPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {selectedTasks.length > 1 && (
+              <p className="mt-4 text-xs text-gray-500">
+                Drag the six-dot handle to change the order.
+              </p>
             )}
             <Link
               href={
