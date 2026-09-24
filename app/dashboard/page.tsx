@@ -90,16 +90,13 @@ export default function DashboardPage() {
     return selectedFilter ? task.status === selectedFilter : false;
   });
 
-  const reorderTasks = async (taskId: number, direction: "up" | "down") => {
+  const moveTask = async (taskId: number, targetIndex: number) => {
     const currentIndex = selectedTasks.findIndex((task) => task.id === taskId);
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selectedTasks.length) return;
 
     const reorderedSelected = [...selectedTasks];
-    [reorderedSelected[currentIndex], reorderedSelected[targetIndex]] = [
-      reorderedSelected[targetIndex],
-      reorderedSelected[currentIndex],
-    ];
+    const [movedTask] = reorderedSelected.splice(currentIndex, 1);
+    reorderedSelected.splice(targetIndex, 0, movedTask);
     let selectedIndex = 0;
     const reorderedTasks = tasks.map((task) =>
       selectedTasks.some((selected) => selected.id === task.id)
@@ -119,6 +116,11 @@ export default function DashboardPage() {
     } catch (reorderError) {
       setError(reorderError instanceof Error ? reorderError.message : "Unable to save task order");
     }
+  };
+
+  const reorderTasks = (taskId: number, direction: "up" | "down") => {
+    const currentIndex = selectedTasks.findIndex((task) => task.id === taskId);
+    moveTask(taskId, direction === "up" ? currentIndex - 1 : currentIndex + 1);
   };
 
   const taskCardClass = (filter: TaskFilter) => {
