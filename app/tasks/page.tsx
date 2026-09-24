@@ -100,13 +100,6 @@ export default function TasksPage() {
       });
   }, [filter, query, sort, tasks]);
 
-  const summary = {
-    total: tasks.length,
-    pending: tasks.filter((task) => task.status === "PENDING").length,
-    completed: tasks.filter((task) => task.status === "COMPLETED").length,
-    overdue: tasks.filter(isOverdue).length,
-  };
-
   const submitTask = async (event: FormEvent) => {
     event.preventDefault();
     setSaving(true);
@@ -216,20 +209,7 @@ export default function TasksPage() {
         <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">Back to dashboard</Link>
         <h1 className="mb-6 mt-2 text-3xl font-bold text-gray-900">Your tasks</h1>
 
-        <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[
-            ["Total", summary.total, "text-gray-900"],
-            ["Pending", summary.pending, "text-orange-600"],
-            ["Completed", summary.completed, "text-green-600"],
-            ["Overdue", summary.overdue, "text-red-600"],
-          ].map(([label, value, color]) => (
-            <div key={label} className="rounded-lg bg-white p-4 shadow">
-              <p className="text-sm text-gray-500">{label}</p><p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
-            </div>
-          ))}
-        </section>
-
-        <form onSubmit={submitTask} className="mb-8 space-y-3 rounded-lg bg-white p-5 text-gray-900 shadow">
+        <form id="add-task" onSubmit={submitTask} className="mb-8 space-y-3 rounded-lg bg-white p-5 text-gray-900 shadow">
           <h2 className="text-lg font-semibold">Create a task</h2>
           {renderFormFields(form, setForm)}
           <button type="submit" disabled={saving} className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60">
@@ -257,7 +237,6 @@ export default function TasksPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h2 className={`font-semibold ${task.status === "COMPLETED" ? "text-gray-400 line-through" : "text-gray-900"}`}>{task.title}</h2>
-                    {task.description && <p className="mt-1 text-sm text-gray-600">{task.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
                       <span className={`rounded px-2 py-1 ${task.priority === "HIGH" ? "bg-red-100 text-red-700" : task.priority === "LOW" ? "bg-gray-100 text-gray-700" : "bg-yellow-100 text-yellow-700"}`}>{task.priority} priority</span>
                       {task.category && <span className="rounded bg-blue-100 px-2 py-1 text-blue-700">{task.category}</span>}
