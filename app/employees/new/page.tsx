@@ -147,6 +147,18 @@ export default function NewEmployeePage() {
             <Field label="Middle Name"><input value={form.middleName} onChange={(e) => update("middleName", e.target.value)} className={inputClass} /></Field>
             <Field label="Last Name" required><input required value={form.lastName} onChange={(e) => update("lastName", e.target.value)} className={inputClass} /></Field>
             <div />
+            <Field label="Photo">
+              <div className="flex items-center gap-4 sm:col-span-2">
+                {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-24 w-24 rounded-lg border border-gray-200 object-cover" /> : <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400">No photo</div>}
+                <div className="grid gap-2">
+                  <label className="inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Choose photo
+                    <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), setMessage); }} className="sr-only" />
+                  </label>
+                  <p className="text-xs text-gray-500">JPG, PNG, or GIF up to 2 MB.</p>
+                </div>
+              </div>
+            </Field>
             <Field label="Date of Birth"><input type="date" value={form.dateOfBirth} onChange={(e) => updateDateOfBirth(e.target.value)} className={inputClass} /></Field>
             <Field label="Age"><input readOnly tabIndex={-1} value={form.age} placeholder="Calculated automatically" className={`${inputClass} cursor-not-allowed bg-gray-100`} /></Field>
             <Field label="Marital Status"><select value={form.maritalStatus} onChange={(e) => update("maritalStatus", e.target.value)} className={inputClass}><option value="">Select status</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></Field>
@@ -155,15 +167,6 @@ export default function NewEmployeePage() {
           <Section title="Contact Information">
             <Field label="Mobile Number"><input inputMode="numeric" value={form.mobileNumber} onChange={(e) => update("mobileNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
             <Field label="Email Address"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={inputClass} /></Field>
-            <Field label="Photo">
-              <div className="flex items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3">
-                {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-16 w-16 rounded-full object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">No photo</div>}
-                <div className="grid gap-2">
-                  <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), setMessage); }} className="text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700" />
-                  <p className="text-xs text-gray-500">JPG, PNG, or GIF up to 2 MB.</p>
-                </div>
-              </div>
-            </Field>
             <Field label="Address"><textarea rows={3} value={form.address} onChange={(e) => update("address", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
           </Section>
           <Section title="Emergency Information">

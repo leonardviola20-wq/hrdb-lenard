@@ -219,8 +219,8 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
     biometricNo: employee.biometricNo || "", branch: employee.branch || "",
     employerId: employee.employer?.id?.toString() || "", status: employee.status || "Trainee",
     dateStarted: employee.dateStarted?.slice(0, 10) || "", endDate: employee.endDate?.slice(0, 10) || "",
-    sssNumber: employee.sssNumber || "", pagIbigNumber: employee.pagIbigNumber || "",
-    philHealth: employee.philHealth || "", tinNumber: employee.tinNumber || "", photoUrl: employee.photoUrl || "",
+    sssNumber: formatDigits(employee.sssNumber || "", [2, 7, 1]), pagIbigNumber: formatDigits(employee.pagIbigNumber || "", [4, 4, 4]),
+    philHealth: formatDigits(employee.philHealth || "", [2, 9, 1]), tinNumber: formatDigits(employee.tinNumber || "", [3, 3, 3, 5]), photoUrl: employee.photoUrl || "",
     remarks: employee.remarks || "",
   });
   const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
@@ -230,10 +230,13 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
       {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, field === "mobileNumber" ? formatMobile(event.target.value) : event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
       <div className="grid gap-2 text-sm font-medium text-gray-700 sm:col-span-2">
         <span>Photo</span>
-        <div className="flex items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3">
-          {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-16 w-16 rounded-full object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">No photo</div>}
+        <div className="flex items-center gap-4">
+          {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-24 w-24 rounded-lg border border-gray-200 object-cover" /> : <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400">No photo</div>}
           <div className="grid gap-2">
-            <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), onError); }} className="text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700" />
+            <label className="inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              Choose photo
+              <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), onError); }} className="sr-only" />
+            </label>
             <button type="button" onClick={() => update("photoUrl", "")} className="text-left text-xs text-gray-500 hover:text-gray-900">Remove photo</button>
           </div>
         </div>
