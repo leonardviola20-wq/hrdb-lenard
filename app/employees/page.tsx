@@ -54,6 +54,21 @@ function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value
   reader.readAsDataURL(file);
 }
 
+function formatDigits(value: string, groups: number[]) {
+  const digits = value.replace(/\D/g, "").slice(0, groups.reduce((sum, size) => sum + size, 0));
+  let offset = 0;
+  return groups.map((size) => {
+    const part = digits.slice(offset, offset + size);
+    offset += size;
+    return part;
+  }).filter(Boolean).join("-");
+}
+
+function formatMobile(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  return [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 11)].filter(Boolean).join(" ");
+}
+
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [query, setQuery] = useState("");
@@ -212,7 +227,7 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
   const textFields = ["firstName", "middleName", "lastName", "mobileNumber", "email", "address", "emergencyName", "emergencyNumber", "emergencyAddress", "biometricNo", "branch"] as const;
   return <form className="mt-6 max-h-[70vh] overflow-y-auto pr-2" onSubmit={(event) => { event.preventDefault(); void onSave({ ...form, age: form.age ? Number(form.age) : null, employerId: form.employerId ? Number(form.employerId) : null }); }}>
     <div className="grid gap-4 sm:grid-cols-2">
-      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
+      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, field === "mobileNumber" ? formatMobile(event.target.value) : event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
       <div className="grid gap-2 text-sm font-medium text-gray-700 sm:col-span-2">
         <span>Photo</span>
         <div className="flex items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3">
@@ -232,10 +247,10 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Status</span><select value={form.status} onChange={(event) => update("status", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900">{["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"].map((status) => <option key={status}>{status}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Date Started</span><input type="date" value={form.dateStarted} onChange={(event) => update("dateStarted", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       {["Contractual", "Resigned", "Terminated", "AWOL", "Leave"].includes(form.status) && <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Ended</span><input type="date" value={form.endDate} onChange={(event) => update("endDate", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>}
-      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>SSS</span><input value={form.sssNumber} onChange={(event) => update("sssNumber", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
-      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Pag-IBIG</span><input value={form.pagIbigNumber} onChange={(event) => update("pagIbigNumber", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
-      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>PhilHealth</span><input value={form.philHealth} onChange={(event) => update("philHealth", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
-      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>TIN</span><input value={form.tinNumber} onChange={(event) => update("tinNumber", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>SSS</span><input inputMode="numeric" placeholder="00-0000000-0" value={form.sssNumber} onChange={(event) => update("sssNumber", formatDigits(event.target.value, [2, 7, 1]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Pag-IBIG</span><input inputMode="numeric" placeholder="0000-0000-0000" value={form.pagIbigNumber} onChange={(event) => update("pagIbigNumber", formatDigits(event.target.value, [4, 4, 4]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>PhilHealth</span><input inputMode="numeric" placeholder="00-000000000-0" value={form.philHealth} onChange={(event) => update("philHealth", formatDigits(event.target.value, [2, 9, 1]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>TIN</span><input inputMode="numeric" placeholder="000-000-000-00000" value={form.tinNumber} onChange={(event) => update("tinNumber", formatDigits(event.target.value, [3, 3, 3, 5]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700 sm:col-span-2"><span>Remarks</span><textarea rows={3} value={form.remarks} onChange={(event) => update("remarks", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
     </div>
     <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={onCancel} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700">Cancel</button><button type="submit" disabled={saving} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{saving ? "Saving..." : "Save changes"}</button></div>
