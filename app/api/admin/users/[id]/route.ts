@@ -21,19 +21,20 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 
   const userId = Number((await params).id);
   const body = await req.json();
-  if (!Number.isInteger(userId) || typeof body.emailVerified !== "boolean") {
+  if (!Number.isInteger(userId) || (typeof body.emailVerified !== "boolean" && typeof body.canAccessEmployees !== "boolean")) {
     return NextResponse.json({ error: "Invalid user update" }, { status: 400 });
   }
 
   const user = await prisma.user.update({
     where: { id: userId },
     data: {
-      emailVerified: body.emailVerified,
+      ...(typeof body.emailVerified === "boolean" ? { emailVerified: body.emailVerified } : {}),
+      ...(typeof body.canAccessEmployees === "boolean" ? { canAccessEmployees: body.canAccessEmployees } : {}),
       ...(body.emailVerified
         ? { verificationTokenHash: null, verificationTokenExpires: null }
         : {}),
     },
-    select: { id: true, emailVerified: true },
+    select: { id: true, emailVerified: true, canAccessEmployees: true },
   });
 
   return NextResponse.json({ user });

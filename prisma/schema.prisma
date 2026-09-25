@@ -14,6 +14,7 @@ model User {
   name      String?
   password  String
   role      String   @default("USER")
+  canAccessEmployees Boolean @default(false)
   emailVerified Boolean @default(true)
   verificationTokenHash String? @unique
   verificationTokenExpires DateTime?

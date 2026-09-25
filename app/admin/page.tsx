@@ -9,6 +9,7 @@ type AdminUser = {
   email: string;
   role: string;
   emailVerified: boolean;
+  canAccessEmployees: boolean;
   createdAt: string;
   _count: { tasks: number };
 };
@@ -67,6 +68,25 @@ export default function AdminPage() {
     }
   };
 
+  const updateEmployeeAccess = async (user: AdminUser) => {
+    setBusyUserId(user.id);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailVerified: user.emailVerified, canAccessEmployees: !user.canAccessEmployees }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to update employee access");
+      setUsers((current) => current.map((item) => item.id === user.id ? { ...item, canAccessEmployees: data.user.canAccessEmployees } : item));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to update employee access");
+    } finally {
+      setBusyUserId(null);
+    }
+  };
+
   const verifiedCount = users.filter((user) => user.emailVerified).length;
   const adminCount = users.filter((user) => user.role === "ADMIN").length;
 
@@ -107,6 +127,7 @@ export default function AdminPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded px-2 py-1 text-xs font-medium ${user.emailVerified ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>{user.emailVerified ? "Verified" : "Needs verification"}</span>
                       <button type="button" disabled={busyUserId === user.id} onClick={() => updateVerification(user)} className="rounded border border-gray-500 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">{busyUserId === user.id ? "Saving..." : user.emailVerified ? "Unverify" : "Verify account"}</button>
+                      {user.role !== "ADMIN" && <button type="button" disabled={busyUserId === user.id} onClick={() => updateEmployeeAccess(user)} className={`rounded border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${user.canAccessEmployees ? "border-blue-700 bg-blue-50 text-blue-800" : "border-gray-500 bg-white text-gray-900"}`}>{user.canAccessEmployees ? "Remove Employees access" : "Allow Employees access"}</button>}
                     </div>
                   </div>
                 </article>
