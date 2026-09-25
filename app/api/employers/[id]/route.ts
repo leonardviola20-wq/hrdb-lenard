@@ -10,6 +10,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
   if (!Number.isInteger(id) || typeof body.name !== "string" || !body.name.trim()) return NextResponse.json({ error: "Invalid employer update" }, { status: 400 });
   const text = (field: string) => typeof body[field] === "string" ? body[field].trim() || null : null;
+  const date = (field: string) => {
+    const value = text(field);
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
   try {
     const employer = await prisma.employer.update({ where: { id }, data: {
       name: body.name.trim(), company: text("tradeName"), branches: text("branchName"),
@@ -17,11 +23,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       branchStatus: text("branchStatus") || "Open", president: text("president"), longAddress: text("longAddress"),
       shortAddress: text("shortAddress"), logo: text("logo"), secDti: text("secDti"), tin: text("tin"),
       sss: text("sss"), hdmf: text("hdmf"), phic: text("phic"),
-      secDtiRegistrationDate: body.secDtiRegistrationDate ? new Date(String(body.secDtiRegistrationDate)) : null,
-      tinRegistrationDate: body.tinRegistrationDate ? new Date(String(body.tinRegistrationDate)) : null,
-      sssRegistrationDate: body.sssRegistrationDate ? new Date(String(body.sssRegistrationDate)) : null,
-      hdmfRegistrationDate: body.hdmfRegistrationDate ? new Date(String(body.hdmfRegistrationDate)) : null,
-      phicRegistrationDate: body.phicRegistrationDate ? new Date(String(body.phicRegistrationDate)) : null,
+      secDtiRegistrationDate: date("secDtiRegistrationDate"),
+      tinRegistrationDate: date("tinRegistrationDate"),
+      sssRegistrationDate: date("sssRegistrationDate"),
+      hdmfRegistrationDate: date("hdmfRegistrationDate"),
+      phicRegistrationDate: date("phicRegistrationDate"),
     }, include: { _count: { select: { employees: true } } } });
     return NextResponse.json({ employer });
   } catch (error) {
