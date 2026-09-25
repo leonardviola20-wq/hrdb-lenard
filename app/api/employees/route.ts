@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
       email: true,
       mobileNumber: true,
       branch: true,
+      position: true,
       photoUrl: true,
       assignedBy: true,
       assignedAt: true,
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
   const dateOfBirth = optionalDate("dateOfBirth");
   const dateStarted = optionalDate("dateStarted");
   const status = optionalString("status");
-  const endedStatuses = new Set(["Contractual", "Resigned", "Terminated", "AWOL", "Leave"]);
+  const endedStatuses = new Set(["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"]);
   const endDate = endedStatuses.has(status || "") ? optionalDate("endDate") : null;
   if (dateOfBirth === undefined || dateStarted === undefined || endDate === undefined) {
     return NextResponse.json({ error: "Enter valid dates" }, { status: 400 });
@@ -130,6 +131,7 @@ export async function POST(req: NextRequest) {
         remarks: optionalString("remarks"),
         photoUrl: optionalString("photoUrl"),
         branch: optionalString("branch"),
+        position: optionalString("position"),
         assignedBy: String(session.id ?? session.email ?? "ADMIN"),
         assignedAt: new Date(),
       },

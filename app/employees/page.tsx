@@ -30,6 +30,7 @@ type Employee = {
   email: string | null;
   mobileNumber: string | null;
   branch: string | null;
+  position: string | null;
   photoUrl: string | null;
   assignedBy: string | null;
   assignedAt: string | null;
@@ -69,7 +70,26 @@ function formatMobile(value: string) {
   return [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 11)].filter(Boolean).join(" ");
 }
 
+function displayMobile(value: string | null) {
+  return value ? formatMobile(value) : "Not set";
+}
+
+function formatLabel(value: string) {
+  return value.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function calculateAge(dateOfBirth: string | null) {
+  if (!dateOfBirth) return null;
+  const birthDate = new Date(`${dateOfBirth.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  if (today < new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate())) age -= 1;
+  return Math.max(0, age);
+}
+
 const branches = ["Arya 1", "Arya 2", "Yasuo", "Shangri-la", "Greenhills", "Magnolia", "MyDay", "Warehouse", "Office", "Vape", "Commissary", "Others"];
+const positions = ["President", "Corporate Secretary", "Treasurer", "Accountant", "Purchaser", "IT", "Admin", "Admin Staff", "Office Staff", "Store In-charge", "Commissary Staff", "Driver", "Sales Staff", "Dining Staff", "Cashier", "Kitchen Staff", "Dispatcher", "Receptionist", "Warehouse Staff"];
 const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
 
 export default function EmployeesPage() {
@@ -78,6 +98,7 @@ export default function EmployeesPage() {
   const [message, setMessage] = useState("");
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -139,27 +160,35 @@ export default function EmployeesPage() {
             {filteredEmployees.map((employee) => {
               const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
               return (
-                <article key={employee.id} onClick={() => { setSelectedEmployee(employee); setEditing(false); }} className="cursor-pointer rounded-lg bg-white p-5 shadow transition hover:-translate-y-0.5 hover:shadow-md">
+                <article key={employee.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      {employee.photoUrl && <img src={employee.photoUrl} alt="" className="mb-3 h-12 w-12 rounded-full object-cover" />}
-                      <h2 className="truncate text-lg font-semibold text-gray-900">{fullName}</h2>
-                      <p className="mt-1 text-sm text-gray-500">{employee.employeeCode}</p>
+                      {employee.photoUrl ? <img src={employee.photoUrl} alt="" className="mb-4 h-24 w-24 rounded-full object-cover" /> : <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">No photo</div>}
+                      <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
                     </div>
-                    <span className={`rounded px-2 py-1 text-xs font-medium ${employee.status?.toLowerCase() === "inactive" ? "bg-gray-100 text-gray-600" : "bg-green-100 text-green-700"}`}>
-                      {employee.status || "Active"}
-                    </span>
+                    <div className="relative shrink-0">
+                      <button type="button" onClick={() => setOpenMenuId(openMenuId === employee.id ? null : employee.id)} className="rounded p-1 text-xl leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Actions for ${fullName}`}>•••</button>
+                      {openMenuId === employee.id && <div className="absolute right-0 top-8 z-10 w-28 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg">
+                        <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(false); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">View</button>
+                        <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(true); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">Update</button>
+                      </div>}
+                    </div>
                   </div>
-                  <dl className="mt-4 space-y-2 text-sm">
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-gray-500">Employer</dt>
-                      <dd className="text-right text-gray-900">{employee.employer?.company || employee.employer?.name || "Unassigned"}</dd>
+                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div className="grid content-start gap-1">
+                      <span className="font-semibold text-green-600">{["Regular", "Contractual", "Trainee", "Leave"].includes(employee.status || "") ? "Active" : employee.status || "Active"}</span>
+                      <span className="font-medium text-gray-700">{employee.status || "Not set"}</span>
                     </div>
-                    {employee.branch && <div className="flex justify-between gap-3"><dt className="text-gray-500">Branch</dt><dd className="text-right text-gray-900">{employee.branch}</dd></div>}
-                    {employee.email && <div className="flex justify-between gap-3"><dt className="text-gray-500">Email</dt><dd className="truncate text-right text-gray-900">{employee.email}</dd></div>}
-                    {employee.mobileNumber && <div className="flex justify-between gap-3"><dt className="text-gray-500">Mobile</dt><dd className="text-right text-gray-900">{employee.mobileNumber}</dd></div>}
-                    {employee.assignedBy && <div className="flex justify-between gap-3"><dt className="text-gray-500">Assigned by</dt><dd className="text-right text-gray-900">{employee.assignedBy}</dd></div>}
-                    {employee.assignedAt && <div className="flex justify-between gap-3"><dt className="text-gray-500">Assigned at</dt><dd className="text-right text-gray-900">{new Date(employee.assignedAt).toLocaleDateString()}</dd></div>}
+                    <div className="grid min-w-0 content-start gap-1">
+                      <span className="truncate text-gray-900">{employee.branch || "Branch not set"}</span>
+                      <span className="truncate text-gray-900">{employee.position || "Position not set"}</span>
+                    </div>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
+                    <div><dt className="text-gray-500">Biometric ID</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
+                    <div><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.company || employee.employer?.name || "Unassigned"}</dd></div>
+                    <div><dt className="text-gray-500">Phone</dt><dd className="mt-1 text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
+                    <div><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
                   </dl>
                 </article>
               );
@@ -197,8 +226,9 @@ export default function EmployeesPage() {
                   <div><dt className="text-gray-500">Employer</dt><dd className="font-medium text-gray-900">{selectedEmployee.employer?.company || selectedEmployee.employer?.name || "Unassigned"}</dd></div>
                   <div><dt className="text-gray-500">Status</dt><dd className="font-medium text-gray-900">{selectedEmployee.status || "Active"}</dd></div>
                   <div><dt className="text-gray-500">Branch</dt><dd className="font-medium text-gray-900">{selectedEmployee.branch || "Not set"}</dd></div>
-                  <div><dt className="text-gray-500">Mobile</dt><dd className="font-medium text-gray-900">{selectedEmployee.mobileNumber || "Not set"}</dd></div>
+                  <div><dt className="text-gray-500">Mobile</dt><dd className="font-medium text-gray-900">{displayMobile(selectedEmployee.mobileNumber)}</dd></div>
                   <div><dt className="text-gray-500">Email</dt><dd className="font-medium text-gray-900">{selectedEmployee.email || "Not set"}</dd></div>
+                  <div><dt className="text-gray-500">Age</dt><dd className="font-medium text-gray-900">{calculateAge(selectedEmployee.dateOfBirth) ?? selectedEmployee.age ?? "Not set"}</dd></div>
                   <div><dt className="text-gray-500">Assigned by</dt><dd className="font-medium text-gray-900">{selectedEmployee.assignedBy || "Not set"}</dd></div>
                 </dl>
                 <button type="button" onClick={() => setEditing(true)} className="mt-6 rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Edit employee</button>
@@ -214,12 +244,12 @@ export default function EmployeesPage() {
 function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSave }: { employee: Employee; employers: Employer[]; saving: boolean; onCancel: () => void; onError: (value: string) => void; onSave: (changes: Record<string, string | number | null>) => Promise<void> }) {
   const [form, setForm] = useState({
     firstName: employee.firstName, middleName: employee.middleName || "", lastName: employee.lastName,
-    dateOfBirth: employee.dateOfBirth?.slice(0, 10) || "", age: employee.age?.toString() || "",
+    dateOfBirth: employee.dateOfBirth?.slice(0, 10) || "", age: calculateAge(employee.dateOfBirth)?.toString() || "",
     maritalStatus: employee.maritalStatus || "", gender: employee.gender || "",
-    mobileNumber: employee.mobileNumber || "", email: employee.email || "", address: employee.address || "",
-    emergencyName: employee.emergencyName || "", emergencyNumber: employee.emergencyNumber || "",
+    mobileNumber: formatMobile(employee.mobileNumber || ""), email: employee.email || "", address: employee.address || "",
+    emergencyName: employee.emergencyName || "", emergencyNumber: formatMobile(employee.emergencyNumber || ""),
     emergencyRelation: employee.emergencyRelation || "", emergencyAddress: employee.emergencyAddress || "",
-    biometricNo: employee.biometricNo || "", branch: employee.branch || "",
+    biometricNo: employee.biometricNo || "", branch: employee.branch || "", position: employee.position || "",
     employerId: employee.employer?.id?.toString() || "", status: employee.status || "Trainee",
     dateStarted: employee.dateStarted?.slice(0, 10) || "", endDate: employee.endDate?.slice(0, 10) || "",
     sssNumber: formatDigits(employee.sssNumber || "", [2, 7, 1]), pagIbigNumber: formatDigits(employee.pagIbigNumber || "", [4, 4, 4]),
@@ -232,16 +262,13 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
       setForm((current) => ({ ...current, dateOfBirth: "", age: "" }));
       return;
     }
-    const birthDate = new Date(`${value}T00:00:00`);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    if (today < new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate())) age -= 1;
-    setForm((current) => ({ ...current, dateOfBirth: value, age: String(Math.max(0, age)) }));
+    setForm((current) => ({ ...current, dateOfBirth: value, age: String(calculateAge(value) ?? "") }));
   };
-  const textFields = ["firstName", "middleName", "lastName", "mobileNumber", "email", "address", "emergencyName", "emergencyNumber", "emergencyAddress", "biometricNo"] as const;
+  const textFields = ["firstName", "middleName", "lastName"] as const;
   return <form className="mt-6 max-h-[70vh] overflow-y-auto pr-2" onSubmit={(event) => { event.preventDefault(); void onSave({ ...form, age: form.age ? Number(form.age) : null, employerId: form.employerId ? Number(form.employerId) : null }); }}>
     <div className="grid gap-4 sm:grid-cols-2">
-      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, field === "mobileNumber" ? formatMobile(event.target.value) : event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
+      <h3 className="border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Personal Information</h3>
+      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{formatLabel(field)}</span><input value={form[field]} onChange={(event) => update(field, event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
       <div className="grid gap-2 text-sm font-medium text-gray-700 sm:col-span-2">
         <span>Photo</span>
         <div className="flex items-center gap-4">
@@ -259,12 +286,20 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Age</span><input readOnly tabIndex={-1} value={form.age} className="cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900" /></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Marital Status</span><select value={form.maritalStatus} onChange={(event) => update("maritalStatus", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select status</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Gender</span><select value={form.gender} onChange={(event) => update("gender", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option></select></label>
+      <h3 className="mt-2 border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Contact Information</h3>
+      {(["mobileNumber", "email", "address"] as const).map((field) => <label key={field} className={`grid gap-1 text-sm font-medium text-gray-700 ${field === "address" ? "sm:col-span-2" : ""}`}><span>{field === "mobileNumber" ? "Mobile Number" : formatLabel(field)}</span>{field === "address" ? <textarea rows={2} value={form[field]} onChange={(event) => update(field, event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /> : <input value={form[field]} onChange={(event) => update(field, field === "mobileNumber" ? formatMobile(event.target.value) : event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" />}</label>)}
+      <h3 className="mt-2 border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Emergency Information</h3>
+      {(["emergencyName", "emergencyNumber"] as const).map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "emergencyNumber" ? "Emergency Number" : formatLabel(field)}</span><input inputMode={field === "emergencyNumber" ? "numeric" : undefined} value={form[field]} onChange={(event) => update(field, field === "emergencyNumber" ? formatMobile(event.target.value) : event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Relation</span><select value={form.emergencyRelation} onChange={(event) => update("emergencyRelation", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select relation</option><option>Family</option><option>Friend</option><option>Work / Colleague</option><option>Others</option></select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700 sm:col-span-2"><span>Emergency Address</span><textarea rows={2} value={form.emergencyAddress} onChange={(event) => update("emergencyAddress", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <h3 className="mt-2 border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Job Information</h3>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Employer</span><select value={form.employerId} onChange={(event) => update("employerId", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Unassigned</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.company || employer.name}</option>)}</select></label>
-      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Status</span><select value={form.status} onChange={(event) => update("status", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900">{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Status</span><select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value, endDate: ["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"].includes(event.target.value) ? current.endDate : "" }))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900">{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Branch</span><select value={form.branch} onChange={(event) => update("branch", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select branch</option>{branches.map((branch) => <option key={branch}>{branch}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Position</span><select value={form.position} onChange={(event) => update("position", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select position</option>{positions.map((position) => <option key={position}>{position}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Date Started</span><input type="date" value={form.dateStarted} onChange={(event) => update("dateStarted", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
-      {["Contractual", "Resigned", "Terminated", "AWOL", "Leave"].includes(form.status) && <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Ended</span><input type="date" value={form.endDate} onChange={(event) => update("endDate", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>}
+      {["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"].includes(form.status) && <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Ended</span><input type="date" value={form.endDate} onChange={(event) => update("endDate", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>}
+      <h3 className="mt-2 border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Government Information</h3>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>SSS</span><input inputMode="numeric" placeholder="00-0000000-0" value={form.sssNumber} onChange={(event) => update("sssNumber", formatDigits(event.target.value, [2, 7, 1]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Pag-IBIG</span><input inputMode="numeric" placeholder="0000-0000-0000" value={form.pagIbigNumber} onChange={(event) => update("pagIbigNumber", formatDigits(event.target.value, [4, 4, 4]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>PhilHealth</span><input inputMode="numeric" placeholder="00-000000000-0" value={form.philHealth} onChange={(event) => update("philHealth", formatDigits(event.target.value, [2, 9, 1]))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>

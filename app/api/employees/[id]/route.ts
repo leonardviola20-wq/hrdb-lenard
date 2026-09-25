@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   };
   const status = text("status");
-  const endedStatuses = new Set(["Contractual", "Resigned", "Terminated", "AWOL", "Leave"]);
+  const endedStatuses = new Set(["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"]);
   const employerId = body.employerId === "" || body.employerId === null || body.employerId === undefined
     ? null
     : Number(body.employerId);
@@ -64,6 +64,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         emergencyAddress: text("emergencyAddress"),
         biometricNo: text("biometricNo"),
         branch: text("branch"),
+        position: text("position"),
         photoUrl: text("photoUrl"),
         employerId,
         status,

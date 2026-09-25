@@ -59,6 +59,7 @@ model employee {
   age               Int?
   biometricNo       String?   @unique
   branch            String?
+  position          String?
   createdAt         DateTime  @default(now())
   dateOfBirth       DateTime?
   email             String?
