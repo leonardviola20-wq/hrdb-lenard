@@ -31,11 +31,7 @@ export default function AuthPage() {
     if (!res.ok) {
       setError(data.error || "Login failed");
     } else {
-      if (data.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     }
   } catch {
     setError("Something went wrong");

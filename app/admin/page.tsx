@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 type AdminUser = {
@@ -80,9 +79,6 @@ export default function AdminPage() {
             <h1 className="mt-1 text-3xl font-bold text-gray-900">Admin dashboard</h1>
             <p className="mt-2 text-gray-600">Manage user access and account verification.</p>
           </div>
-          <Link href="/dashboard" className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">
-            User dashboard
-          </Link>
         </header>
 
         {message && <p className="mb-4 text-red-600">{message}</p>}
