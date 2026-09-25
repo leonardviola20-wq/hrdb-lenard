@@ -24,6 +24,7 @@ type EmployeeForm = {
   emergencyAddress: string;
   biometricNo: string;
   branch: string;
+  position: string;
   employerId: string;
   status: string;
   dateStarted: string;
@@ -40,13 +41,14 @@ const emptyForm: EmployeeForm = {
   age: "", maritalStatus: "", gender: "", mobileNumber: "", email: "", address: "",
   photoUrl: "",
   emergencyName: "", emergencyNumber: "", emergencyRelation: "", emergencyAddress: "",
-  biometricNo: "", branch: "", employerId: "", status: "Trainee", dateStarted: "", endDate: "",
+  biometricNo: "", branch: "", position: "", employerId: "", status: "Trainee", dateStarted: "", endDate: "",
   sssNumber: "", pagIbigNumber: "", philHealth: "", tinNumber: "", remarks: "",
 };
 
 const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
-const endedStatuses = new Set(["Contractual", "Resigned", "Terminated", "AWOL", "Leave"]);
+const endedStatuses = new Set(["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"]);
 const branches = ["Arya 1", "Arya 2", "Yasuo", "Shangri-la", "Greenhills", "Magnolia", "MyDay", "Warehouse", "Office", "Vape", "Commissary", "Others"];
+const positions = ["President", "Corporate Secretary", "Treasurer", "Accountant", "Purchaser", "IT", "Admin", "Admin Staff", "Office Staff", "Store In-charge", "Commissary Staff", "Driver", "Sales Staff", "Dining Staff", "Cashier", "Kitchen Staff", "Dispatcher", "Receptionist", "Warehouse Staff"];
 const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
 
 function formatDigits(value: string, groups: number[]) {
@@ -172,15 +174,16 @@ export default function NewEmployeePage() {
           </Section>
           <Section title="Emergency Information">
             <Field label="Contact Person"><input value={form.emergencyName} onChange={(e) => update("emergencyName", e.target.value)} className={inputClass} /></Field>
-            <Field label="Contact Number"><input value={form.emergencyNumber} onChange={(e) => update("emergencyNumber", e.target.value)} className={inputClass} /></Field>
+            <Field label="Contact Number"><input inputMode="numeric" value={form.emergencyNumber} onChange={(e) => update("emergencyNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
             <Field label="Relation"><select value={form.emergencyRelation} onChange={(e) => update("emergencyRelation", e.target.value)} className={inputClass}><option value="">Select relation</option><option>Family</option><option>Friend</option><option>Work / Colleague</option><option>Others</option></select></Field>
-            <Field label="Address"><textarea rows={3} value={form.emergencyAddress} onChange={(e) => update("emergencyAddress", e.target.value)} className={inputClass} /></Field>
+            <Field label="Address"><textarea rows={3} value={form.emergencyAddress} onChange={(e) => update("emergencyAddress", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
           </Section>
           <Section title="Job Information">
             <Field label="Biometric ID"><input value={form.biometricNo} onChange={(e) => update("biometricNo", e.target.value)} className={inputClass} /></Field>
             <Field label="Employer"><select value={form.employerId} onChange={(e) => update("employerId", e.target.value)} className={inputClass}><option value="">Select employer</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.company || employer.name}</option>)}</select></Field>
             <Field label="Status"><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value, endDate: endedStatuses.has(e.target.value) ? current.endDate : "" }))} className={inputClass}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></Field>
             <Field label="Branch"><select value={form.branch} onChange={(e) => update("branch", e.target.value)} className={inputClass}><option value="">Select branch</option>{branches.map((branch) => <option key={branch}>{branch}</option>)}</select></Field>
+            <Field label="Position"><select value={form.position} onChange={(e) => update("position", e.target.value)} className={inputClass}><option value="">Select position</option>{positions.map((position) => <option key={position}>{position}</option>)}</select></Field>
             <Field label="Date Started"><input type="date" value={form.dateStarted} onChange={(e) => update("dateStarted", e.target.value)} className={inputClass} /></Field>
             {endedStatuses.has(form.status) && <Field label="Ended"><input type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} className={inputClass} /></Field>}
           </Section>
