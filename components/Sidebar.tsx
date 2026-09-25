@@ -31,7 +31,8 @@ export function Sidebar() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
-  const collapsedText = collapsed
+  const isCollapsed = collapsed && !mobileOpen;
+  const collapsedText = isCollapsed
     ? "md:hidden"
     : "whitespace-nowrap";
 
@@ -50,13 +51,13 @@ export function Sidebar() {
   return (
     <aside
       className={`relative z-20 flex shrink-0 flex-col bg-[#172554] text-white shadow-xl transition-[height,width] duration-300 md:sticky md:top-0 md:h-screen ${
-        collapsed ? "md:w-14" : "md:w-64"
+        isCollapsed ? "md:w-14" : "md:w-64"
       } ${
         mobileOpen ? "h-screen" : "h-16"
       }`}
     >
       <div className={`relative flex shrink-0 items-center justify-between border-b border-white/10 px-4 md:px-6 ${
-        collapsed ? "h-16 md:h-20 md:flex-col md:justify-center md:gap-1 md:px-0" : "h-16 md:h-20"
+        isCollapsed ? "h-16 md:h-20 md:flex-col md:justify-center md:gap-1 md:px-0" : "h-16 md:h-20"
       }`}>
         <button
           type="button"
@@ -70,10 +71,10 @@ export function Sidebar() {
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={`flex shrink-0 items-center justify-center rounded-xl bg-blue-400 font-bold text-[#172554] shadow-lg shadow-blue-950/20 transition-all duration-300 hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200 ${
-              collapsed ? "h-8 w-8 text-sm" : "h-10 w-10 text-lg"
+              isCollapsed ? "h-8 w-8 text-sm" : "h-10 w-10 text-lg"
             }`}
           >
             H
@@ -88,7 +89,7 @@ export function Sidebar() {
 
       <nav
         aria-label="Primary navigation"
-        className={`${mobileOpen ? "flex" : "hidden"} sidebar-scrollbar-hidden flex-1 flex-col overflow-y-auto py-6 md:flex ${collapsed ? "px-2" : "px-4"}`}
+        className={`${mobileOpen ? "flex" : "hidden"} sidebar-scrollbar-hidden flex-1 flex-col overflow-y-auto py-6 md:flex ${isCollapsed ? "px-2" : "px-4"}`}
       >
         <p className={`mb-3 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
           Workspace
@@ -102,18 +103,18 @@ export function Sidebar() {
                 key={label}
                 href={href}
                 onClick={() => setMobileOpen(false)}
-                title={collapsed ? label : undefined}
+                title={isCollapsed ? label : undefined}
                 className={`group/item flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
                   active
-                    ? collapsed
+                    ? isCollapsed
                       ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
                       : "px-3 bg-white text-[#172554] shadow-sm"
-                    : collapsed
+                    : isCollapsed
                       ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
                       : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                <Icon className={`h-5 w-5 shrink-0 transition-transform ${active ? "text-blue-700" : "text-blue-300 group-hover:text-blue-100"} ${collapsed ? "group-hover/item:scale-110" : ""}`} />
+                <Icon className={`h-5 w-5 shrink-0 transition-transform ${active ? "text-blue-700" : "text-blue-300 group-hover:text-blue-100"} ${isCollapsed ? "group-hover/item:scale-110" : ""}`} />
                 <span className={collapsedText}>{label}</span>
               </Link>
             );
@@ -126,13 +127,13 @@ export function Sidebar() {
         <Link
           href="/settings"
           onClick={() => setMobileOpen(false)}
-          title={collapsed ? "Settings" : undefined}
+          title={isCollapsed ? "Settings" : undefined}
           className={`group/item flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
             pathname === "/settings"
-              ? collapsed
+              ? isCollapsed
                 ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
                 : "px-3 bg-white text-[#172554] shadow-sm"
-              : collapsed
+              : isCollapsed
                 ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
                 : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
           }`}
@@ -142,13 +143,13 @@ export function Sidebar() {
         </Link>
       </nav>
 
-      <div className={`${mobileOpen ? "block" : "hidden"} border-t border-white/10 p-4 md:block ${collapsed ? "md:p-3" : ""}`}>
+      <div className={`${mobileOpen ? "block" : "hidden"} border-t border-white/10 p-4 md:block ${isCollapsed ? "md:p-3" : ""}`}>
         <button
           type="button"
           onClick={logout}
           disabled={loggingOut}
-          title={collapsed ? "Log-out" : undefined}
-          className={`group/item flex w-full items-center gap-3 rounded-xl py-3 text-left text-sm font-medium text-blue-100 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 ${collapsed ? "md:mx-auto md:h-10 md:w-10 md:justify-center md:px-0" : "px-3"}`}
+          title={isCollapsed ? "Log-out" : undefined}
+          className={`group/item flex w-full items-center gap-3 rounded-xl py-3 text-left text-sm font-medium text-blue-100 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 ${isCollapsed ? "md:mx-auto md:h-10 md:w-10 md:justify-center md:px-0" : "px-3"}`}
         >
           <ArrowRightOnRectangleIcon className="h-5 w-5 shrink-0 text-blue-300" />
           <span className={collapsedText}>{loggingOut ? "Logging out..." : "Log-out"}</span>
