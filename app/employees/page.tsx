@@ -9,6 +9,23 @@ type Employee = {
   firstName: string;
   middleName: string | null;
   lastName: string;
+  dateOfBirth: string | null;
+  age: number | null;
+  maritalStatus: string | null;
+  gender: string | null;
+  address: string | null;
+  emergencyName: string | null;
+  emergencyNumber: string | null;
+  emergencyRelation: string | null;
+  emergencyAddress: string | null;
+  biometricNo: string | null;
+  dateStarted: string | null;
+  endDate: string | null;
+  sssNumber: string | null;
+  pagIbigNumber: string | null;
+  philHealth: string | null;
+  tinNumber: string | null;
+  remarks: string | null;
   status: string | null;
   email: string | null;
   mobileNumber: string | null;
@@ -16,13 +33,18 @@ type Employee = {
   photoUrl: string | null;
   assignedBy: string | null;
   assignedAt: string | null;
-  employer: { name: string; company: string | null } | null;
+  employer: { id: number; name: string; company: string | null } | null;
 };
+type Employer = { id: number; name: string; company: string | null };
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [employers, setEmployers] = useState<Employer[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetch("/api/employees")
@@ -32,6 +54,12 @@ export default function EmployeesPage() {
         setEmployees(data.employees);
       })
       .catch((error: Error) => setMessage(error.message));
+    fetch("/api/employers")
+      .then(async (response) => {
+        const data = await response.json();
+        if (response.ok) setEmployers(data.employers);
+      })
+      .catch(() => {});
   }, []);
 
   const filteredEmployees = useMemo(() => {
@@ -76,7 +104,7 @@ export default function EmployeesPage() {
             {filteredEmployees.map((employee) => {
               const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
               return (
-                <article key={employee.id} className="rounded-lg bg-white p-5 shadow">
+                <article key={employee.id} onClick={() => { setSelectedEmployee(employee); setEditing(false); }} className="cursor-pointer rounded-lg bg-white p-5 shadow transition hover:-translate-y-0.5 hover:shadow-md">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       {employee.photoUrl && <img src={employee.photoUrl} alt="" className="mb-3 h-12 w-12 rounded-full object-cover" />}
@@ -104,6 +132,85 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
+      {selectedEmployee && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setSelectedEmployee(null)}>
+          <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-gray-500">{selectedEmployee.employeeCode}</p>
+                <h2 className="mt-1 text-2xl font-bold text-gray-900">{[selectedEmployee.firstName, selectedEmployee.middleName, selectedEmployee.lastName].filter(Boolean).join(" ")}</h2>
+              </div>
+              <button type="button" onClick={() => setSelectedEmployee(null)} className="text-2xl text-gray-400 hover:text-gray-700" aria-label="Close">×</button>
+            </div>
+            {editing ? (
+              <EmployeeEditForm employee={selectedEmployee} employers={employers} saving={saving} onCancel={() => setEditing(false)} onSave={async (changes) => {
+                setSaving(true);
+                try {
+                  const response = await fetch(`/api/employees/${selectedEmployee.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
+                  const data = await response.json();
+                  if (!response.ok) throw new Error(data.error || "Unable to update employee");
+                  setEmployees((current) => current.map((item) => item.id === data.employee.id ? data.employee : item));
+                  setSelectedEmployee(data.employee);
+                  setEditing(false);
+                } catch (error) {
+                  setMessage(error instanceof Error ? error.message : "Unable to update employee");
+                } finally { setSaving(false); }
+              }} />
+            ) : (
+              <>
+                <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+                  <div><dt className="text-gray-500">Employer</dt><dd className="font-medium text-gray-900">{selectedEmployee.employer?.company || selectedEmployee.employer?.name || "Unassigned"}</dd></div>
+                  <div><dt className="text-gray-500">Status</dt><dd className="font-medium text-gray-900">{selectedEmployee.status || "Active"}</dd></div>
+                  <div><dt className="text-gray-500">Branch</dt><dd className="font-medium text-gray-900">{selectedEmployee.branch || "Not set"}</dd></div>
+                  <div><dt className="text-gray-500">Mobile</dt><dd className="font-medium text-gray-900">{selectedEmployee.mobileNumber || "Not set"}</dd></div>
+                  <div><dt className="text-gray-500">Email</dt><dd className="font-medium text-gray-900">{selectedEmployee.email || "Not set"}</dd></div>
+                  <div><dt className="text-gray-500">Assigned by</dt><dd className="font-medium text-gray-900">{selectedEmployee.assignedBy || "Not set"}</dd></div>
+                </dl>
+                <button type="button" onClick={() => setEditing(true)} className="mt-6 rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Edit employee</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
+}
+
+function EmployeeEditForm({ employee, employers, saving, onCancel, onSave }: { employee: Employee; employers: Employer[]; saving: boolean; onCancel: () => void; onSave: (changes: Record<string, string | number | null>) => Promise<void> }) {
+  const [form, setForm] = useState({
+    firstName: employee.firstName, middleName: employee.middleName || "", lastName: employee.lastName,
+    dateOfBirth: employee.dateOfBirth?.slice(0, 10) || "", age: employee.age?.toString() || "",
+    maritalStatus: employee.maritalStatus || "", gender: employee.gender || "",
+    mobileNumber: employee.mobileNumber || "", email: employee.email || "", address: employee.address || "",
+    emergencyName: employee.emergencyName || "", emergencyNumber: employee.emergencyNumber || "",
+    emergencyRelation: employee.emergencyRelation || "", emergencyAddress: employee.emergencyAddress || "",
+    biometricNo: employee.biometricNo || "", branch: employee.branch || "",
+    employerId: employee.employer?.id?.toString() || "", status: employee.status || "Trainee",
+    dateStarted: employee.dateStarted?.slice(0, 10) || "", endDate: employee.endDate?.slice(0, 10) || "",
+    sssNumber: employee.sssNumber || "", pagIbigNumber: employee.pagIbigNumber || "",
+    philHealth: employee.philHealth || "", tinNumber: employee.tinNumber || "", photoUrl: employee.photoUrl || "",
+    remarks: employee.remarks || "",
+  });
+  const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
+  const textFields = ["firstName", "middleName", "lastName", "mobileNumber", "email", "address", "emergencyName", "emergencyNumber", "emergencyAddress", "biometricNo", "branch", "photoUrl"] as const;
+  return <form className="mt-6 max-h-[70vh] overflow-y-auto pr-2" onSubmit={(event) => { event.preventDefault(); void onSave({ ...form, age: form.age ? Number(form.age) : null, employerId: form.employerId ? Number(form.employerId) : null }); }}>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field === "photoUrl" ? "Photo URL" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Date of Birth</span><input type="date" value={form.dateOfBirth} onChange={(event) => update("dateOfBirth", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Age</span><input type="number" min="0" max="130" value={form.age} onChange={(event) => update("age", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Marital Status</span><input value={form.maritalStatus} onChange={(event) => update("maritalStatus", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Gender</span><input value={form.gender} onChange={(event) => update("gender", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Relation</span><select value={form.emergencyRelation} onChange={(event) => update("emergencyRelation", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select relation</option><option>Family</option><option>Friend</option><option>Work / Colleague</option><option>Others</option></select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Employer</span><select value={form.employerId} onChange={(event) => update("employerId", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Unassigned</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.company || employer.name}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Status</span><select value={form.status} onChange={(event) => update("status", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900">{["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"].map((status) => <option key={status}>{status}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Date Started</span><input type="date" value={form.dateStarted} onChange={(event) => update("dateStarted", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      {["Contractual", "Resigned", "Terminated", "AWOL", "Leave"].includes(form.status) && <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Ended</span><input type="date" value={form.endDate} onChange={(event) => update("endDate", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>}
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>SSS</span><input value={form.sssNumber} onChange={(event) => update("sssNumber", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Pag-IBIG</span><input value={form.pagIbigNumber} onChange={(event) => update("pagIbigNumber", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>PhilHealth</span><input value={form.philHealth} onChange={(event) => update("philHealth", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>TIN</span><input value={form.tinNumber} onChange={(event) => update("tinNumber", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700 sm:col-span-2"><span>Remarks</span><textarea rows={3} value={form.remarks} onChange={(event) => update("remarks", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
+    </div>
+    <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={onCancel} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700">Cancel</button><button type="submit" disabled={saving} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{saving ? "Saving..." : "Save changes"}</button></div>
+  </form>;
 }
