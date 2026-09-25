@@ -175,7 +175,7 @@ export default function EmployeesPage() {
                 <article key={employee.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      {employee.photoUrl ? <img src={employee.photoUrl} alt="" className="mb-4 h-24 w-24 rounded-full object-cover" /> : <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">No photo</div>}
+                      {employee.photoUrl ? <img src={employee.photoUrl} alt="" className="mb-4 h-24 w-24 rounded-full border-2 border-gray-200 object-cover" /> : <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs text-gray-400">No photo</div>}
                       <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
                     </div>
                     <div className="relative shrink-0">
