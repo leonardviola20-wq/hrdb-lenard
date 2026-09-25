@@ -17,6 +17,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       branchStatus: text("branchStatus") || "Open", president: text("president"), longAddress: text("longAddress"),
       shortAddress: text("shortAddress"), logo: text("logo"), secDti: text("secDti"), tin: text("tin"),
       sss: text("sss"), hdmf: text("hdmf"), phic: text("phic"),
+      secDtiRegistrationDate: body.secDtiRegistrationDate ? new Date(String(body.secDtiRegistrationDate)) : null,
+      tinRegistrationDate: body.tinRegistrationDate ? new Date(String(body.tinRegistrationDate)) : null,
+      sssRegistrationDate: body.sssRegistrationDate ? new Date(String(body.sssRegistrationDate)) : null,
+      hdmfRegistrationDate: body.hdmfRegistrationDate ? new Date(String(body.hdmfRegistrationDate)) : null,
+      phicRegistrationDate: body.phicRegistrationDate ? new Date(String(body.phicRegistrationDate)) : null,
     }, include: { _count: { select: { employees: true } } } });
     return NextResponse.json({ employer });
   } catch (error) {

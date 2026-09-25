@@ -24,6 +24,11 @@ export async function POST(req: NextRequest) {
       email: text(body, "email"), contactNumber: text(body, "contactNumber"), branchStatus: text(body, "branchStatus") || "Open",
       president: text(body, "president"), longAddress: text(body, "longAddress"), shortAddress: text(body, "shortAddress"), logo: text(body, "logo"),
       secDti: text(body, "secDti"), tin: text(body, "tin"), sss: text(body, "sss"), hdmf: text(body, "hdmf"), phic: text(body, "phic"),
+      secDtiRegistrationDate: body.secDtiRegistrationDate ? new Date(String(body.secDtiRegistrationDate)) : null,
+      tinRegistrationDate: body.tinRegistrationDate ? new Date(String(body.tinRegistrationDate)) : null,
+      sssRegistrationDate: body.sssRegistrationDate ? new Date(String(body.sssRegistrationDate)) : null,
+      hdmfRegistrationDate: body.hdmfRegistrationDate ? new Date(String(body.hdmfRegistrationDate)) : null,
+      phicRegistrationDate: body.phicRegistrationDate ? new Date(String(body.phicRegistrationDate)) : null,
     }, include: { _count: { select: { employees: true } } } });
     return NextResponse.json({ employer }, { status: 201 });
   } catch (error) {
