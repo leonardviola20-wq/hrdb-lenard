@@ -37,6 +37,23 @@ type Employee = {
 };
 type Employer = { id: number; name: string; company: string | null };
 
+function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value: string) => void) {
+  if (!file.type.startsWith("image/")) {
+    onError("Please select an image file.");
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    onError("Photo must be 2 MB or smaller.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result === "string") onPhoto(reader.result);
+  };
+  reader.onerror = () => onError("Unable to read the selected photo.");
+  reader.readAsDataURL(file);
+}
+
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [query, setQuery] = useState("");
@@ -143,7 +160,7 @@ export default function EmployeesPage() {
               <button type="button" onClick={() => setSelectedEmployee(null)} className="text-2xl text-gray-400 hover:text-gray-700" aria-label="Close">×</button>
             </div>
             {editing ? (
-              <EmployeeEditForm employee={selectedEmployee} employers={employers} saving={saving} onCancel={() => setEditing(false)} onSave={async (changes) => {
+              <EmployeeEditForm employee={selectedEmployee} employers={employers} saving={saving} onCancel={() => setEditing(false)} onError={setMessage} onSave={async (changes) => {
                 setSaving(true);
                 try {
                   const response = await fetch(`/api/employees/${selectedEmployee.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
@@ -176,7 +193,7 @@ export default function EmployeesPage() {
   );
 }
 
-function EmployeeEditForm({ employee, employers, saving, onCancel, onSave }: { employee: Employee; employers: Employer[]; saving: boolean; onCancel: () => void; onSave: (changes: Record<string, string | number | null>) => Promise<void> }) {
+function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSave }: { employee: Employee; employers: Employer[]; saving: boolean; onCancel: () => void; onError: (value: string) => void; onSave: (changes: Record<string, string | number | null>) => Promise<void> }) {
   const [form, setForm] = useState({
     firstName: employee.firstName, middleName: employee.middleName || "", lastName: employee.lastName,
     dateOfBirth: employee.dateOfBirth?.slice(0, 10) || "", age: employee.age?.toString() || "",
@@ -192,10 +209,20 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onSave }: { e
     remarks: employee.remarks || "",
   });
   const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
-  const textFields = ["firstName", "middleName", "lastName", "mobileNumber", "email", "address", "emergencyName", "emergencyNumber", "emergencyAddress", "biometricNo", "branch", "photoUrl"] as const;
+  const textFields = ["firstName", "middleName", "lastName", "mobileNumber", "email", "address", "emergencyName", "emergencyNumber", "emergencyAddress", "biometricNo", "branch"] as const;
   return <form className="mt-6 max-h-[70vh] overflow-y-auto pr-2" onSubmit={(event) => { event.preventDefault(); void onSave({ ...form, age: form.age ? Number(form.age) : null, employerId: form.employerId ? Number(form.employerId) : null }); }}>
     <div className="grid gap-4 sm:grid-cols-2">
-      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field === "photoUrl" ? "Photo URL" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
+      {textFields.map((field) => <label key={field} className="grid gap-1 text-sm font-medium text-gray-700"><span>{field === "mobileNumber" ? "Mobile Number" : field.replace(/([A-Z])/g, " $1")}</span><input value={form[field]} onChange={(event) => update(field, event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>)}
+      <div className="grid gap-2 text-sm font-medium text-gray-700 sm:col-span-2">
+        <span>Photo</span>
+        <div className="flex items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3">
+          {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-16 w-16 rounded-full object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">No photo</div>}
+          <div className="grid gap-2">
+            <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), onError); }} className="text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700" />
+            <button type="button" onClick={() => update("photoUrl", "")} className="text-left text-xs text-gray-500 hover:text-gray-900">Remove photo</button>
+          </div>
+        </div>
+      </div>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Date of Birth</span><input type="date" value={form.dateOfBirth} onChange={(event) => update("dateOfBirth", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Age</span><input type="number" min="0" max="130" value={form.age} onChange={(event) => update("age", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Marital Status</span><input value={form.maritalStatus} onChange={(event) => update("maritalStatus", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
