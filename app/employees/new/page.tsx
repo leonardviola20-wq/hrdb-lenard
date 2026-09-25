@@ -63,6 +63,23 @@ function formatMobile(value: string) {
   return [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 11)].filter(Boolean).join(" ");
 }
 
+function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value: string) => void) {
+  if (!file.type.startsWith("image/")) {
+    onError("Please select an image file.");
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    onError("Photo must be 2 MB or smaller.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result === "string") onPhoto(reader.result);
+  };
+  reader.onerror = () => onError("Unable to read the selected photo.");
+  reader.readAsDataURL(file);
+}
+
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return <label className="grid gap-1.5 text-sm font-medium text-gray-700"><span>{label}{required && <span className="text-red-600"> *</span>}</span>{children}</label>;
 }
@@ -138,7 +155,15 @@ export default function NewEmployeePage() {
           <Section title="Contact Information">
             <Field label="Mobile Number"><input inputMode="numeric" value={form.mobileNumber} onChange={(e) => update("mobileNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
             <Field label="Email Address"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={inputClass} /></Field>
-            <Field label="Photo URL"><input type="url" value={form.photoUrl} onChange={(e) => update("photoUrl", e.target.value)} placeholder="https://..." className={inputClass} /></Field>
+            <Field label="Photo">
+              <div className="flex items-center gap-4 rounded-lg border border-dashed border-gray-300 p-3">
+                {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-16 w-16 rounded-full object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">No photo</div>}
+                <div className="grid gap-2">
+                  <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), setMessage); }} className="text-sm text-gray-700 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-gray-700" />
+                  <p className="text-xs text-gray-500">JPG, PNG, or GIF up to 2 MB.</p>
+                </div>
+              </div>
+            </Field>
             <Field label="Address"><textarea rows={3} value={form.address} onChange={(e) => update("address", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
           </Section>
           <Section title="Emergency Information">
