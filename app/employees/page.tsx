@@ -110,7 +110,6 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [employerFilter, setEmployerFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
-  const [positionFilter, setPositionFilter] = useState("");
   const [message, setMessage] = useState("");
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -144,27 +143,20 @@ export default function EmployeesPage() {
       return (!search || fullName.includes(search) || employee.employeeCode.toLowerCase().includes(search) || employer.includes(search))
         && (!statusFilter || employee.status === statusFilter)
         && (!employerFilter || employee.employer?.id.toString() === employerFilter)
-        && (!branchFilter || employee.branch === branchFilter)
-        && (!positionFilter || employee.position === positionFilter);
+        && (!branchFilter || employee.branch === branchFilter);
     });
-  }, [employees, query, statusFilter, employerFilter, branchFilter, positionFilter]);
+  }, [employees, query, statusFilter, employerFilter, branchFilter]);
 
   const employeeBranches = useMemo(
     () => [...new Set(employees.map((employee) => employee.branch).filter((value): value is string => Boolean(value)))].sort(),
     [employees]
   );
-  const employeePositions = useMemo(
-    () => [...new Set(employees.map((employee) => employee.position).filter((value): value is string => Boolean(value)))].sort(),
-    [employees]
-  );
-  const hasFilters = Boolean(query || statusFilter || employerFilter || branchFilter || positionFilter);
-  const activeFilterCount = [statusFilter, employerFilter, branchFilter, positionFilter].filter(Boolean).length;
+  const hasFilters = Boolean(query || statusFilter || employerFilter || branchFilter);
   const clearFilters = () => {
     setQuery("");
     setStatusFilter("");
     setEmployerFilter("");
     setBranchFilter("");
-    setPositionFilter("");
   };
 
   return (
@@ -183,26 +175,23 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-          <label className="grid gap-1.5 text-sm">
-            <span className="font-semibold text-gray-800">Search employees</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, employee code, or employer..."
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-        </div>
         <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-gray-900">Filter employees</h2>
-              {activeFilterCount > 0 && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{activeFilterCount} active</span>}
+              <h2 className="text-sm font-semibold text-gray-900">Search and filter employees</h2>
             </div>
             <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-2">
+              <span className="font-semibold text-gray-800">Search</span>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Name, code, or employer"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Status</span>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
@@ -222,13 +211,6 @@ export default function EmployeesPage() {
               <select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 <option value="">All branches</option>
                 {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold text-gray-800">Position</span>
-              <select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="">All positions</option>
-                {employeePositions.map((position) => <option key={position} value={position}>{position}</option>)}
               </select>
             </label>
           </div>
