@@ -51,7 +51,7 @@ export default function ContactsPage() {
         <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">Back to dashboard</Link>
         <div className="mb-6 mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Office contacts</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
             <p className="mt-2 text-gray-600">Suppliers, contractors, and office service providers.</p>
           </div>
           <Link href="/admin/contacts" className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">Manage contacts</Link>
@@ -64,7 +64,7 @@ export default function ContactsPage() {
             {categories.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
         </section>
-        {filteredContacts.length === 0 ? <p className="rounded-lg bg-white p-6 text-gray-600 shadow">No office contacts found.</p> : (
+        {filteredContacts.length === 0 ? <p className="rounded-lg bg-white p-6 text-gray-600 shadow">No contacts found.</p> : (
           <div className="grid gap-4 md:grid-cols-2">
             {filteredContacts.map((contact) => (
               <article key={contact.id} className="rounded-lg bg-white p-5 shadow">

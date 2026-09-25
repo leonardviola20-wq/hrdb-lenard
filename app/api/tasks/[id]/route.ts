@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     dueDate?: Date | null;
   } = {};
   if (body.status !== undefined) {
-    if (body.status !== "PENDING" && body.status !== "COMPLETED") {
+    if (!["PENDING", "IN_PROGRESS", "COMPLETED"].includes(body.status)) {
       return NextResponse.json({ error: "Invalid task status" }, { status: 400 });
     }
     data.status = body.status;
