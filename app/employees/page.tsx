@@ -13,6 +13,9 @@ type Employee = {
   email: string | null;
   mobileNumber: string | null;
   branch: string | null;
+  photoUrl: string | null;
+  assignedBy: string | null;
+  assignedAt: string | null;
   employer: { name: string; company: string | null } | null;
 };
 
@@ -76,6 +79,7 @@ export default function EmployeesPage() {
                 <article key={employee.id} className="rounded-lg bg-white p-5 shadow">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
+                      {employee.photoUrl && <img src={employee.photoUrl} alt="" className="mb-3 h-12 w-12 rounded-full object-cover" />}
                       <h2 className="truncate text-lg font-semibold text-gray-900">{fullName}</h2>
                       <p className="mt-1 text-sm text-gray-500">{employee.employeeCode}</p>
                     </div>
@@ -91,6 +95,8 @@ export default function EmployeesPage() {
                     {employee.branch && <div className="flex justify-between gap-3"><dt className="text-gray-500">Branch</dt><dd className="text-right text-gray-900">{employee.branch}</dd></div>}
                     {employee.email && <div className="flex justify-between gap-3"><dt className="text-gray-500">Email</dt><dd className="truncate text-right text-gray-900">{employee.email}</dd></div>}
                     {employee.mobileNumber && <div className="flex justify-between gap-3"><dt className="text-gray-500">Mobile</dt><dd className="text-right text-gray-900">{employee.mobileNumber}</dd></div>}
+                    {employee.assignedBy && <div className="flex justify-between gap-3"><dt className="text-gray-500">Assigned by</dt><dd className="text-right text-gray-900">{employee.assignedBy}</dd></div>}
+                    {employee.assignedAt && <div className="flex justify-between gap-3"><dt className="text-gray-500">Assigned at</dt><dd className="text-right text-gray-900">{new Date(employee.assignedAt).toLocaleDateString()}</dd></div>}
                   </dl>
                 </article>
               );

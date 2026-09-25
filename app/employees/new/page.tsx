@@ -7,7 +7,6 @@ import { FormEvent, useEffect, useState } from "react";
 type Employer = { id: number; name: string; company: string | null };
 
 type EmployeeForm = {
-  employeeCode: string;
   firstName: string;
   middleName: string;
   lastName: string;
@@ -16,6 +15,7 @@ type EmployeeForm = {
   maritalStatus: string;
   gender: string;
   mobileNumber: string;
+  photoUrl: string;
   email: string;
   address: string;
   emergencyName: string;
@@ -23,6 +23,7 @@ type EmployeeForm = {
   emergencyRelation: string;
   emergencyAddress: string;
   biometricNo: string;
+  branch: string;
   employerId: string;
   status: string;
   dateStarted: string;
@@ -35,15 +36,32 @@ type EmployeeForm = {
 };
 
 const emptyForm: EmployeeForm = {
-  employeeCode: "", firstName: "", middleName: "", lastName: "", dateOfBirth: "",
+  firstName: "", middleName: "", lastName: "", dateOfBirth: "",
   age: "", maritalStatus: "", gender: "", mobileNumber: "", email: "", address: "",
+  photoUrl: "",
   emergencyName: "", emergencyNumber: "", emergencyRelation: "", emergencyAddress: "",
-  biometricNo: "", employerId: "", status: "Trainee", dateStarted: "", endDate: "",
+  biometricNo: "", branch: "", employerId: "", status: "Trainee", dateStarted: "", endDate: "",
   sssNumber: "", pagIbigNumber: "", philHealth: "", tinNumber: "", remarks: "",
 };
 
 const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
+const endedStatuses = new Set(["Contractual", "Resigned", "Terminated", "AWOL", "Leave"]);
 const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
+
+function formatDigits(value: string, groups: number[]) {
+  const digits = value.replace(/\D/g, "").slice(0, groups.reduce((sum, size) => sum + size, 0));
+  let offset = 0;
+  return groups.map((size) => {
+    const part = digits.slice(offset, offset + size);
+    offset += size;
+    return part;
+  }).filter(Boolean).join("-");
+}
+
+function formatMobile(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  return [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 11)].filter(Boolean).join(" ");
+}
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return <label className="grid gap-1.5 text-sm font-medium text-gray-700"><span>{label}{required && <span className="text-red-600"> *</span>}</span>{children}</label>;
@@ -69,6 +87,17 @@ export default function NewEmployeePage() {
   }, []);
 
   const update = (field: keyof EmployeeForm, value: string) => setForm((current) => ({ ...current, [field]: value }));
+  const updateDateOfBirth = (value: string) => {
+    if (!value) {
+      setForm((current) => ({ ...current, dateOfBirth: "", age: "" }));
+      return;
+    }
+    const birthDate = new Date(`${value}T00:00:00`);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    if (today < new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate())) age -= 1;
+    setForm((current) => ({ ...current, dateOfBirth: value, age: String(Math.max(0, age)) }));
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -97,41 +126,40 @@ export default function NewEmployeePage() {
         {message && <p className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{message}</p>}
         <form onSubmit={submit} className="grid gap-5">
           <Section title="Personal Information">
-            <Field label="Employee Code" required><input required value={form.employeeCode} onChange={(e) => update("employeeCode", e.target.value)} className={inputClass} /></Field>
-            <div />
             <Field label="First Name" required><input required value={form.firstName} onChange={(e) => update("firstName", e.target.value)} className={inputClass} /></Field>
             <Field label="Middle Name"><input value={form.middleName} onChange={(e) => update("middleName", e.target.value)} className={inputClass} /></Field>
             <Field label="Last Name" required><input required value={form.lastName} onChange={(e) => update("lastName", e.target.value)} className={inputClass} /></Field>
             <div />
-            <Field label="Date of Birth"><input type="date" value={form.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} className={inputClass} /></Field>
-            <Field label="Age"><input type="number" min="0" max="130" value={form.age} onChange={(e) => update("age", e.target.value)} className={inputClass} /></Field>
+            <Field label="Date of Birth"><input type="date" value={form.dateOfBirth} onChange={(e) => updateDateOfBirth(e.target.value)} className={inputClass} /></Field>
+            <Field label="Age"><input readOnly tabIndex={-1} value={form.age} placeholder="Calculated automatically" className={`${inputClass} cursor-not-allowed bg-gray-100`} /></Field>
             <Field label="Marital Status"><select value={form.maritalStatus} onChange={(e) => update("maritalStatus", e.target.value)} className={inputClass}><option value="">Select status</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></Field>
             <Field label="Gender"><select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={inputClass}><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option></select></Field>
           </Section>
           <Section title="Contact Information">
-            <Field label="Mobile Number"><input value={form.mobileNumber} onChange={(e) => update("mobileNumber", e.target.value)} className={inputClass} /></Field>
+            <Field label="Mobile Number"><input inputMode="numeric" value={form.mobileNumber} onChange={(e) => update("mobileNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
             <Field label="Email Address"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={inputClass} /></Field>
+            <Field label="Photo URL"><input type="url" value={form.photoUrl} onChange={(e) => update("photoUrl", e.target.value)} placeholder="https://..." className={inputClass} /></Field>
             <Field label="Address"><textarea rows={3} value={form.address} onChange={(e) => update("address", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
           </Section>
           <Section title="Emergency Information">
             <Field label="Contact Person"><input value={form.emergencyName} onChange={(e) => update("emergencyName", e.target.value)} className={inputClass} /></Field>
             <Field label="Contact Number"><input value={form.emergencyNumber} onChange={(e) => update("emergencyNumber", e.target.value)} className={inputClass} /></Field>
-            <Field label="Relation"><input value={form.emergencyRelation} onChange={(e) => update("emergencyRelation", e.target.value)} className={inputClass} /></Field>
+            <Field label="Relation"><select value={form.emergencyRelation} onChange={(e) => update("emergencyRelation", e.target.value)} className={inputClass}><option value="">Select relation</option><option>Family</option><option>Friend</option><option>Work / Colleague</option><option>Others</option></select></Field>
             <Field label="Address"><textarea rows={3} value={form.emergencyAddress} onChange={(e) => update("emergencyAddress", e.target.value)} className={inputClass} /></Field>
           </Section>
           <Section title="Job Information">
             <Field label="Biometric ID"><input value={form.biometricNo} onChange={(e) => update("biometricNo", e.target.value)} className={inputClass} /></Field>
             <Field label="Employer"><select value={form.employerId} onChange={(e) => update("employerId", e.target.value)} className={inputClass}><option value="">Select employer</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.company || employer.name}</option>)}</select></Field>
-            <Field label="Status"><select value={form.status} onChange={(e) => update("status", e.target.value)} className={inputClass}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></Field>
-            <div />
+            <Field label="Status"><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value, endDate: endedStatuses.has(e.target.value) ? current.endDate : "" }))} className={inputClass}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></Field>
+            <Field label="Branch"><input value={form.branch} onChange={(e) => update("branch", e.target.value)} className={inputClass} /></Field>
             <Field label="Date Started"><input type="date" value={form.dateStarted} onChange={(e) => update("dateStarted", e.target.value)} className={inputClass} /></Field>
-            <Field label="Ended"><input type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} className={inputClass} /></Field>
+            {endedStatuses.has(form.status) && <Field label="Ended"><input type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} className={inputClass} /></Field>}
           </Section>
           <Section title="Government Information">
-            <Field label="SSS"><input value={form.sssNumber} onChange={(e) => update("sssNumber", e.target.value)} className={inputClass} /></Field>
-            <Field label="Pag-IBIG"><input value={form.pagIbigNumber} onChange={(e) => update("pagIbigNumber", e.target.value)} className={inputClass} /></Field>
-            <Field label="PhilHealth"><input value={form.philHealth} onChange={(e) => update("philHealth", e.target.value)} className={inputClass} /></Field>
-            <Field label="TIN"><input value={form.tinNumber} onChange={(e) => update("tinNumber", e.target.value)} className={inputClass} /></Field>
+            <Field label="SSS"><input inputMode="numeric" value={form.sssNumber} onChange={(e) => update("sssNumber", formatDigits(e.target.value, [2, 7, 1]))} placeholder="00-0000000-0" className={inputClass} /></Field>
+            <Field label="Pag-IBIG"><input inputMode="numeric" value={form.pagIbigNumber} onChange={(e) => update("pagIbigNumber", formatDigits(e.target.value, [4, 4, 4]))} placeholder="0000-0000-0000" className={inputClass} /></Field>
+            <Field label="PhilHealth"><input inputMode="numeric" value={form.philHealth} onChange={(e) => update("philHealth", formatDigits(e.target.value, [2, 9, 1]))} placeholder="00-000000000-0" className={inputClass} /></Field>
+            <Field label="TIN"><input inputMode="numeric" value={form.tinNumber} onChange={(e) => update("tinNumber", formatDigits(e.target.value, [3, 3, 3, 5]))} placeholder="000-000-000-00000" className={inputClass} /></Field>
           </Section>
           <Section title="Remarks">
             <Field label="Additional notes"><textarea rows={5} value={form.remarks} onChange={(e) => update("remarks", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>

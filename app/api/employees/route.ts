@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
       email: true,
       mobileNumber: true,
       branch: true,
+      photoUrl: true,
+      assignedBy: true,
+      assignedAt: true,
       employer: { select: { name: true, company: true } },
     },
   });
@@ -41,10 +44,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const requiredFields = ["employeeCode", "firstName", "lastName"];
+  const requiredFields = ["firstName", "lastName"];
   if (requiredFields.some((field) => typeof body[field] !== "string" || !body[field].trim())) {
     return NextResponse.json(
-      { error: "Employee code, first name, and last name are required" },
+      { error: "First name and last name are required" },
       { status: 400 }
     );
   }
@@ -60,7 +63,9 @@ export async function POST(req: NextRequest) {
 
   const dateOfBirth = optionalDate("dateOfBirth");
   const dateStarted = optionalDate("dateStarted");
-  const endDate = optionalDate("endDate");
+  const status = optionalString("status");
+  const endedStatuses = new Set(["Contractual", "Resigned", "Terminated", "AWOL", "Leave"]);
+  const endDate = endedStatuses.has(status || "") ? optionalDate("endDate") : null;
   if (dateOfBirth === undefined || dateStarted === undefined || endDate === undefined) {
     return NextResponse.json({ error: "Enter valid dates" }, { status: 400 });
   }
@@ -78,9 +83,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const employee = await prisma.employee.create({
+    const employee = await prisma.$transaction(async (tx) => {
+      const created = await tx.employee.create({
       data: {
-        employeeCode: body.employeeCode.trim(),
+        employeeCode: `PENDING-${crypto.randomUUID()}`,
         firstName: body.firstName.trim(),
         middleName: optionalString("middleName"),
         lastName: body.lastName.trim(),
@@ -97,7 +103,7 @@ export async function POST(req: NextRequest) {
         emergencyAddress: optionalString("emergencyAddress"),
         biometricNo: optionalString("biometricNo"),
         employerId,
-        status: optionalString("status"),
+        status,
         dateStarted,
         endDate,
         sssNumber: optionalString("sssNumber"),
@@ -105,8 +111,17 @@ export async function POST(req: NextRequest) {
         philHealth: optionalString("philHealth"),
         tinNumber: optionalString("tinNumber"),
         remarks: optionalString("remarks"),
+        photoUrl: optionalString("photoUrl"),
+        branch: optionalString("branch"),
+        assignedBy: String(session.id ?? session.email ?? "ADMIN"),
+        assignedAt: new Date(),
       },
-      include: { employer: { select: { name: true, company: true } } },
+      });
+      return tx.employee.update({
+        where: { id: created.id },
+        data: { employeeCode: `EMP-${String(created.id).padStart(5, "0")}` },
+        include: { employer: { select: { name: true, company: true } } },
+      });
     });
     return NextResponse.json({ employee }, { status: 201 });
   } catch (error) {
