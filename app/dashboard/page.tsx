@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 type Task = {
@@ -29,6 +29,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<TaskFilter | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const taskPanelRef = useRef<HTMLElement | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingForm, setEditingForm] = useState<TaskForm | null>(null);
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
@@ -39,6 +40,18 @@ export default function DashboardPage() {
     overdue: 0,
   });
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!selectedFilter) return;
+    const closeTaskList = (event: MouseEvent) => {
+      if (taskPanelRef.current && !taskPanelRef.current.contains(event.target as Node)) {
+        setSelectedFilter(null);
+        setSelectedTask(null);
+      }
+    };
+    document.addEventListener("mousedown", closeTaskList);
+    return () => document.removeEventListener("mousedown", closeTaskList);
+  }, [selectedFilter]);
 
   useEffect(() => {
     fetch("/api/tasks")
@@ -213,7 +226,7 @@ export default function DashboardPage() {
         {error && <p className="mb-4 text-red-600">{error}</p>}
 
         <div className="grid items-start gap-6 lg:grid-cols-2">
-          <section className="rounded-lg bg-white p-5 shadow">
+          <section ref={taskPanelRef} className="rounded-lg bg-white p-5 shadow">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
               <Link
