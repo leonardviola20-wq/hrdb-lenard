@@ -88,6 +88,18 @@ function calculateAge(dateOfBirth: string | null) {
   return Math.max(0, age);
 }
 
+function displayDate(value: string | null) {
+  return value ? new Date(value).toLocaleDateString() : "Not set";
+}
+
+function ViewSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return <section className="rounded-lg border border-gray-200 bg-gray-50 p-4"><h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-semibold text-gray-900">{title}</h3><dl className="grid gap-3 text-sm sm:grid-cols-2">{children}</dl></section>;
+}
+
+function ViewField({ label, value }: { label: string; value: React.ReactNode }) {
+  return <div className="min-w-0"><dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</dt><dd className="mt-1 break-words font-medium text-gray-900">{value || "Not set"}</dd></div>;
+}
+
 const branches = ["Arya 1", "Arya 2", "Yasuo", "Shangri-la", "Greenhills", "Magnolia", "MyDay", "Warehouse", "Office", "Vape", "Commissary", "Others"];
 const positions = ["President", "Corporate Secretary", "Treasurer", "Accountant", "Purchaser", "IT", "Admin", "Admin Staff", "Office Staff", "Store In-charge", "Commissary Staff", "Driver", "Sales Staff", "Dining Staff", "Cashier", "Kitchen Staff", "Dispatcher", "Receptionist", "Warehouse Staff"];
 const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
@@ -198,7 +210,7 @@ export default function EmployeesPage() {
       </div>
       {selectedEmployee && (
         <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setSelectedEmployee(null)}>
-          <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
+          <div className="w-full max-w-3xl rounded-xl bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-gray-500">{selectedEmployee.employeeCode}</p>
@@ -222,16 +234,50 @@ export default function EmployeesPage() {
               }} />
             ) : (
               <>
-                <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-                  <div><dt className="text-gray-500">Employer</dt><dd className="font-medium text-gray-900">{selectedEmployee.employer?.company || selectedEmployee.employer?.name || "Unassigned"}</dd></div>
-                  <div><dt className="text-gray-500">Status</dt><dd className="font-medium text-gray-900">{selectedEmployee.status || "Active"}</dd></div>
-                  <div><dt className="text-gray-500">Branch</dt><dd className="font-medium text-gray-900">{selectedEmployee.branch || "Not set"}</dd></div>
-                  <div><dt className="text-gray-500">Mobile</dt><dd className="font-medium text-gray-900">{displayMobile(selectedEmployee.mobileNumber)}</dd></div>
-                  <div><dt className="text-gray-500">Email</dt><dd className="font-medium text-gray-900">{selectedEmployee.email || "Not set"}</dd></div>
-                  <div><dt className="text-gray-500">Age</dt><dd className="font-medium text-gray-900">{calculateAge(selectedEmployee.dateOfBirth) ?? selectedEmployee.age ?? "Not set"}</dd></div>
-                  <div><dt className="text-gray-500">Assigned by</dt><dd className="font-medium text-gray-900">{selectedEmployee.assignedBy || "Not set"}</dd></div>
-                </dl>
-                <button type="button" onClick={() => setEditing(true)} className="mt-6 rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Edit employee</button>
+                <div className="mt-6 max-h-[70vh] space-y-4 overflow-y-auto pr-2">
+                  <ViewSection title="Personal Information">
+                    <div className="sm:col-span-2">{selectedEmployee.photoUrl ? <img src={selectedEmployee.photoUrl} alt="Employee" className="h-28 w-28 rounded-full object-cover" /> : <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-xs text-gray-500">No photo</div>}</div>
+                    <ViewField label="First Name" value={selectedEmployee.firstName} />
+                    <ViewField label="Middle Name" value={selectedEmployee.middleName} />
+                    <ViewField label="Last Name" value={selectedEmployee.lastName} />
+                    <ViewField label="Date of Birth" value={displayDate(selectedEmployee.dateOfBirth)} />
+                    <ViewField label="Age" value={calculateAge(selectedEmployee.dateOfBirth) ?? selectedEmployee.age} />
+                    <ViewField label="Marital Status" value={selectedEmployee.maritalStatus} />
+                    <ViewField label="Gender" value={selectedEmployee.gender} />
+                  </ViewSection>
+                  <ViewSection title="Contact Information">
+                    <ViewField label="Mobile Number" value={displayMobile(selectedEmployee.mobileNumber)} />
+                    <ViewField label="Email" value={selectedEmployee.email} />
+                    <div className="sm:col-span-2"><ViewField label="Address" value={selectedEmployee.address} /></div>
+                  </ViewSection>
+                  <ViewSection title="Emergency Information">
+                    <ViewField label="Contact Person" value={selectedEmployee.emergencyName} />
+                    <ViewField label="Contact Number" value={displayMobile(selectedEmployee.emergencyNumber)} />
+                    <ViewField label="Relation" value={selectedEmployee.emergencyRelation} />
+                    <div className="sm:col-span-2"><ViewField label="Address" value={selectedEmployee.emergencyAddress} /></div>
+                  </ViewSection>
+                  <ViewSection title="Job Information">
+                    <ViewField label="Biometric ID" value={selectedEmployee.biometricNo} />
+                    <ViewField label="Employer" value={selectedEmployee.employer?.company || selectedEmployee.employer?.name} />
+                    <ViewField label="Status" value={selectedEmployee.status} />
+                    <ViewField label="Branch" value={selectedEmployee.branch} />
+                    <ViewField label="Position" value={selectedEmployee.position} />
+                    <ViewField label="Date Started" value={displayDate(selectedEmployee.dateStarted)} />
+                    <ViewField label="Ended" value={displayDate(selectedEmployee.endDate)} />
+                  </ViewSection>
+                  <ViewSection title="Government Information">
+                    <ViewField label="SSS" value={selectedEmployee.sssNumber} />
+                    <ViewField label="Pag-IBIG" value={selectedEmployee.pagIbigNumber} />
+                    <ViewField label="PhilHealth" value={selectedEmployee.philHealth} />
+                    <ViewField label="TIN" value={selectedEmployee.tinNumber} />
+                  </ViewSection>
+                  <ViewSection title="Assignment and Remarks">
+                    <ViewField label="Assigned By" value={selectedEmployee.assignedBy} />
+                    <ViewField label="Assigned At" value={displayDate(selectedEmployee.assignedAt)} />
+                    <div className="sm:col-span-2"><ViewField label="Remarks" value={selectedEmployee.remarks} /></div>
+                  </ViewSection>
+                </div>
+                <div className="mt-6 flex justify-end"><button type="button" onClick={() => setEditing(true)} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Update employee</button></div>
               </>
             )}
           </div>

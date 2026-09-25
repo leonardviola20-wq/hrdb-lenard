@@ -21,6 +21,7 @@ type CurrentUser = {
   username: string | null;
   email: string;
   role: string;
+  canAccessEmployees: boolean;
 };
 
 const navigation = [
@@ -96,7 +97,7 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
           Workspace
         </p>
         <div className="space-y-2">
-          {navigation.filter((item) => isAdmin || ["/dashboard", "/tasks"].includes(item.href)).map(({ label, href, icon: Icon }) => {
+          {navigation.filter((item) => isAdmin || ["/dashboard", "/tasks"].includes(item.href) || (item.href === "/employees" && user?.canAccessEmployees)).map(({ label, href, icon: Icon }) => {
             const active =
               pathname === href || (href === "/tasks" && pathname.startsWith("/tasks/"));
             return (

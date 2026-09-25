@@ -25,6 +25,7 @@ export async function POST(req: Request) {
         email: true,
         password: true,
         role: true,
+        canAccessEmployees: true,
         emailVerified: true,
       }
     });
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
     }
 
     // Create JWT payload
-    const payload = { id: user.id, email: user.email, role: user.role };
+    const payload = { id: user.id, email: user.email, role: user.role, canAccessEmployees: user.canAccessEmployees };
 
     // Sign JWT
     const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });

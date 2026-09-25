@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       name: true,
       email: true,
       role: true,
+      canAccessEmployees: true,
       emailVerified: true,
       createdAt: true,
       _count: { select: { tasks: true } },

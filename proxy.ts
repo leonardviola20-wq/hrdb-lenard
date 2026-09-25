@@ -24,6 +24,7 @@ export function proxy(req: NextRequest) {
       const isAllowedUserRoute =
         pathname === "/dashboard" ||
         pathname.startsWith("/tasks") ||
+        pathname.startsWith("/employees") ||
         pathname === "/settings";
 
       if (!isAdmin && !isAllowedUserRoute) {
