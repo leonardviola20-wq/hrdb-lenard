@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-
-type User = {
-  username: string | null;
-  name: string | null;
-  email: string;
-  role: string;
-};
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 type Task = {
   id: number;
@@ -32,7 +26,6 @@ type TaskForm = {
 };
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<TaskFilter | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -48,14 +41,6 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/me")
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Unable to load dashboard");
-        setUser(data.user);
-      })
-      .catch((err: Error) => setError(err.message));
-
     fetch("/api/tasks")
       .then(async (res) => {
         const data = await res.json();
@@ -78,7 +63,6 @@ export default function DashboardPage() {
       .catch((err: Error) => setError(err.message));
   }, []);
 
-  const displayName = user?.name || user?.username || user?.email || "there";
   const selectedTasks = tasks.filter((task) => {
     if (selectedFilter === "OVERDUE") {
       return (
@@ -225,97 +209,78 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8 flex items-start justify-between">
-          <div>
-            <p className="text-sm font-medium text-blue-600">HRDB-Lenard</p>
-            <h1 className="mt-1 text-3xl font-bold text-gray-900">
-              Welcome, {displayName}
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Your personal workspace and task overview.
-            </p>
-          </div>
-          <Link
-            href="/tasks#add-task"
-            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
-          >
-            Add task
-          </Link>
-          <Link
-            href="/contacts"
-            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
-          >
-            Office contacts
-          </Link>
-        </header>
-
+      <div className="max-w-6xl">
         {error && <p className="mb-4 text-red-600">{error}</p>}
 
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg bg-white p-5 shadow">
-            <p className="text-sm text-gray-500">Account</p>
-            <p className="mt-2 text-lg font-semibold text-gray-900">
-              {user?.username || "Loading..."}
-            </p>
-            <p className="mt-1 truncate text-sm text-gray-600">
-              {user?.email || ""}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSelectedFilter("PENDING")}
-            className={taskCardClass("PENDING")}
-          >
-            <p className="text-sm text-gray-600">Pending tasks</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {taskSummary.pending}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedFilter("COMPLETED")}
-            className={taskCardClass("COMPLETED")}
-          >
-            <p className="text-sm text-gray-600">Completed tasks</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {taskSummary.completed}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedFilter("OVERDUE")}
-            className={taskCardClass("OVERDUE")}
-          >
-            <p className="text-sm text-gray-600">Overdue tasks</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {taskSummary.overdue}
-            </p>
-          </button>
-        </section>
-
-        <section className="mt-6 rounded-lg bg-white p-5 shadow">
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Completion progress</span>
-            <span>
-              {taskSummary.total
-                ? Math.round((taskSummary.completed / taskSummary.total) * 100)
-                : 0}%
-            </span>
-          </div>
-          <div className="mt-2 h-3 overflow-hidden rounded-full bg-gray-200">
-            <div
-              className="h-full rounded-full bg-green-500 transition-all"
-              style={{
-                width: `${
-                  taskSummary.total
-                    ? (taskSummary.completed / taskSummary.total) * 100
-                    : 0
-                }%`,
-              }}
-            />
-          </div>
-        </section>
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <section className="rounded-lg bg-white p-5 shadow">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
+              <Link
+                href="/tasks?create=1"
+                aria-label="Add a new task"
+                title="Add a new task"
+                className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                <PlusIcon className="h-5 w-5" />
+              </Link>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => setSelectedFilter("PENDING")}
+              className={taskCardClass("PENDING")}
+            >
+              <p className="text-sm text-gray-600">Pending tasks</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {taskSummary.pending}
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFilter("COMPLETED")}
+              className={taskCardClass("COMPLETED")}
+            >
+              <p className="text-sm text-gray-600">Completed tasks</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {taskSummary.completed}
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFilter("OVERDUE")}
+              className={taskCardClass("OVERDUE")}
+            >
+              <p className="text-sm text-gray-600">Overdue tasks</p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {taskSummary.overdue}
+              </p>
+            </button>
+            </div>
+            <div className="mt-5">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Completion progress</span>
+                <span>
+                  {taskSummary.total
+                    ? Math.round((taskSummary.completed / taskSummary.total) * 100)
+                    : 0}%
+                </span>
+              </div>
+              <div className="mt-2 h-3 overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-green-500 transition-all"
+                  style={{
+                    width: `${
+                      taskSummary.total
+                        ? (taskSummary.completed / taskSummary.total) * 100
+                        : 0
+                    }%`,
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
 
         {selectedFilter && (
           <section className="mt-8 rounded-lg bg-white p-6 shadow">
@@ -509,13 +474,6 @@ export default function DashboardPage() {
           </section>
         )}
 
-        <section className="mt-8 rounded-lg bg-white p-6 shadow">
-          <h2 className="text-xl font-semibold text-gray-900">Your account</h2>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm text-gray-500">Email</dt>
-              <dd className="mt-1 text-gray-900">{user?.email || "Loading..."}</dd>
-            </div>
             {editingTask && editingForm && (
               <div className="fixed inset-0 z-10 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
                 <form onSubmit={saveEdit} className="grid w-full max-w-lg gap-3 rounded-lg bg-white p-6 shadow-xl">
@@ -536,12 +494,6 @@ export default function DashboardPage() {
                 </form>
               </div>
             )}
-            <div>
-              <dt className="text-sm text-gray-500">Role</dt>
-              <dd className="mt-1 text-gray-900">{user?.role || "Loading..."}</dd>
-            </div>
-          </dl>
-        </section>
       </div>
     </main>
   );

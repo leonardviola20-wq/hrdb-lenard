@@ -14,8 +14,8 @@ async function isAdmin(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (getAuthenticatedUserId(req) === null) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!(await isAdmin(req))) {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
   const contacts = await prisma.officeContact.findMany({
     where: { active: true },

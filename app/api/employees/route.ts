@@ -12,10 +12,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
-  const employers = await prisma.employer.findMany({
-    orderBy: { name: "asc" },
-    include: { _count: { select: { employees: true } } },
+  const employees = await prisma.employee.findMany({
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    select: {
+      id: true,
+      employeeCode: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      status: true,
+      email: true,
+      mobileNumber: true,
+      branch: true,
+      employer: { select: { name: true, company: true } },
+    },
   });
 
-  return NextResponse.json({ employers });
+  return NextResponse.json({ employees });
 }

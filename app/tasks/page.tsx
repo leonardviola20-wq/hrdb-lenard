@@ -55,7 +55,10 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("create") === "1";
+  });
 
   useEffect(() => {
     let cancelled = false;
