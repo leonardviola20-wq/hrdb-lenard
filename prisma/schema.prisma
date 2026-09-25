@@ -95,6 +95,19 @@ model employer {
   name      String
   company   String?
   branches  String?
+  status String @default("Active")
+  email String?
+  contactNumber String?
+  branchStatus String @default("Open")
+  president String?
+  longAddress String?
+  shortAddress String?
+  logo String?
+  secDti String?
+  tin String?
+  sss String?
+  hdmf String?
+  phic String?
   employees employee[]
 }
 
