@@ -198,7 +198,7 @@ export default function EmployeesPage() {
                   </div>
                   <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
                     <div><dt className="text-gray-500">Biometric No.</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
-                    <div><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.company || employee.employer?.name || "Unassigned"}</dd></div>
+                    <div><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.name || "Unassigned"}</dd></div>
                     <div><dt className="text-gray-500">Phone</dt><dd className="mt-1 text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
                     <div><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
                   </dl>
@@ -259,7 +259,7 @@ export default function EmployeesPage() {
                   </ViewSection>
                   <ViewSection title="Job Information">
                     <ViewField label="Biometric No." value={selectedEmployee.biometricNo} />
-                    <ViewField label="Employer" value={selectedEmployee.employer?.company || selectedEmployee.employer?.name} />
+                    <ViewField label="Employer" value={selectedEmployee.employer?.name} />
                     <ViewField label="Status" value={selectedEmployee.status} />
                     <ViewField label="Branch" value={selectedEmployee.branch} />
                     <ViewField label="Position" value={selectedEmployee.position} />
@@ -341,7 +341,7 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
       <label className="grid gap-1 text-sm font-medium text-gray-700 sm:col-span-2"><span>Emergency Address</span><textarea rows={2} value={form.emergencyAddress} onChange={(event) => update("emergencyAddress", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       <h3 className="mt-2 border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Job Information</h3>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Biometric No.</span><input value={form.biometricNo} onChange={(event) => update("biometricNo", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
-      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Employer</span><select value={form.employerId} onChange={(event) => update("employerId", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Unassigned</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.company || employer.name}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Employer</span><select value={form.employerId} onChange={(event) => update("employerId", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Unassigned</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Status</span><select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value, endDate: ["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"].includes(event.target.value) ? current.endDate : "" }))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900">{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Branch</span><select value={form.branch} onChange={(event) => update("branch", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select branch</option>{branches.map((branch) => <option key={branch}>{branch}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Position</span><select value={form.position} onChange={(event) => update("position", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select position</option>{positions.map((position) => <option key={position}>{position}</option>)}</select></label>
