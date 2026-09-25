@@ -146,7 +146,7 @@ export default function EmployersPage() {
     </label>
   );
   const agencyField = (label: string, valueKey: keyof FormState, dateKey: keyof FormState, groups?: number[]) => (
-    <div className="grid gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:grid-cols-2">
+    <div className="grid gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:col-span-2 sm:grid-cols-2">
       <label className="grid gap-1.5 text-sm">
         <span className="font-semibold text-gray-900">{label}</span>
         <input value={form[valueKey]} onChange={(event) => update(valueKey, groups ? formatNumber(event.target.value, groups) : event.target.value)} className={inputClass} />
@@ -191,9 +191,9 @@ export default function EmployersPage() {
           ))}
         </div>
         {modalOpen && (
-          <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
-            <form onSubmit={submit} className="w-full max-w-3xl rounded-xl bg-white p-6 shadow-xl">
-              <div className="mb-5 flex justify-between"><h2 className="text-xl font-bold text-gray-950">{editing ? "Update employer" : "Add employer"}</h2><button type="button" onClick={() => { setEditing(null); setForm({ ...emptyForm }); setModalOpen(false); }} className="text-2xl text-gray-500" aria-label="Close">×</button></div>
+          <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-3 sm:items-center sm:p-4">
+            <form onSubmit={submit} className="my-2 max-h-[calc(100vh-1rem)] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-4 shadow-xl sm:my-4 sm:max-h-[calc(100vh-2rem)] sm:p-6">
+              <div className="sticky top-0 z-10 mb-5 flex justify-between bg-white pb-2"><h2 className="text-xl font-bold text-gray-950">{editing ? "Update employer" : "Add employer"}</h2><button type="button" onClick={() => { setEditing(null); setForm({ ...emptyForm }); setModalOpen(false); }} className="text-2xl text-gray-500" aria-label="Close">×</button></div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {field("Employer Name", "name")}{field("Trade Name", "tradeName")}{field("Email Address", "email", "email")}
                 <label className="grid gap-1.5 text-sm"><span className="font-semibold text-gray-900">Contact Number</span><input value={form.contactNumber} onChange={(event) => update("contactNumber", contact(event.target.value))} placeholder="00 0000 0000" className={inputClass} /></label>
