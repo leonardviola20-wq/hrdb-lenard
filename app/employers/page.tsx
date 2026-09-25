@@ -182,10 +182,10 @@ export default function EmployersPage() {
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 text-sm">
-                <p><span className="font-medium text-gray-600">Status</span><br />{employer.status}</p>
-                <p><span className="font-medium text-gray-600">Branch</span><br />{employer.branches || "Not set"}</p>
-                <p><span className="font-medium text-gray-600">Contact</span><br />{employer.contactNumber || "Not set"}</p>
-                <p><span className="font-medium text-gray-600">Employees</span><br />{employer._count.employees}</p>
+                <p><span className="font-medium text-gray-600">Status</span><br /><strong className="font-semibold text-gray-950">{employer.status}</strong></p>
+                <p><span className="font-medium text-gray-600">Branch</span><br /><strong className="font-semibold text-gray-950">{employer.branches || "Not set"}</strong></p>
+                <p><span className="font-medium text-gray-600">Contact</span><br /><strong className="font-semibold text-gray-950">{employer.contactNumber || "Not set"}</strong></p>
+                <p><span className="font-medium text-gray-600">Employees</span><br /><strong className="font-semibold text-gray-950">{employer._count.employees}</strong></p>
               </div>
             </article>
           ))}

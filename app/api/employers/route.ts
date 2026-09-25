@@ -4,6 +4,12 @@ import { getAuthenticatedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const text = (body: Record<string, unknown>, field: string) => typeof body[field] === "string" ? body[field].trim() || null : null;
+const date = (body: Record<string, unknown>, field: string) => {
+  const value = text(body, field);
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 export async function GET(req: NextRequest) {
   const session = getAuthenticatedSession(req);
@@ -24,11 +30,11 @@ export async function POST(req: NextRequest) {
       email: text(body, "email"), contactNumber: text(body, "contactNumber"), branchStatus: text(body, "branchStatus") || "Open",
       president: text(body, "president"), longAddress: text(body, "longAddress"), shortAddress: text(body, "shortAddress"), logo: text(body, "logo"),
       secDti: text(body, "secDti"), tin: text(body, "tin"), sss: text(body, "sss"), hdmf: text(body, "hdmf"), phic: text(body, "phic"),
-      secDtiRegistrationDate: body.secDtiRegistrationDate ? new Date(String(body.secDtiRegistrationDate)) : null,
-      tinRegistrationDate: body.tinRegistrationDate ? new Date(String(body.tinRegistrationDate)) : null,
-      sssRegistrationDate: body.sssRegistrationDate ? new Date(String(body.sssRegistrationDate)) : null,
-      hdmfRegistrationDate: body.hdmfRegistrationDate ? new Date(String(body.hdmfRegistrationDate)) : null,
-      phicRegistrationDate: body.phicRegistrationDate ? new Date(String(body.phicRegistrationDate)) : null,
+      secDtiRegistrationDate: date(body, "secDtiRegistrationDate"),
+      tinRegistrationDate: date(body, "tinRegistrationDate"),
+      sssRegistrationDate: date(body, "sssRegistrationDate"),
+      hdmfRegistrationDate: date(body, "hdmfRegistrationDate"),
+      phicRegistrationDate: date(body, "phicRegistrationDate"),
     }, include: { _count: { select: { employees: true } } } });
     return NextResponse.json({ employer }, { status: 201 });
   } catch (error) {
