@@ -279,19 +279,16 @@ export default function DashboardPage() {
                 />
               </div>
             </div>
-          </section>
-        </div>
-
-        {selectedFilter && (
-          <section className="mt-8 rounded-lg bg-white p-6 shadow">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {selectedFilter === "PENDING"
-                  ? "Pending tasks"
-                  : selectedFilter === "COMPLETED"
-                    ? "Completed tasks"
-                    : "Overdue tasks"}
-              </h2>
+            {selectedFilter && (
+              <div className="mt-6 border-t border-gray-200 pt-5">
+              <div className="flex items-center justify-between gap-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {selectedFilter === "PENDING"
+                    ? "Pending tasks"
+                    : selectedFilter === "COMPLETED"
+                      ? "Completed tasks"
+                      : "Overdue tasks"}
+                </h3>
               <button
                 type="button"
                 onClick={() => setSelectedFilter(null)}
@@ -303,7 +300,7 @@ export default function DashboardPage() {
             {selectedTasks.length === 0 ? (
               <p className="mt-4 text-gray-600">No tasks in this category.</p>
             ) : (
-              <ul className="mt-4 divide-y divide-gray-200">
+              <ul className="mt-4 max-h-72 divide-y divide-gray-200 overflow-y-auto pr-2">
                 {selectedTasks.map((task) => (
                   <li
                     key={task.id}
@@ -471,8 +468,10 @@ export default function DashboardPage() {
             >
               Open full list
             </Link>
-          </section>
-        )}
+            </div>
+          )}
+        </section>
+        </div>
 
             {editingTask && editingForm && (
               <div className="fixed inset-0 z-10 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
