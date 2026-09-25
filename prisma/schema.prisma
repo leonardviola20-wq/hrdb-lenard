@@ -104,10 +104,15 @@ model employer {
   shortAddress String?
   logo String?
   secDti String?
+  secDtiRegistrationDate DateTime?
   tin String?
+  tinRegistrationDate DateTime?
   sss String?
+  sssRegistrationDate DateTime?
   hdmf String?
+  hdmfRegistrationDate DateTime?
   phic String?
+  phicRegistrationDate DateTime?
   employees employee[]
 }
 
