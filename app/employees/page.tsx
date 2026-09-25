@@ -118,6 +118,13 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (openMenuId === null) return;
+    const closeMenu = () => setOpenMenuId(null);
+    document.addEventListener("click", closeMenu);
+    return () => document.removeEventListener("click", closeMenu);
+  }, [openMenuId]);
+
+  useEffect(() => {
     fetch("/api/employees")
       .then(async (response) => {
         const data = await response.json();
@@ -234,8 +241,8 @@ export default function EmployeesPage() {
                       <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
                     </div>
                     <div className="relative shrink-0">
-                      <button type="button" onClick={() => setOpenMenuId(openMenuId === employee.id ? null : employee.id)} className="rounded p-1 text-xl leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Actions for ${fullName}`}>•••</button>
-                      {openMenuId === employee.id && <div className="absolute right-0 top-8 z-10 w-28 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg">
+                      <button type="button" onClick={(event) => { event.stopPropagation(); setOpenMenuId(openMenuId === employee.id ? null : employee.id); }} className="rounded p-1 text-xl leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Actions for ${fullName}`}>•••</button>
+                      {openMenuId === employee.id && <div onClick={(event) => event.stopPropagation()} className="absolute right-0 top-8 z-10 w-28 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg">
                         <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(false); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">View</button>
                         <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(true); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">Update</button>
                       </div>}
@@ -268,7 +275,6 @@ export default function EmployeesPage() {
           <div className="w-full max-w-3xl rounded-xl bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-gray-500">{selectedEmployee.employeeCode}</p>
                 <h2 className="mt-1 text-2xl font-bold text-gray-900">{[selectedEmployee.firstName, selectedEmployee.middleName, selectedEmployee.lastName].filter(Boolean).join(" ")}</h2>
                 <p className="mt-1 text-sm text-gray-500">Biometric No.: {selectedEmployee.biometricNo || "Not set"}</p>
               </div>

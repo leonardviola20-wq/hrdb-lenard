@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircleIcon,
   ChevronDownIcon,
@@ -55,6 +55,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<number | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(() => {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("create") === "1";
@@ -77,6 +78,13 @@ export default function TasksPage() {
     void fetchTasks();
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (openMenuTaskId === null) return;
+    const closeMenu = () => setOpenMenuTaskId(null);
+    document.addEventListener("click", closeMenu);
+    return () => document.removeEventListener("click", closeMenu);
+  }, [openMenuTaskId]);
 
   const isOverdue = (task: Task) =>
     task.status === "PENDING" && !!task.dueDate && new Date(task.dueDate) < new Date();
@@ -392,13 +400,13 @@ export default function TasksPage() {
                         <div className="flex items-start justify-between gap-2">
                           <h3 className={`font-semibold leading-6 ${task.status === "COMPLETED" ? "text-slate-400 line-through" : "text-slate-900"}`}>{task.title}</h3>
                           <div className="flex shrink-0 items-center gap-1">
-                            <details className="relative">
-                            <summary className="list-none cursor-pointer rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><EllipsisHorizontalIcon className="h-5 w-5" /></summary>
-                            <div className="absolute right-0 z-10 mt-1 w-32 rounded-lg border border-slate-200 bg-white p-1 text-sm shadow-lg">
-                              <button type="button" disabled={busyTaskId === task.id} onClick={() => beginEdit(task)} className="w-full rounded px-2 py-1.5 text-left hover:bg-slate-100 disabled:opacity-50">Edit</button>
-                              <button type="button" disabled={busyTaskId === task.id} onClick={() => deleteTask(task.id)} className="w-full rounded px-2 py-1.5 text-left text-rose-600 hover:bg-rose-50 disabled:opacity-50">Delete</button>
+                            <div className="relative">
+                              <button type="button" aria-expanded={openMenuTaskId === task.id} onClick={(event) => { event.stopPropagation(); setOpenMenuTaskId((current) => current === task.id ? null : task.id); }} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><EllipsisHorizontalIcon className="h-5 w-5" /></button>
+                              {openMenuTaskId === task.id && <div onClick={(event) => event.stopPropagation()} className="absolute right-0 z-10 mt-1 w-32 rounded-lg border border-slate-200 bg-white p-1 text-sm shadow-lg">
+                                <button type="button" disabled={busyTaskId === task.id} onClick={() => { setOpenMenuTaskId(null); beginEdit(task); }} className="w-full rounded px-2 py-1.5 text-left font-medium text-slate-900 hover:bg-slate-100 disabled:opacity-50">Edit</button>
+                                <button type="button" disabled={busyTaskId === task.id} onClick={() => { setOpenMenuTaskId(null); void deleteTask(task.id); }} className="w-full rounded px-2 py-1.5 text-left font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">Delete</button>
+                              </div>}
                             </div>
-                            </details>
                           </div>
                         </div>
                         {task.description && <p className="mt-2 line-clamp-3 text-sm leading-5 text-slate-500">{task.description}</p>}
