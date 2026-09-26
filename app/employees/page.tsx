@@ -107,6 +107,9 @@ const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of co
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [query, setQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [showSearch, setShowSearch] = useState(true);
+  const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [employerFilter, setEmployerFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
@@ -161,9 +164,14 @@ export default function EmployeesPage() {
   const hasFilters = Boolean(query || statusFilter || employerFilter || branchFilter);
   const clearFilters = () => {
     setQuery("");
+    setSearchInput("");
     setStatusFilter("");
     setEmployerFilter("");
     setBranchFilter("");
+  };
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    setQuery(searchInput);
   };
 
   return (
@@ -176,29 +184,57 @@ export default function EmployeesPage() {
               <h1 className="mt-1 text-2xl font-bold text-gray-950 sm:text-3xl">Employee Directory</h1>
               <p className="mt-2 text-gray-600">Employee directory and assignment details.</p>
             </div>
-            <Link href="/employees/new" className="inline-flex w-fit shrink-0 items-center rounded-lg bg-[#172554] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-900">
-              Add employee
-            </Link>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSearch((current) => !current)}
+                  className={`rounded-lg border px-3 py-2.5 text-sm font-semibold ${showSearch ? "border-blue-800 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}
+                  aria-expanded={showSearch}
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSearchFilters((current) => !current)}
+                  className={`rounded-lg border px-3 py-2.5 text-sm font-semibold ${showSearchFilters ? "border-blue-800 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}
+                  aria-expanded={showSearchFilters}
+                >
+                  Filters
+                </button>
+                <Link
+                  href="/employees/new"
+                  aria-label="Add employee"
+                  title="Add employee"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#172554] text-2xl font-light leading-none text-white shadow-sm hover:bg-blue-900"
+                >
+                  +
+                </Link>
+              </div>
+              <p className="text-xs text-gray-600">
+                Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-gray-900">Search and filter employees</h2>
-            </div>
+          {showSearchFilters && <div className="mb-4 flex justify-end">
             <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-2">
+          </div>}
+          {showSearch && <form onSubmit={submitSearch} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="grid flex-1 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Search</span>
               <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Name, code, or employer"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
             </label>
+            <button type="submit" className="rounded-lg bg-[#172554] px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900">Search</button>
+          </form>}
+          {showSearchFilters && <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Status</span>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
@@ -220,10 +256,7 @@ export default function EmployeesPage() {
                 {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
               </select>
             </label>
-          </div>
-          <div className="mt-4 border-t border-gray-100 pt-3 text-xs text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
-          </div>
+          </div>}
         </div>
 
         {message && <p className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
