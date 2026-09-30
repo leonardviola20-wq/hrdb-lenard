@@ -157,7 +157,7 @@ export default function EmployersPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-6xl">
+      <div className="max-w-6xl">
         <header className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-blue-700">HRDB-Lenard</p>

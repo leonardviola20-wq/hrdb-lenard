@@ -176,7 +176,7 @@ export default function EmployeesPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
-      <div className="mx-auto max-w-6xl">
+      <div className="max-w-6xl">
         <div className="mb-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
