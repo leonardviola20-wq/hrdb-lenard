@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function AttendancePage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-5xl">
+      <div className="max-w-5xl">
         <p className="text-sm font-medium text-blue-600">HRDB-Lenard</p>
         <h1 className="mt-1 text-3xl font-bold text-gray-900">Attendance</h1>
         <p className="mt-2 text-gray-600">Attendance tracking will be available here.</p>

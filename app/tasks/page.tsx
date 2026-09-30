@@ -272,7 +272,7 @@ export default function TasksPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="max-w-[1500px]">
         <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
             <Link href="/dashboard" className="text-sm font-medium text-blue-600 hover:underline">Back to dashboard</Link>

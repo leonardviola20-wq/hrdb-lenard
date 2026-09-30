@@ -47,7 +47,7 @@ export default function ContactsPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-5xl">
+      <div className="max-w-5xl">
         <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">Back to dashboard</Link>
         <div className="mb-6 mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
