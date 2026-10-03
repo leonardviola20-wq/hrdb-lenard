@@ -13,9 +13,19 @@ async function isAdmin(req: NextRequest) {
   return user?.role === "ADMIN";
 }
 
+async function canViewContacts(req: NextRequest) {
+  const userId = getAuthenticatedUserId(req);
+  if (userId === null) return false;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, accessiblePages: true },
+  });
+  return user?.role === "ADMIN" || Boolean(user?.accessiblePages.includes("/contacts"));
+}
+
 export async function GET(req: NextRequest) {
-  if (!(await isAdmin(req))) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  if (!(await canViewContacts(req))) {
+    return NextResponse.json({ error: "Contacts access required" }, { status: 403 });
   }
   const contacts = await prisma.officeContact.findMany({
     where: { active: true },

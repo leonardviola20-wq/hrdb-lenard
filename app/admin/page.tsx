@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { PAGE_ACCESS_OPTIONS, type PageAccessHref } from "@/lib/pageAccess";
 
 type AdminUser = {
   id: number;
@@ -9,7 +11,7 @@ type AdminUser = {
   email: string;
   role: string;
   emailVerified: boolean;
-  canAccessEmployees: boolean;
+  accessiblePages: PageAccessHref[];
   createdAt: string;
   _count: { tasks: number };
 };
@@ -20,6 +22,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [accessUser, setAccessUser] = useState<AdminUser | null>(null);
+  const [selectedPages, setSelectedPages] = useState<PageAccessHref[]>([]);
+  const [accessError, setAccessError] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -68,20 +73,35 @@ export default function AdminPage() {
     }
   };
 
-  const updateEmployeeAccess = async (user: AdminUser) => {
-    setBusyUserId(user.id);
-    setMessage("");
+  const openAccessDialog = (user: AdminUser) => {
+    setAccessUser(user);
+    setSelectedPages(user.accessiblePages);
+    setAccessError("");
+  };
+
+  const togglePageAccess = (page: PageAccessHref) => {
+    setSelectedPages((current) => current.includes(page)
+      ? current.filter((item) => item !== page)
+      : [...current, page]);
+  };
+
+  const savePageAccess = async () => {
+    if (!accessUser || selectedPages.length === 0) return;
+    setBusyUserId(accessUser.id);
+    setAccessError("");
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const res = await fetch(`/api/admin/users/${accessUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailVerified: user.emailVerified, canAccessEmployees: !user.canAccessEmployees }),
+        body: JSON.stringify({ accessiblePages: selectedPages }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unable to update employee access");
-      setUsers((current) => current.map((item) => item.id === user.id ? { ...item, canAccessEmployees: data.user.canAccessEmployees } : item));
+      if (!res.ok) throw new Error(data.error || "Unable to update page access");
+      setUsers((current) => current.map((item) => item.id === accessUser.id ? { ...item, accessiblePages: data.user.accessiblePages } : item));
+      setMessage(`Page access updated for ${accessUser.name || accessUser.username || accessUser.email}. Changes apply at the next sign-in.`);
+      setAccessUser(null);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to update employee access");
+      setAccessError(error instanceof Error ? error.message : "Unable to update page access");
     } finally {
       setBusyUserId(null);
     }
@@ -93,14 +113,6 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-purple-600">HRDB-Lenard</p>
-            <h1 className="mt-1 text-3xl font-bold text-gray-900">Admin dashboard</h1>
-            <p className="mt-2 text-gray-600">Manage user access and account verification.</p>
-          </div>
-        </header>
-
         {message && <p className="mb-4 text-red-600">{message}</p>}
 
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -127,7 +139,11 @@ export default function AdminPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded px-2 py-1 text-xs font-medium ${user.emailVerified ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>{user.emailVerified ? "Verified" : "Needs verification"}</span>
                       <button type="button" disabled={busyUserId === user.id} onClick={() => updateVerification(user)} className="rounded border border-gray-500 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">{busyUserId === user.id ? "Saving..." : user.emailVerified ? "Unverify" : "Verify account"}</button>
-                      {user.role !== "ADMIN" && <button type="button" disabled={busyUserId === user.id} onClick={() => updateEmployeeAccess(user)} className={`rounded border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 ${user.canAccessEmployees ? "border-blue-700 bg-blue-50 text-blue-800" : "border-gray-500 bg-white text-gray-900"}`}>{user.canAccessEmployees ? "Remove Employees access" : "Allow Employees access"}</button>}
+                      {user.role !== "ADMIN" ? (
+                        <button type="button" onClick={() => openAccessDialog(user)} className="rounded border border-blue-700 bg-white px-3 py-2 text-sm font-medium text-blue-900 transition hover:bg-blue-50">
+                          Manage access · {user.accessiblePages.length}
+                        </button>
+                      ) : <span className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-800">Full access</span>}
                     </div>
                   </div>
                 </article>
@@ -136,6 +152,44 @@ export default function AdminPage() {
           )}
         </section>
       </div>
+
+      {accessUser && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setAccessUser(null)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="page-access-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-2xl">
+            <header className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+              <div className="min-w-0">
+                <h2 id="page-access-title" className="text-lg font-semibold text-gray-950">Page access</h2>
+                <p className="mt-1 truncate text-sm text-gray-500">{accessUser.name || accessUser.username || accessUser.email}</p>
+              </div>
+              <button type="button" onClick={() => setAccessUser(null)} aria-label="Close page access dialog" title="Close" className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </header>
+            <div className="px-5 py-4 sm:px-6">
+              <p className="mb-3 text-sm text-gray-600">Choose which sidebar pages this user can open.</p>
+              <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
+                {PAGE_ACCESS_OPTIONS.map(({ href, label }) => (
+                  <label key={href} className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50">
+                    <span className="text-sm font-medium text-gray-800">{label}</span>
+                    <input type="checkbox" checked={selectedPages.includes(href)} onChange={() => togglePageAccess(href)} className="h-4 w-4 shrink-0 accent-blue-800" />
+                  </label>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <p className="text-xs text-gray-500">{selectedPages.length} of {PAGE_ACCESS_OPTIONS.length} pages enabled</p>
+                {selectedPages.length === 0 && <p className="text-xs font-medium text-amber-700">Select at least one page.</p>}
+              </div>
+              {accessError && <p role="alert" className="mt-3 text-sm font-medium text-red-700">{accessError}</p>}
+            </div>
+            <footer className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4 sm:px-6">
+              <button type="button" onClick={() => setAccessUser(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => void savePageAccess()} disabled={busyUserId === accessUser.id || selectedPages.length === 0} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">
+                {busyUserId === accessUser.id ? "Saving..." : "Save access"}
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

@@ -50,10 +50,6 @@ export default function ContactsPage() {
       <div className="max-w-5xl">
         <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">Back to dashboard</Link>
         <div className="mb-6 mt-2 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
-            <p className="mt-2 text-gray-600">Suppliers, contractors, and office service providers.</p>
-          </div>
           <Link href="/admin/contacts" className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">Manage contacts</Link>
         </div>
         {message && <p className="mb-4 text-red-600">{message}</p>}

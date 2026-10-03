@@ -26,6 +26,7 @@ export async function POST(req: Request) {
         password: true,
         role: true,
         canAccessEmployees: true,
+        accessiblePages: true,
         emailVerified: true,
       }
     });
@@ -48,7 +49,13 @@ export async function POST(req: Request) {
     }
 
     // Create JWT payload
-    const payload = { id: user.id, email: user.email, role: user.role, canAccessEmployees: user.canAccessEmployees };
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      canAccessEmployees: user.canAccessEmployees,
+      accessiblePages: user.accessiblePages,
+    };
 
     // Sign JWT
     const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });

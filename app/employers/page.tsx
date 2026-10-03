@@ -159,11 +159,6 @@ export default function EmployersPage() {
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl">
         <header className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-blue-700">HRDB-Lenard</p>
-            <h1 className="mt-1 text-3xl font-bold text-gray-950">Employers</h1>
-            <p className="mt-2 text-gray-700">Manage employer, branch, and government information.</p>
-          </div>
           <button type="button" onClick={() => openForm()} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white">Add employer</button>
         </header>
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employers..." className={`${inputClass} mb-6`} />

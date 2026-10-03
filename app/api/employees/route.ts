@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
   if (session.role !== "ADMIN") {
-    const user = await prisma.user.findUnique({ where: { id: session.id }, select: { canAccessEmployees: true } });
-    if (!user?.canAccessEmployees) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
+    const user = await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } });
+    if (!user?.accessiblePages.includes("/employees")) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
   }
   const employees = await prisma.employee.findMany({
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
   if (session.role !== "ADMIN") {
-    const user = await prisma.user.findUnique({ where: { id: session.id }, select: { canAccessEmployees: true } });
-    if (!user?.canAccessEmployees) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
+    const user = await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } });
+    if (!user?.accessiblePages.includes("/employees")) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
   }
   const body = await req.json();
   const requiredFields = ["firstName", "lastName"];

@@ -15,6 +15,7 @@ model User {
   password  String
   role      String   @default("USER")
   canAccessEmployees Boolean @default(false)
+  accessiblePages String[] @default(["/dashboard", "/tasks", "/settings"])
   emailVerified Boolean @default(true)
   verificationTokenHash String? @unique
   verificationTokenExpires DateTime?
@@ -41,6 +42,9 @@ model Task {
   status      String   @default("PENDING")
   priority    String   @default("MEDIUM")
   category    String?
+  notes       String?
+  recurrence  String   @default("NONE")
+  isFlagged   Boolean  @default(false)
   dueDate     DateTime?
   sortOrder   Int      @default(0)
   userId      Int

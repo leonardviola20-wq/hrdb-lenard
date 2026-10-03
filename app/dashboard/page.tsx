@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, CakeIcon, FlagIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { RECURRENCE_OPTIONS, type TaskRecurrence } from "@/lib/taskRecurrence";
 
 type Task = {
   id: number;
@@ -11,6 +12,9 @@ type Task = {
   status: "PENDING" | "COMPLETED";
   priority: "LOW" | "MEDIUM" | "HIGH";
   category: string | null;
+  notes: string | null;
+  recurrence: TaskRecurrence;
+  isFlagged: boolean;
   dueDate: string | null;
   createdAt: string;
 };
@@ -22,7 +26,16 @@ type TaskForm = {
   description: string;
   priority: Task["priority"];
   category: string;
+  notes: string;
+  recurrence: TaskRecurrence;
+  isFlagged: boolean;
   dueDate: string;
+};
+
+type DashboardReminders = {
+  upcomingTasks: { id: number; title: string; dueDate: string; status: string; isFlagged: boolean }[];
+  birthdayReminders: { name: string; date: string }[];
+  canViewBirthdays: boolean;
 };
 
 export default function DashboardPage() {
@@ -40,6 +53,7 @@ export default function DashboardPage() {
     overdue: 0,
   });
   const [error, setError] = useState("");
+  const [reminders, setReminders] = useState<DashboardReminders>({ upcomingTasks: [], birthdayReminders: [], canViewBirthdays: false });
 
   useEffect(() => {
     if (!selectedFilter) return;
@@ -58,7 +72,12 @@ export default function DashboardPage() {
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Unable to load tasks");
-        const tasks = data.tasks as Task[];
+        const tasks = (data.tasks as Task[]).map((task) => ({
+          ...task,
+          notes: task.notes || null,
+          recurrence: task.recurrence || "NONE",
+          isFlagged: Boolean(task.isFlagged),
+        }));
         setTasks(tasks);
         const overdue = tasks.filter(
           (task) =>
@@ -74,6 +93,16 @@ export default function DashboardPage() {
         });
       })
       .catch((err: Error) => setError(err.message));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/dashboard/reminders")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load reminders");
+        setReminders(data);
+      })
+      .catch((reminderError: Error) => setError(reminderError.message));
   }, []);
 
   const selectedTasks = tasks.filter((task) => {
@@ -137,8 +166,12 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Unable to update task");
       const updatedTask = { ...task, ...changes } as Task;
+      const nextTask = data.nextTask as Task | null;
       setTasks((current) => {
-        const nextTasks = current.map((item) => (item.id === task.id ? updatedTask : item));
+        const nextTasks = [
+          ...current.map((item) => (item.id === task.id ? updatedTask : item)),
+          ...(nextTask ? [nextTask] : []),
+        ];
         setTaskSummary({
           total: nextTasks.length,
           pending: nextTasks.filter((item) => item.status === "PENDING").length,
@@ -169,6 +202,9 @@ export default function DashboardPage() {
       description: task.description || "",
       priority: task.priority,
       category: task.category || "",
+      notes: task.notes || "",
+      recurrence: task.recurrence || "NONE",
+      isFlagged: Boolean(task.isFlagged),
       dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
     });
   };
@@ -180,6 +216,7 @@ export default function DashboardPage() {
       ...editingForm,
       description: editingForm.description || null,
       category: editingForm.category || null,
+      notes: editingForm.notes || null,
       dueDate: editingForm.dueDate
         ? new Date(`${editingForm.dueDate}T00:00:00`).toISOString()
         : null,
@@ -402,6 +439,14 @@ export default function DashboardPage() {
                             <dd className="mt-1 font-medium text-gray-900">{task.priority}</dd>
                           </div>
                           <div>
+                            <dt className="text-gray-500">Repeat</dt>
+                            <dd className="mt-1 font-medium text-gray-900">{task.recurrence && task.recurrence !== "NONE" ? task.recurrence.toLowerCase() : "Does not repeat"}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500">Flag</dt>
+                            <dd className="mt-1 font-medium text-gray-900">{task.isFlagged ? "Flagged" : "Not flagged"}</dd>
+                          </div>
+                          <div>
                             <dt className="text-gray-500">Category</dt>
                             <dd className="mt-1 text-gray-900">{task.category || "None"}</dd>
                           </div>
@@ -418,6 +463,10 @@ export default function DashboardPage() {
                             <dd className="mt-1 whitespace-pre-wrap text-gray-900">
                               {task.description || "No description"}
                             </dd>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <dt className="text-gray-500">Notes</dt>
+                            <dd className="mt-1 whitespace-pre-wrap text-gray-900">{task.notes || "No notes"}</dd>
                           </div>
                           <div>
                             <dt className="text-gray-500">Created</dt>
@@ -486,19 +535,89 @@ export default function DashboardPage() {
         </section>
         </div>
 
+        <section className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
+              <div>
+                <h2 className="font-semibold text-gray-900">Upcoming Events</h2>
+                <p className="mt-1 text-xs text-gray-500">Task due dates in the next 30 days</p>
+              </div>
+              <ArrowPathIcon className="h-5 w-5 text-blue-700" />
+            </div>
+            <div className="flex-1">
+              {reminders.upcomingTasks.length === 0 ? (
+                <p className="py-4 text-sm text-gray-500">No upcoming task due dates.</p>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {reminders.upcomingTasks.map((event) => (
+                    <li key={event.id} className="flex items-center justify-between gap-3 py-3 first:pt-3 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-900">{event.title}</p>
+                        <p className="mt-0.5 text-xs text-gray-500">{new Date(event.dueDate).toLocaleDateString()} · {event.status === "IN_PROGRESS" ? "In progress" : "To do"}</p>
+                      </div>
+                      {event.isFlagged && <FlagIcon className="h-4 w-4 shrink-0 text-rose-600" aria-label="Flagged task" />}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <Link href="/tasks" className="mt-auto pt-3 text-sm font-semibold text-blue-800 hover:underline">Open tasks</Link>
+          </div>
+
+          <div className="flex h-full flex-col rounded-lg border border-amber-200 bg-amber-50/60 p-5">
+            <div className="flex items-center justify-between gap-3 border-b border-amber-200/70 pb-3">
+              <div>
+                <h2 className="font-semibold text-gray-900">Birthday Notifications</h2>
+                <p className="mt-1 text-xs text-gray-600">Employee birthdays this month</p>
+              </div>
+              <CakeIcon className="h-5 w-5 text-amber-700" />
+            </div>
+            <div className="flex-1">
+              {!reminders.canViewBirthdays ? (
+                <p className="py-4 text-sm text-gray-600">Employees access is required to view birthday reminders.</p>
+              ) : reminders.birthdayReminders.length === 0 ? (
+                <p className="py-4 text-sm text-gray-600">No upcoming birthdays this month.</p>
+              ) : (
+                <ul className="divide-y divide-amber-200/70">
+                  {reminders.birthdayReminders.map((birthday) => (
+                    <li key={`${birthday.name}-${birthday.date}`} className="flex items-center justify-between gap-3 py-3 first:pt-3 last:pb-0">
+                      <span className="truncate text-sm font-medium text-gray-900">{birthday.name}</span>
+                      <time dateTime={birthday.date} className="shrink-0 text-xs font-medium text-amber-900">{new Date(birthday.date).toLocaleDateString()}</time>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {reminders.canViewBirthdays && <Link href="/employees" className="mt-auto pt-3 text-sm font-semibold text-amber-900 hover:underline">Open employees</Link>}
+          </div>
+        </section>
+
             {editingTask && editingForm && (
               <div className="fixed inset-0 z-10 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
                 <form onSubmit={saveEdit} className="grid w-full max-w-lg gap-3 rounded-lg bg-white p-6 shadow-xl">
                   <h2 className="text-xl font-semibold text-gray-900">Edit task</h2>
                   <input required value={editingForm.title} onChange={(event) => setEditingForm({ ...editingForm, title: event.target.value })} className="w-full rounded border border-gray-400 p-2 text-gray-900" />
                   <textarea value={editingForm.description} onChange={(event) => setEditingForm({ ...editingForm, description: event.target.value })} rows={3} placeholder="Description" className="w-full rounded border border-gray-400 p-2 text-gray-900" />
+                  <textarea value={editingForm.notes} onChange={(event) => setEditingForm({ ...editingForm, notes: event.target.value })} rows={2} maxLength={2000} placeholder="Notes" className="w-full rounded border border-gray-400 p-2 text-gray-900" />
                   <select value={editingForm.priority} onChange={(event) => setEditingForm({ ...editingForm, priority: event.target.value as Task["priority"] })} className="w-full rounded border border-gray-400 p-2 text-gray-900">
                     <option value="LOW">Low priority</option>
                     <option value="MEDIUM">Medium priority</option>
                     <option value="HIGH">High priority</option>
                   </select>
                   <input value={editingForm.category} onChange={(event) => setEditingForm({ ...editingForm, category: event.target.value })} placeholder="Category" className="w-full rounded border border-gray-400 p-2 text-gray-900" />
-                  <input type="date" value={editingForm.dueDate} onChange={(event) => setEditingForm({ ...editingForm, dueDate: event.target.value })} className="w-full rounded border border-gray-400 p-2 text-gray-900" />
+                  <input type="date" value={editingForm.dueDate} onChange={(event) => setEditingForm({ ...editingForm, dueDate: event.target.value })} required={editingForm.recurrence !== "NONE"} className="w-full rounded border border-gray-400 p-2 text-gray-900" />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      Repeat
+                      <select value={editingForm.recurrence} onChange={(event) => setEditingForm({ ...editingForm, recurrence: event.target.value as TaskRecurrence })} className="rounded border border-gray-400 bg-white p-2 text-gray-900">
+                        {RECURRENCE_OPTIONS.map((option) => <option key={option} value={option}>{option === "NONE" ? "Does not repeat" : option.charAt(0) + option.slice(1).toLowerCase()}</option>)}
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <input type="checkbox" checked={editingForm.isFlagged} onChange={(event) => setEditingForm({ ...editingForm, isFlagged: event.target.checked })} className="h-4 w-4 accent-rose-600" />
+                      <FlagIcon className="h-4 w-4 text-rose-600" /> Flag task
+                    </label>
+                  </div>
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => { setEditingTask(null); setEditingForm(null); }} className="rounded border border-gray-500 bg-white px-4 py-2 text-gray-900 hover:bg-gray-100">Cancel</button>
                     <button type="submit" className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">Save changes</button>

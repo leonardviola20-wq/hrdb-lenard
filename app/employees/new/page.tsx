@@ -140,8 +140,6 @@ export default function NewEmployeePage() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-6">
           <Link href="/employees" className="text-sm font-medium text-blue-600 hover:underline">← Employee Directory</Link>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900">Add New Employee</h1>
-          <p className="mt-2 text-gray-600">Create an employee profile and record their work information.</p>
         </div>
         {message && <p className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{message}</p>}
         <form onSubmit={submit} className="grid gap-5">
