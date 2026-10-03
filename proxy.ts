@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import { DEFAULT_PAGE_ACCESS, hasPageAccess, isPageAccessHref, PAGE_ACCESS_OPTIONS } from "@/lib/pageAccess";
 
 // Named export works
 export function proxy(req: NextRequest) {
@@ -19,16 +20,19 @@ export function proxy(req: NextRequest) {
     try {
       const session = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload & {
         role?: string;
+        accessiblePages?: unknown;
+        canAccessEmployees?: boolean;
       };
       const isAdmin = session.role === "ADMIN";
-      const isAllowedUserRoute =
-        pathname === "/dashboard" ||
-        pathname.startsWith("/tasks") ||
-        pathname.startsWith("/employees") ||
-        pathname === "/settings";
+      const accessiblePages = Array.isArray(session.accessiblePages)
+        ? session.accessiblePages.filter(isPageAccessHref)
+        : session.canAccessEmployees
+          ? [...DEFAULT_PAGE_ACCESS, "/employees" as const]
+          : DEFAULT_PAGE_ACCESS;
 
-      if (!isAdmin && !isAllowedUserRoute) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+      if (!isAdmin && !hasPageAccess(pathname, accessiblePages)) {
+        const fallback = PAGE_ACCESS_OPTIONS.find((page) => accessiblePages.includes(page.href))?.href || "/login";
+        return NextResponse.redirect(new URL(fallback, req.url));
       }
       return NextResponse.next();
     } catch {

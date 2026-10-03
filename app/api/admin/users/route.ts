@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
       email: true,
       role: true,
       canAccessEmployees: true,
+      accessiblePages: true,
       emailVerified: true,
       createdAt: true,
       _count: { select: { tasks: true } },

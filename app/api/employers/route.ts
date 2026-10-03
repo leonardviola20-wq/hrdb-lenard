@@ -17,9 +17,9 @@ export async function GET(req: NextRequest) {
   if (session.role !== "ADMIN") {
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      select: { canAccessEmployees: true },
+      select: { accessiblePages: true },
     });
-    if (!user?.canAccessEmployees) {
+    if (!user?.accessiblePages.some((page) => page === "/employers" || page === "/employees")) {
       return NextResponse.json({ error: "Employees access required" }, { status: 403 });
     }
   }

@@ -9,8 +9,8 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   const session = getAuthenticatedSession(req);
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   if (session.role !== "ADMIN") {
-    const user = await prisma.user.findUnique({ where: { id: session.id }, select: { canAccessEmployees: true } });
-    if (!user?.canAccessEmployees) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
+    const user = await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } });
+    if (!user?.accessiblePages.includes("/employees")) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
   }
   const id = Number((await params).id);
   if (!Number.isInteger(id)) return NextResponse.json({ error: "Invalid employee id" }, { status: 400 });

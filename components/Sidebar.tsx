@@ -2,26 +2,27 @@
 
 import {
   ArrowRightOnRectangleIcon,
-  Bars3Icon,
   BriefcaseIcon,
   CalendarDaysIcon,
   ChartBarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   IdentificationIcon,
   Cog6ToothIcon,
   Squares2X2Icon,
   UserGroupIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { DEFAULT_PAGE_ACCESS, type PageAccessHref } from "@/lib/pageAccess";
 
 type CurrentUser = {
   name: string | null;
   username: string | null;
   email: string;
   role: string;
-  canAccessEmployees: boolean;
+  accessiblePages: PageAccessHref[];
 };
 
 const navigation = [
@@ -35,12 +36,13 @@ const navigation = [
 
 type SidebarProps = {
   collapsed: boolean;
+  onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileToggle: () => void;
   user: CurrentUser | null;
 };
 
-export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: SidebarProps) {
+export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileToggle, user }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -49,6 +51,7 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
     ? "md:hidden"
     : "whitespace-nowrap";
   const isAdmin = user?.role === "ADMIN";
+  const accessiblePages = user?.accessiblePages || DEFAULT_PAGE_ACCESS;
 
   const logout = async () => {
     setLoggingOut(true);
@@ -64,7 +67,7 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
 
   return (
     <aside
-      className={`${mobileOpen ? "fixed inset-x-0 top-[76px] flex h-[calc(100vh-76px)]" : "hidden md:flex"} z-20 shrink-0 flex-col bg-[#172554] text-white shadow-xl transition-[height,width] duration-300 md:sticky md:top-0 md:h-screen ${
+      className={`${mobileOpen ? "fixed inset-x-0 top-[76px] flex h-[calc(100vh-76px)]" : "hidden md:flex"} relative z-20 shrink-0 flex-col bg-[#172554] text-white shadow-xl transition-[height,width] duration-300 md:sticky md:top-0 md:h-screen ${
         isCollapsed ? "md:w-[65px]" : "md:w-64"
       }`}
     >
@@ -82,8 +85,7 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
             H
           </button>
           <div className={`overflow-hidden ${collapsedText}`}>
-            <p className="text-base font-bold tracking-tight">HRDB</p>
-            <p className="text-xs text-blue-200">People workspace</p>
+            <p className="text-base font-bold tracking-tight">HRDB-Lenard</p>
           </div>
         </div>
         <div className="w-10 md:hidden" aria-hidden="true" />
@@ -97,7 +99,7 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
           Workspace
         </p>
         <div className="space-y-2">
-          {navigation.filter((item) => isAdmin || ["/dashboard", "/tasks"].includes(item.href) || (item.href === "/employees" && user?.canAccessEmployees)).map(({ label, href, icon: Icon }) => {
+          {navigation.filter((item) => isAdmin || accessiblePages.includes(item.href as PageAccessHref)).map(({ label, href, icon: Icon }) => {
             const active =
               pathname === href || (href === "/tasks" && pathname.startsWith("/tasks/"));
             return (
@@ -126,25 +128,32 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
         <p className={`mb-3 mt-8 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
           Account
         </p>
-        <Link
-          href="/settings"
-          onClick={onMobileToggle}
-          title={isCollapsed ? "Account Settings" : undefined}
-          className={`group/item flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
-            pathname === "/settings"
-              ? isCollapsed
-                ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
-                : "px-3 bg-white text-[#172554] shadow-sm"
-              : isCollapsed
-                ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
-                : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
-          <span className={collapsedText}>Account Settings</span>
-        </Link>
+        {(isAdmin || accessiblePages.includes("/settings")) && <Link
+            href="/settings"
+            onClick={onMobileToggle}
+            title={isCollapsed ? "Account Settings" : undefined}
+            className={`group/item flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
+              pathname === "/settings"
+                ? isCollapsed
+                  ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
+                  : "px-3 bg-white text-[#172554] shadow-sm"
+                : isCollapsed
+                  ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                  : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
+            <span className={collapsedText}>Account Settings</span>
+          </Link>}
       </nav>
 
+      <div className={`${mobileOpen ? "block" : "hidden"} px-4 py-3 md:block ${isCollapsed ? "md:px-2" : ""}`}>
+        <div className={`mb-3 px-3 ${collapsedText}`}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-200">Welcome</p>
+          <p className="mt-1 truncate text-sm font-semibold text-white">{user?.name || user?.username || user?.email || "Loading profile..."}</p>
+          <p className="mt-0.5 text-xs text-blue-200">{user?.role === "ADMIN" ? "Admin" : user ? "User" : ""}</p>
+        </div>
+      </div>
       <div className={`${mobileOpen ? "block" : "hidden"} border-t border-white/10 p-4 md:block ${isCollapsed ? "md:p-3" : ""}`}>
         <button
           type="button"
@@ -157,6 +166,16 @@ export function Sidebar({ collapsed, mobileOpen, onMobileToggle, user }: Sidebar
           <span className={collapsedText}>{loggingOut ? "Logging out..." : "Log-out"}</span>
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute -right-3 top-20 z-30 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-blue-300/40 bg-blue-400 text-[#172554] shadow-md transition hover:bg-blue-300 md:flex"
+      >
+        {collapsed ? <ChevronRightIcon className="h-4 w-4" /> : <ChevronLeftIcon className="h-4 w-4" />}
+      </button>
     </aside>
   );
 }
@@ -167,18 +186,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pageTitle = getPageTitle(pathname);
+  const pageSubtitle = getPageSubtitle(pathname);
 
   useEffect(() => {
     if (publicRoute) return;
-    fetch("/api/me")
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to load profile");
-        setUser(data.user);
-      })
-      .catch(() => {
-        setUser(null);
-      });
+
+    const loadUser = () => {
+      fetch("/api/me")
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Unable to load profile");
+          setUser(data.user);
+        })
+        .catch(() => setUser(null));
+    };
+
+    loadUser();
+    window.addEventListener("hrdb-profile-updated", loadUser);
+    return () => window.removeEventListener("hrdb-profile-updated", loadUser);
   }, [publicRoute]);
 
   if (publicRoute) return children;
@@ -187,43 +213,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col bg-[#f8fafc] md:flex-row">
       <Sidebar
         collapsed={collapsed}
+        onToggleCollapsed={() => setCollapsed((value) => !value)}
         mobileOpen={mobileOpen}
         onMobileToggle={() => setMobileOpen(false)}
         user={user}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-[76px] shrink-0 border-b border-white/10 bg-[#172554] shadow-sm backdrop-blur md:h-20">
-          <div className="flex w-14 shrink-0 items-center justify-center border-r border-white/10 bg-[#172554]">
+        <header className="sticky top-0 z-10 flex h-[76px] shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:h-20">
+          <div className="flex h-full w-14 shrink-0 items-center justify-center md:hidden">
             <button
               type="button"
-              onClick={() => {
-                if (mobileOpen) {
-                  setMobileOpen(false);
-                } else if (window.innerWidth < 768) {
-                  setMobileOpen(true);
-                } else {
-                  setCollapsed((value) => !value);
-                }
-              }}
-              aria-label={mobileOpen ? "Close navigation menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={mobileOpen ? "Close navigation menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="rounded-lg p-2 text-blue-200 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+              onClick={() => setMobileOpen((value) => !value)}
+              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              title={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-400 text-[#172554] shadow-md transition hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
-              {mobileOpen ? <XMarkIcon className="h-5 w-5" /> : <Bars3Icon className="h-5 w-5" />}
+              {mobileOpen ? <ChevronLeftIcon className="h-5 w-5" /> : <ChevronRightIcon className="h-5 w-5" />}
             </button>
           </div>
-          <div className="flex min-w-0 flex-1 items-center bg-[#172554] px-4 text-white sm:px-6">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300">HRDB-Lenard</p>
-              <h1 className="mt-0.5 truncate text-lg font-bold tracking-tight text-white sm:text-xl">
-                Welcome, {user?.name || user?.username || user?.email || "there"}
-              </h1>
-              <p className="mt-0.5 truncate text-xs text-blue-100 sm:text-sm">Your personal workspace and task overview.</p>
-            </div>
+          <div className="min-w-0 px-5 md:px-7">
+            <h1 className="truncate text-xl font-bold sm:text-2xl">{pageTitle}</h1>
+            {pageSubtitle && <p className="mt-0.5 max-w-full truncate text-xs text-blue-100 sm:text-sm">{pageSubtitle}</p>}
           </div>
         </header>
         {children}
       </div>
     </div>
   );
+}
+
+function getPageTitle(pathname: string) {
+  if (pathname.startsWith("/tasks")) return "Tasks";
+  if (pathname === "/dashboard") return "Dashboard";
+  if (pathname === "/employees/new") return "Add New Employee";
+  if (pathname === "/employees") return "Employee Directory";
+  if (pathname === "/attendance") return "Attendance";
+  if (pathname === "/contacts") return "Contacts";
+  if (pathname === "/employers") return "Employers";
+  if (pathname === "/settings") return "Account Settings";
+  if (pathname === "/admin/contacts") return "Manage Office Contacts";
+  if (pathname === "/admin") return "Admin Dashboard";
+  return "HRDB-Lenard";
+}
+
+function getPageSubtitle(pathname: string) {
+  if (pathname.startsWith("/tasks")) return "Plan, prioritize, and keep your work moving.";
+  if (pathname === "/dashboard") return "Your personal workspace and task overview.";
+  if (pathname === "/employees/new") return "Create an employee profile and record their work information.";
+  if (pathname === "/employees") return "Employee directory and assignment details.";
+  if (pathname === "/attendance") return "Attendance tracking and records.";
+  if (pathname === "/contacts") return "Suppliers, contractors, and office service providers.";
+  if (pathname === "/employers") return "Manage employer, branch, and government information.";
+  if (pathname === "/settings") return "Profile details and account security.";
+  if (pathname === "/admin/contacts") return "Manage office contacts and service providers.";
+  if (pathname === "/admin") return "Manage user access and account verification.";
+  return "";
 }
