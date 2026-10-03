@@ -136,19 +136,21 @@ export default function DashboardPage() {
             ) : reminders.birthdayReminders.length === 0 ? (
               <p className="py-4 text-sm text-gray-600">No upcoming birthdays this month.</p>
             ) : (
-              <div className="mt-3 grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto_auto] gap-x-2 text-xs">
-                <div className="border-b border-amber-200 pb-2 font-semibold text-gray-600">Name</div>
-                <div className="border-b border-amber-200 pb-2 font-semibold text-gray-600">Branch</div>
-                <div className="border-b border-amber-200 pb-2 text-center font-semibold text-gray-600">Day</div>
-                <div className="border-b border-amber-200 pb-2 text-right font-semibold text-gray-600">Birthday date</div>
-                {reminders.birthdayReminders.map((birthday) => (
-                  <div key={`${birthday.name}-${birthday.date}`} className="contents">
-                    <span className="truncate border-b border-amber-200/70 py-2 font-medium text-gray-900">{birthday.name}</span>
-                    <span className="truncate border-b border-amber-200/70 py-2 text-gray-700">{birthday.branch || "Not set"}</span>
-                    <span className="border-b border-amber-200/70 py-2 text-center text-gray-700">{birthday.day}</span>
-                    <time dateTime={birthday.date} className="whitespace-nowrap border-b border-amber-200/70 py-2 text-right text-amber-900">{new Date(birthday.date).toLocaleDateString()}</time>
-                  </div>
-                ))}
+              <div className="mt-3 max-h-[190px] overflow-y-auto pr-4">
+                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_42px_76px] gap-x-3 text-xs">
+                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600">Name</div>
+                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600">Branch</div>
+                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600">Day</div>
+                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600">Date</div>
+                  {reminders.birthdayReminders.map((birthday) => (
+                    <div key={`${birthday.name}-${birthday.date}`} className="contents">
+                      <span className="truncate border-b border-amber-200/70 py-2 font-medium text-gray-900">{birthday.name}</span>
+                      <span className="truncate border-b border-amber-200/70 py-2 text-gray-700">{birthday.branch || "Not set"}</span>
+                      <span className="border-b border-amber-200/70 py-2 text-center text-gray-700">{birthday.day}</span>
+                      <time dateTime={birthday.date} className="whitespace-nowrap border-b border-amber-200/70 py-2 text-center text-amber-900">{new Date(birthday.date).toLocaleDateString("en-US", { month: "short", day: "2-digit", timeZone: "UTC" })}</time>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

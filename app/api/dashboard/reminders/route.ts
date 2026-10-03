@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
                 date: date.toISOString(),
               }]
             : [];
-        }).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5))
+        }).sort((a, b) => a.date.localeCompare(b.date)))
       : [];
 
     return NextResponse.json({ upcomingTasks, birthdayReminders, canViewBirthdays });
