@@ -55,13 +55,21 @@ export async function GET(req: NextRequest) {
     const canViewBirthdays = user.role === "ADMIN" || user.accessiblePages.includes("/employees");
     const birthdayReminders = canViewBirthdays
       ? await prisma.employee.findMany({
-          where: { dateOfBirth: { not: null } },
-          select: { firstName: true, lastName: true, dateOfBirth: true },
+          where: {
+            dateOfBirth: { not: null },
+            status: { in: ["Regular", "Contractual", "Trainee", "Leave"] },
+          },
+          select: { firstName: true, lastName: true, branch: true, dateOfBirth: true },
         }).then((employees) => employees.flatMap((employee) => {
           if (!employee.dateOfBirth) return [];
           const date = nextBirthday(employee.dateOfBirth, today, endOfMonth);
           return date
-            ? [{ name: `${employee.firstName} ${employee.lastName}`, date: date.toISOString() }]
+            ? [{
+                name: `${employee.firstName} ${employee.lastName}`,
+                branch: employee.branch,
+                day: date.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+                date: date.toISOString(),
+              }]
             : [];
         }).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5))
       : [];

@@ -1,51 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowPathIcon, CakeIcon, FlagIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { RECURRENCE_OPTIONS, type TaskRecurrence } from "@/lib/taskRecurrence";
 
 type Task = {
-  id: number;
-  title: string;
-  description: string | null;
   status: "PENDING" | "COMPLETED";
-  priority: "LOW" | "MEDIUM" | "HIGH";
-  category: string | null;
-  notes: string | null;
-  recurrence: TaskRecurrence;
-  isFlagged: boolean;
   dueDate: string | null;
-  createdAt: string;
-};
-
-type TaskFilter = "PENDING" | "COMPLETED" | "OVERDUE";
-
-type TaskForm = {
-  title: string;
-  description: string;
-  priority: Task["priority"];
-  category: string;
-  notes: string;
-  recurrence: TaskRecurrence;
-  isFlagged: boolean;
-  dueDate: string;
 };
 
 type DashboardReminders = {
   upcomingTasks: { id: number; title: string; dueDate: string; status: string; isFlagged: boolean }[];
-  birthdayReminders: { name: string; date: string }[];
+  birthdayReminders: { name: string; branch: string | null; day: string; date: string }[];
   canViewBirthdays: boolean;
 };
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState<TaskFilter | null>(null);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const taskPanelRef = useRef<HTMLElement | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editingForm, setEditingForm] = useState<TaskForm | null>(null);
-  const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
   const [taskSummary, setTaskSummary] = useState({
     total: 0,
     pending: 0,
@@ -56,29 +26,11 @@ export default function DashboardPage() {
   const [reminders, setReminders] = useState<DashboardReminders>({ upcomingTasks: [], birthdayReminders: [], canViewBirthdays: false });
 
   useEffect(() => {
-    if (!selectedFilter) return;
-    const closeTaskList = (event: MouseEvent) => {
-      if (taskPanelRef.current && !taskPanelRef.current.contains(event.target as Node)) {
-        setSelectedFilter(null);
-        setSelectedTask(null);
-      }
-    };
-    document.addEventListener("mousedown", closeTaskList);
-    return () => document.removeEventListener("mousedown", closeTaskList);
-  }, [selectedFilter]);
-
-  useEffect(() => {
     fetch("/api/tasks")
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Unable to load tasks");
-        const tasks = (data.tasks as Task[]).map((task) => ({
-          ...task,
-          notes: task.notes || null,
-          recurrence: task.recurrence || "NONE",
-          isFlagged: Boolean(task.isFlagged),
-        }));
-        setTasks(tasks);
+        const tasks = data.tasks as Task[];
         const overdue = tasks.filter(
           (task) =>
             task.status === "PENDING" &&
@@ -105,165 +57,13 @@ export default function DashboardPage() {
       .catch((reminderError: Error) => setError(reminderError.message));
   }, []);
 
-  const selectedTasks = tasks.filter((task) => {
-    if (selectedFilter === "OVERDUE") {
-      return (
-        task.status === "PENDING" &&
-        task.dueDate &&
-        new Date(task.dueDate) < new Date()
-      );
-    }
-    return selectedFilter ? task.status === selectedFilter : false;
-  });
-
-  const moveTask = async (taskId: number, targetIndex: number) => {
-    const currentIndex = selectedTasks.findIndex((task) => task.id === taskId);
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selectedTasks.length) return;
-
-    const reorderedSelected = [...selectedTasks];
-    const [movedTask] = reorderedSelected.splice(currentIndex, 1);
-    reorderedSelected.splice(targetIndex, 0, movedTask);
-    let selectedIndex = 0;
-    const reorderedTasks = tasks.map((task) =>
-      selectedTasks.some((selected) => selected.id === task.id)
-        ? reorderedSelected[selectedIndex++]
-        : task
-    );
-    setTasks(reorderedTasks);
-
-    try {
-      const res = await fetch("/api/tasks/reorder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskIds: reorderedTasks.map((task) => task.id) }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unable to save task order");
-    } catch (reorderError) {
-      setError(reorderError instanceof Error ? reorderError.message : "Unable to save task order");
-    }
-  };
-
-  const reorderTasks = (taskId: number, direction: "up" | "down") => {
-    const currentIndex = selectedTasks.findIndex((task) => task.id === taskId);
-    moveTask(taskId, direction === "up" ? currentIndex - 1 : currentIndex + 1);
-  };
-
-  const taskCardClass = (filter: TaskFilter) => {
-    return `rounded-lg border border-gray-300 bg-white p-5 text-left shadow transition hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-700 ${
-      selectedFilter === filter ? "ring-2 ring-gray-700" : ""
-    }`;
-  };
-
-  const updateTask = async (task: Task, changes: Partial<Task>) => {
-    setBusyTaskId(task.id);
-    try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(changes),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unable to update task");
-      const updatedTask = { ...task, ...changes } as Task;
-      const nextTask = data.nextTask as Task | null;
-      setTasks((current) => {
-        const nextTasks = [
-          ...current.map((item) => (item.id === task.id ? updatedTask : item)),
-          ...(nextTask ? [nextTask] : []),
-        ];
-        setTaskSummary({
-          total: nextTasks.length,
-          pending: nextTasks.filter((item) => item.status === "PENDING").length,
-          completed: nextTasks.filter((item) => item.status === "COMPLETED").length,
-          overdue: nextTasks.filter(
-            (item) =>
-              item.status === "PENDING" &&
-              !!item.dueDate &&
-              new Date(item.dueDate) < new Date()
-          ).length,
-        });
-        return nextTasks;
-      });
-      setSelectedTask(updatedTask);
-      return true;
-    } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Unable to update task");
-      return false;
-    } finally {
-      setBusyTaskId(null);
-    }
-  };
-
-  const openEdit = (task: Task) => {
-    setEditingTask(task);
-    setEditingForm({
-      title: task.title,
-      description: task.description || "",
-      priority: task.priority,
-      category: task.category || "",
-      notes: task.notes || "",
-      recurrence: task.recurrence || "NONE",
-      isFlagged: Boolean(task.isFlagged),
-      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
-    });
-  };
-
-  const saveEdit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!editingTask || !editingForm) return;
-    const changes = {
-      ...editingForm,
-      description: editingForm.description || null,
-      category: editingForm.category || null,
-      notes: editingForm.notes || null,
-      dueDate: editingForm.dueDate
-        ? new Date(`${editingForm.dueDate}T00:00:00`).toISOString()
-        : null,
-    };
-    if (await updateTask(editingTask, changes)) {
-      setEditingTask(null);
-      setEditingForm(null);
-    }
-  };
-
-  const deleteTask = async (task: Task) => {
-    if (!window.confirm("Delete this task? This action cannot be undone.")) return;
-    setBusyTaskId(task.id);
-    try {
-      const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unable to delete task");
-      setTasks((current) => {
-        const nextTasks = current.filter((item) => item.id !== task.id);
-        setTaskSummary({
-          total: nextTasks.length,
-          pending: nextTasks.filter((item) => item.status === "PENDING").length,
-          completed: nextTasks.filter((item) => item.status === "COMPLETED").length,
-          overdue: nextTasks.filter(
-            (item) =>
-              item.status === "PENDING" &&
-              !!item.dueDate &&
-              new Date(item.dueDate) < new Date()
-          ).length,
-        });
-        return nextTasks;
-      });
-      setSelectedTask(null);
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete task");
-    } finally {
-      setBusyTaskId(null);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl">
+      <div className="w-full">
         {error && <p className="mb-4 text-red-600">{error}</p>}
 
-        <div className="grid items-start gap-6 lg:grid-cols-2">
-          <section ref={taskPanelRef} className="rounded-lg bg-white p-5 shadow">
+        <div className="grid items-stretch gap-4 lg:grid-cols-3">
+          <section className="order-2 flex h-full flex-col rounded-lg bg-white p-5 shadow">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
               <Link
@@ -276,36 +76,24 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => setSelectedFilter("PENDING")}
-              className={taskCardClass("PENDING")}
-            >
+            <div className="rounded-lg border border-gray-300 bg-white p-5 shadow">
               <p className="text-sm text-gray-600">Pending tasks</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
                 {taskSummary.pending}
               </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFilter("COMPLETED")}
-              className={taskCardClass("COMPLETED")}
-            >
+            </div>
+            <div className="rounded-lg border border-gray-300 bg-white p-5 shadow">
               <p className="text-sm text-gray-600">Completed tasks</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
                 {taskSummary.completed}
               </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFilter("OVERDUE")}
-              className={taskCardClass("OVERDUE")}
-            >
+            </div>
+            <div className="rounded-lg border border-gray-300 bg-white p-5 shadow">
               <p className="text-sm text-gray-600">Overdue tasks</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
                 {taskSummary.overdue}
               </p>
-            </button>
+            </div>
             </div>
             <div className="mt-5">
               <div className="flex justify-between text-sm text-gray-600">
@@ -329,214 +117,45 @@ export default function DashboardPage() {
                 />
               </div>
             </div>
-            {selectedFilter && (
-              <div className="mt-6 border-t border-gray-200 pt-5">
-              <div className="flex items-center justify-between gap-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedFilter === "PENDING"
-                    ? "Pending tasks"
-                    : selectedFilter === "COMPLETED"
-                      ? "Completed tasks"
-                      : "Overdue tasks"}
-                </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedFilter(null)}
-                className="text-sm text-gray-500 hover:text-gray-900"
-              >
-                Clear
-              </button>
-            </div>
-            {selectedTasks.length === 0 ? (
-              <p className="mt-4 text-gray-600">No tasks in this category.</p>
-            ) : (
-              <ul className="mt-4 max-h-72 divide-y divide-gray-200 overflow-y-auto pr-2">
-                {selectedTasks.map((task) => (
-                  <li
-                    key={task.id}
-                    className={`py-3 first:pt-0 last:pb-0 ${
-                      selectedTask?.id === task.id ? "rounded-lg bg-gray-50" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="flex shrink-0 flex-col gap-1">
-                        <button
-                          type="button"
-                          aria-label={`Move ${task.title} up`}
-                          title="Move up"
-                          disabled={selectedTasks.indexOf(task) === 0}
-                          onClick={() => reorderTasks(task.id, "up")}
-                          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
-                        >
-                          <svg
-                            aria-hidden="true"
-                            className="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="m5 12 5-5 5 5" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Move ${task.title} down`}
-                          title="Move down"
-                          disabled={selectedTasks.indexOf(task) === selectedTasks.length - 1}
-                          onClick={() => reorderTasks(task.id, "down")}
-                          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
-                        >
-                          <svg
-                            aria-hidden="true"
-                            className="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="m5 8 5 5 5-5" />
-                          </svg>
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        aria-expanded={selectedTask?.id === task.id}
-                        onClick={() =>
-                          setSelectedTask((current) =>
-                            current?.id === task.id ? null : task
-                          )
-                        }
-                        className="min-w-0 flex-1 rounded p-3 text-left hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-700"
-                      >
-                        <p
-                          className={`font-medium ${
-                            task.status === "COMPLETED"
-                              ? "text-gray-400 line-through"
-                              : "text-gray-900"
-                          }`}
-                        >
-                          {task.title}
-                        </p>
-                      </button>
-                    </div>
-                    {selectedTask?.id === task.id && (
-                      <div className="border-t border-gray-200 px-3 pb-3 pt-4">
-                        <p className="text-sm text-gray-500">Task details</p>
-                        <dl className="mt-3 grid gap-4 text-sm sm:grid-cols-2">
-                          <div>
-                            <dt className="text-gray-500">Status</dt>
-                            <dd className="mt-1 font-medium text-gray-900">
-                              {task.status === "COMPLETED" ? "Completed" : "Pending"}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-gray-500">Priority</dt>
-                            <dd className="mt-1 font-medium text-gray-900">{task.priority}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-gray-500">Repeat</dt>
-                            <dd className="mt-1 font-medium text-gray-900">{task.recurrence && task.recurrence !== "NONE" ? task.recurrence.toLowerCase() : "Does not repeat"}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-gray-500">Flag</dt>
-                            <dd className="mt-1 font-medium text-gray-900">{task.isFlagged ? "Flagged" : "Not flagged"}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-gray-500">Category</dt>
-                            <dd className="mt-1 text-gray-900">{task.category || "None"}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-gray-500">Due date</dt>
-                            <dd className="mt-1 text-gray-900">
-                              {task.dueDate
-                                ? new Date(task.dueDate).toLocaleDateString()
-                                : "No due date"}
-                            </dd>
-                          </div>
-                          <div className="sm:col-span-2">
-                            <dt className="text-gray-500">Description</dt>
-                            <dd className="mt-1 whitespace-pre-wrap text-gray-900">
-                              {task.description || "No description"}
-                            </dd>
-                          </div>
-                          <div className="sm:col-span-2">
-                            <dt className="text-gray-500">Notes</dt>
-                            <dd className="mt-1 whitespace-pre-wrap text-gray-900">{task.notes || "No notes"}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-gray-500">Created</dt>
-                            <dd className="mt-1 text-gray-900">
-                              {new Date(task.createdAt).toLocaleString()}
-                            </dd>
-                          </div>
-                        </dl>
-                        <div className="mt-5 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            disabled={busyTaskId === task.id}
-                            onClick={() =>
-                              updateTask(task, {
-                                status:
-                                  task.status === "COMPLETED" ? "PENDING" : "COMPLETED",
-                              })
-                            }
-                            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50"
-                          >
-                            {task.status === "COMPLETED"
-                              ? "Mark pending"
-                              : "Mark complete"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openEdit(task)}
-                            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyTaskId === task.id}
-                            onClick={() => deleteTask(task)}
-                            className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {selectedTasks.length > 1 && (
-              <p className="mt-4 text-xs text-gray-500">
-                Use the up and down arrows to change the order.
-              </p>
-            )}
-            <Link
-              href={
-                selectedFilter === "PENDING"
-                  ? "/tasks/pending"
-                  : selectedFilter === "COMPLETED"
-                    ? "/tasks/completed"
-                    : "/tasks/overdue"
-              }
-              className="mt-5 inline-block text-sm font-medium text-blue-600 hover:underline"
-            >
-              Open full list
+            <Link href="/tasks" className="mt-5 inline-flex w-fit items-center rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900">
+              Open tasks
             </Link>
-            </div>
-          )}
         </section>
-        </div>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-2">
-          <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <section className="order-1 flex h-full flex-col rounded-lg border border-amber-200 bg-amber-50/60 p-5">
+          <div className="flex items-center justify-between gap-3 border-b border-amber-200/70 pb-3">
+            <div>
+              <h2 className="font-semibold text-gray-900">Birthday Notifications</h2>
+              <p className="mt-1 text-xs text-gray-600">Employee birthdays this month</p>
+            </div>
+            <CakeIcon className="h-5 w-5 text-amber-700" />
+          </div>
+          <div className="flex-1">
+            {!reminders.canViewBirthdays ? (
+              <p className="py-4 text-sm text-gray-600">Employees access is required to view birthday reminders.</p>
+            ) : reminders.birthdayReminders.length === 0 ? (
+              <p className="py-4 text-sm text-gray-600">No upcoming birthdays this month.</p>
+            ) : (
+              <div className="mt-3 grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto_auto] gap-x-2 text-xs">
+                <div className="border-b border-amber-200 pb-2 font-semibold text-gray-600">Name</div>
+                <div className="border-b border-amber-200 pb-2 font-semibold text-gray-600">Branch</div>
+                <div className="border-b border-amber-200 pb-2 text-center font-semibold text-gray-600">Day</div>
+                <div className="border-b border-amber-200 pb-2 text-right font-semibold text-gray-600">Birthday date</div>
+                {reminders.birthdayReminders.map((birthday) => (
+                  <div key={`${birthday.name}-${birthday.date}`} className="contents">
+                    <span className="truncate border-b border-amber-200/70 py-2 font-medium text-gray-900">{birthday.name}</span>
+                    <span className="truncate border-b border-amber-200/70 py-2 text-gray-700">{birthday.branch || "Not set"}</span>
+                    <span className="border-b border-amber-200/70 py-2 text-center text-gray-700">{birthday.day}</span>
+                    <time dateTime={birthday.date} className="whitespace-nowrap border-b border-amber-200/70 py-2 text-right text-amber-900">{new Date(birthday.date).toLocaleDateString()}</time>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {reminders.canViewBirthdays && <Link href="/employees" className="mt-auto pt-3 text-sm font-semibold text-amber-900 hover:underline">Open employees</Link>}
+        </section>
+
+        <section className="order-3 flex min-h-48 h-full flex-col rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
               <div>
                 <h2 className="font-semibold text-gray-900">Upcoming Events</h2>
@@ -562,69 +181,9 @@ export default function DashboardPage() {
               )}
             </div>
             <Link href="/tasks" className="mt-auto pt-3 text-sm font-semibold text-blue-800 hover:underline">Open tasks</Link>
-          </div>
-
-          <div className="flex h-full flex-col rounded-lg border border-amber-200 bg-amber-50/60 p-5">
-            <div className="flex items-center justify-between gap-3 border-b border-amber-200/70 pb-3">
-              <div>
-                <h2 className="font-semibold text-gray-900">Birthday Notifications</h2>
-                <p className="mt-1 text-xs text-gray-600">Employee birthdays this month</p>
-              </div>
-              <CakeIcon className="h-5 w-5 text-amber-700" />
-            </div>
-            <div className="flex-1">
-              {!reminders.canViewBirthdays ? (
-                <p className="py-4 text-sm text-gray-600">Employees access is required to view birthday reminders.</p>
-              ) : reminders.birthdayReminders.length === 0 ? (
-                <p className="py-4 text-sm text-gray-600">No upcoming birthdays this month.</p>
-              ) : (
-                <ul className="divide-y divide-amber-200/70">
-                  {reminders.birthdayReminders.map((birthday) => (
-                    <li key={`${birthday.name}-${birthday.date}`} className="flex items-center justify-between gap-3 py-3 first:pt-3 last:pb-0">
-                      <span className="truncate text-sm font-medium text-gray-900">{birthday.name}</span>
-                      <time dateTime={birthday.date} className="shrink-0 text-xs font-medium text-amber-900">{new Date(birthday.date).toLocaleDateString()}</time>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            {reminders.canViewBirthdays && <Link href="/employees" className="mt-auto pt-3 text-sm font-semibold text-amber-900 hover:underline">Open employees</Link>}
-          </div>
         </section>
+        </div>
 
-            {editingTask && editingForm && (
-              <div className="fixed inset-0 z-10 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
-                <form onSubmit={saveEdit} className="grid w-full max-w-lg gap-3 rounded-lg bg-white p-6 shadow-xl">
-                  <h2 className="text-xl font-semibold text-gray-900">Edit task</h2>
-                  <input required value={editingForm.title} onChange={(event) => setEditingForm({ ...editingForm, title: event.target.value })} className="w-full rounded border border-gray-400 p-2 text-gray-900" />
-                  <textarea value={editingForm.description} onChange={(event) => setEditingForm({ ...editingForm, description: event.target.value })} rows={3} placeholder="Description" className="w-full rounded border border-gray-400 p-2 text-gray-900" />
-                  <textarea value={editingForm.notes} onChange={(event) => setEditingForm({ ...editingForm, notes: event.target.value })} rows={2} maxLength={2000} placeholder="Notes" className="w-full rounded border border-gray-400 p-2 text-gray-900" />
-                  <select value={editingForm.priority} onChange={(event) => setEditingForm({ ...editingForm, priority: event.target.value as Task["priority"] })} className="w-full rounded border border-gray-400 p-2 text-gray-900">
-                    <option value="LOW">Low priority</option>
-                    <option value="MEDIUM">Medium priority</option>
-                    <option value="HIGH">High priority</option>
-                  </select>
-                  <input value={editingForm.category} onChange={(event) => setEditingForm({ ...editingForm, category: event.target.value })} placeholder="Category" className="w-full rounded border border-gray-400 p-2 text-gray-900" />
-                  <input type="date" value={editingForm.dueDate} onChange={(event) => setEditingForm({ ...editingForm, dueDate: event.target.value })} required={editingForm.recurrence !== "NONE"} className="w-full rounded border border-gray-400 p-2 text-gray-900" />
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      Repeat
-                      <select value={editingForm.recurrence} onChange={(event) => setEditingForm({ ...editingForm, recurrence: event.target.value as TaskRecurrence })} className="rounded border border-gray-400 bg-white p-2 text-gray-900">
-                        {RECURRENCE_OPTIONS.map((option) => <option key={option} value={option}>{option === "NONE" ? "Does not repeat" : option.charAt(0) + option.slice(1).toLowerCase()}</option>)}
-                      </select>
-                    </label>
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <input type="checkbox" checked={editingForm.isFlagged} onChange={(event) => setEditingForm({ ...editingForm, isFlagged: event.target.checked })} className="h-4 w-4 accent-rose-600" />
-                      <FlagIcon className="h-4 w-4 text-rose-600" /> Flag task
-                    </label>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => { setEditingTask(null); setEditingForm(null); }} className="rounded border border-gray-500 bg-white px-4 py-2 text-gray-900 hover:bg-gray-100">Cancel</button>
-                    <button type="submit" className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">Save changes</button>
-                  </div>
-                </form>
-              </div>
-            )}
       </div>
     </main>
   );

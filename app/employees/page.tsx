@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -103,14 +104,12 @@ function ViewField({ label, value }: { label: string; value: React.ReactNode }) 
 const branches = ["Arya 1", "Arya 2", "Yasuo", "Shangri-la", "Greenhills", "Magnolia", "MyDay", "Warehouse", "Office", "Vape", "Commissary", "Others"];
 const positions = ["President", "Corporate Secretary", "Treasurer", "Accountant", "Purchaser", "IT", "Admin", "Admin Staff", "Office Staff", "Store In-charge", "Commissary Staff", "Driver", "Sales Staff", "Dining Staff", "Cashier", "Kitchen Staff", "Dispatcher", "Receptionist", "Warehouse Staff"];
 const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
+const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [query, setQuery] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [showSearch, setShowSearch] = useState(true);
-  const [showSearchFilters, setShowSearchFilters] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [employerFilter, setEmployerFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [message, setMessage] = useState("");
@@ -151,7 +150,10 @@ export default function EmployeesPage() {
         ? `${employee.employer.name} ${employee.employer.company || ""}`.toLowerCase()
         : "";
       return (!search || fullName.includes(search) || employee.employeeCode.toLowerCase().includes(search) || employer.includes(search))
-        && (!statusFilter || employee.status === statusFilter)
+        && (statusFilter === "ALL"
+          || (statusFilter === "ACTIVE"
+            ? activeEmployeeStatuses.includes(employee.status || "")
+            : employee.status === statusFilter))
         && (!employerFilter || employee.employer?.id.toString() === employerFilter)
         && (!branchFilter || employee.branch === branchFilter);
     });
@@ -161,104 +163,67 @@ export default function EmployeesPage() {
     () => [...new Set(employees.map((employee) => employee.branch).filter((value): value is string => Boolean(value)))].sort(),
     [employees]
   );
-  const hasFilters = Boolean(query || statusFilter || employerFilter || branchFilter);
+  const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter);
   const clearFilters = () => {
     setQuery("");
-    setSearchInput("");
-    setStatusFilter("");
+    setStatusFilter("ACTIVE");
     setEmployerFilter("");
     setBranchFilter("");
-  };
-  const submitSearch = (event: React.FormEvent) => {
-    event.preventDefault();
-    setQuery(searchInput);
   };
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
-      <div className="max-w-6xl">
-        <div className="mb-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowSearch((current) => !current)}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-semibold ${showSearch ? "border-blue-800 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}
-                  aria-expanded={showSearch}
-                >
-                  Search
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowSearchFilters((current) => !current)}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-semibold ${showSearchFilters ? "border-blue-800 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}
-                  aria-expanded={showSearchFilters}
-                >
-                  Filters
-                </button>
-                <Link
-                  href="/employees/new"
-                  aria-label="Add employee"
-                  title="Add employee"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#172554] text-2xl font-light leading-none text-white shadow-sm hover:bg-blue-900"
-                >
-                  +
-                </Link>
-              </div>
-              <p className="text-xs text-gray-600">
-                Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-          {showSearchFilters && <div className="mb-4 flex justify-end">
-            <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
-          </div>}
-          {showSearch && <form onSubmit={submitSearch} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <label className="grid flex-1 gap-1.5 text-sm">
+      <div className="w-full">
+        <div className="mb-5 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(130px,170px))_auto]">
+            <label className="grid min-w-0 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Search</span>
               <input
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Name, code, or employer"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
             </label>
-            <button type="submit" className="rounded-lg bg-[#172554] px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900">Search</button>
-          </form>}
-          {showSearchFilters && <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="grid gap-1.5 text-sm">
+            <label className="grid min-w-0 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Status</span>
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="">All statuses</option>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="ACTIVE">Active employees</option>
+                <option value="ALL">All statuses</option>
                 {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
             </label>
-            <label className="grid gap-1.5 text-sm">
+            <label className="grid min-w-0 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Employer</span>
-              <select value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              <select value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 <option value="">All employers</option>
                 {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
               </select>
             </label>
-            <label className="grid gap-1.5 text-sm">
+            <label className="grid min-w-0 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Branch</span>
-              <select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              <select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 <option value="">All branches</option>
                 {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
               </select>
             </label>
-          </div>}
+            <div className="flex items-center justify-between gap-3 sm:col-span-2 lg:col-span-4 xl:col-span-1 xl:justify-end">
+              <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
+              <Link href="/employees/new" aria-label="Add employee" title="Add employee" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#172554] text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                <PlusIcon className="h-5 w-5" />
+              </Link>
+            </div>
+          </div>
+          <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-600">
+            Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
+          </p>
         </div>
 
         {message && <p className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
         {filteredEmployees.length === 0 ? (
           <p className="mt-4 rounded-xl border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">No employees found.</p>
         ) : (
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {filteredEmployees.map((employee) => {
               const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
               return (
@@ -278,8 +243,15 @@ export default function EmployeesPage() {
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div className="grid content-start gap-1">
-                      <span className="font-semibold text-green-600">{["Regular", "Contractual", "Trainee", "Leave"].includes(employee.status || "") ? "Active" : employee.status || "Active"}</span>
-                      <span className="font-medium text-gray-700">{employee.status || "Not set"}</span>
+                      {(() => {
+                        const isActive = activeEmployeeStatuses.includes(employee.status || "");
+                        return (
+                          <>
+                            <span className={`font-semibold ${isActive ? "text-green-600" : "text-red-600"}`}>{isActive ? "Active" : "Inactive"}</span>
+                            <span className={`font-medium ${isActive ? "text-gray-700" : "text-red-700"}`}>{employee.status || "Not set"}</span>
+                          </>
+                        );
+                      })()}
                     </div>
                     <div className="grid min-w-0 content-start gap-1">
                       <span className="truncate text-gray-900">{employee.branch || "Branch not set"}</span>
