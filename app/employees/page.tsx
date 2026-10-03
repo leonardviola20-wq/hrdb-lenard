@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { FunnelIcon, MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -113,6 +113,8 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [employerFilter, setEmployerFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -180,6 +182,7 @@ export default function EmployeesPage() {
     [employees]
   );
   const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter);
+  const showSearchField = filtersOpen || mobileSearchOpen;
   const clearFilters = () => {
     setQuery("");
     setStatusFilter("ACTIVE");
@@ -191,16 +194,37 @@ export default function EmployeesPage() {
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
         <div className="mb-5 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(130px,170px))_auto]">
-            <label className="grid min-w-0 gap-1.5 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setMobileSearchOpen((current) => !current)} aria-expanded={mobileSearchOpen} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 md:hidden">
+                <MagnifyingGlassIcon className="h-4 w-4" /> {mobileSearchOpen ? "Close search" : "Search"}
+              </button>
+              <button type="button" onClick={() => setFiltersOpen((current) => !current)} aria-expanded={filtersOpen} className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition ${filtersOpen ? "border-blue-700 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}>
+                <FunnelIcon className="h-4 w-4" /> {filtersOpen ? "Hide filters" : "Filters"}
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
+              <Link href="/employees/new" aria-label="Add employee" title="Add employee" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#172554] text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                <PlusIcon className="h-5 w-5" />
+              </Link>
+            </div>
+          </div>
+
+          {showSearchField && <div className="mt-3 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(130px,170px))]">
+            <label className="grid min-w-0 gap-1.5 text-sm sm:col-span-2 lg:col-span-4">
               <span className="font-semibold text-gray-800">Search</span>
               <input
+                autoFocus={mobileSearchOpen}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Name, code, or employer"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
             </label>
+          </div>}
+
+          {filtersOpen && <div className="mt-3 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="grid min-w-0 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Status</span>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
@@ -223,13 +247,8 @@ export default function EmployeesPage() {
                 {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
               </select>
             </label>
-            <div className="flex items-center justify-between gap-3 sm:col-span-2 lg:col-span-4 xl:col-span-1 xl:justify-end">
-              <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
-              <Link href="/employees/new" aria-label="Add employee" title="Add employee" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#172554] text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300">
-                <PlusIcon className="h-5 w-5" />
-              </Link>
-            </div>
           </div>
+          }
           <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-600">
             {loading ? "Loading employees..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees</>}
           </p>

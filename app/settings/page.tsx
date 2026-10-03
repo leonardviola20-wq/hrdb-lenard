@@ -88,7 +88,7 @@ export default function SettingsPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="max-w-6xl">
         <div className="mb-6">
           {error && <p role="alert" className="mt-3 text-sm font-medium text-red-700">{error}</p>}
         </div>
