@@ -67,7 +67,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
 
   return (
     <aside
-      className={`${mobileOpen ? "fixed inset-x-0 top-[76px] flex h-[calc(100vh-76px)]" : "hidden md:flex"} relative z-20 shrink-0 flex-col bg-[#172554] text-white shadow-xl transition-[height,width] duration-300 md:sticky md:top-0 md:h-screen ${
+      className={`${mobileOpen ? "fixed inset-x-0 top-[76px] flex h-[calc(100dvh-76px)]" : "relative hidden md:sticky md:top-0 md:flex md:h-screen"} z-20 shrink-0 flex-col bg-[#172554] text-white shadow-xl transition-[height,width] duration-300 ${
         isCollapsed ? "md:w-[65px]" : "md:w-64"
       }`}
     >
@@ -190,6 +190,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pageSubtitle = getPageSubtitle(pathname);
 
   useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
     if (publicRoute) return;
 
     const loadUser = () => {
@@ -211,6 +220,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f8fafc] md:flex-row">
+      <header className="sticky top-0 z-40 flex h-[76px] shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:hidden" style={{ backgroundColor: "#172554" }}>
+        <div className="flex h-full w-14 shrink-0 items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setMobileOpen((value) => !value)}
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            title={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-400 text-[#172554] shadow-md transition hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          >
+            {mobileOpen ? <ChevronLeftIcon className="h-5 w-5" /> : <ChevronRightIcon className="h-5 w-5" />}
+          </button>
+        </div>
+        {mobileOpen ? (
+          <div className="flex min-w-0 items-center gap-2 px-3">
+            <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-400 text-base font-bold text-[#172554]">H</span>
+            <span className="truncate text-base font-bold tracking-tight">HRDB-Lenard</span>
+          </div>
+        ) : (
+          <div className="min-w-0 px-3">
+            <h1 className="truncate text-lg font-bold">{pageTitle}</h1>
+            {pageSubtitle && <p className="mt-0.5 truncate text-xs text-blue-100">{pageSubtitle}</p>}
+          </div>
+        )}
+      </header>
       <Sidebar
         collapsed={collapsed}
         onToggleCollapsed={() => setCollapsed((value) => !value)}
@@ -219,18 +252,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         user={user}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-[76px] shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:h-20">
-          <div className="flex h-full w-14 shrink-0 items-center justify-center md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileOpen((value) => !value)}
-              aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-              title={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-400 text-[#172554] shadow-md transition hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            >
-              {mobileOpen ? <ChevronLeftIcon className="h-5 w-5" /> : <ChevronRightIcon className="h-5 w-5" />}
-            </button>
-          </div>
+        <header className="sticky top-0 z-10 hidden h-20 shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:flex">
           <div className="min-w-0 px-5 md:px-7">
             <h1 className="truncate text-xl font-bold sm:text-2xl">{pageTitle}</h1>
             {pageSubtitle && <p className="mt-0.5 max-w-full truncate text-xs text-blue-100 sm:text-sm">{pageSubtitle}</p>}

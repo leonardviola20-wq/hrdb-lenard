@@ -108,6 +108,7 @@ const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [employerFilter, setEmployerFilter] = useState("");
@@ -127,19 +128,34 @@ export default function EmployeesPage() {
   }, [openMenuId]);
 
   useEffect(() => {
+    let active = true;
+    const loadingStartedAt = Date.now();
+
     fetch("/api/employees")
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to load employees");
-        setEmployees(data.employees);
+        if (active) setEmployees(data.employees);
       })
-      .catch((error: Error) => setMessage(error.message));
+      .catch((error: Error) => {
+        if (active) setMessage(error.message);
+      })
+      .finally(() => {
+        const remainingLoadingTime = Math.max(0, 600 - (Date.now() - loadingStartedAt));
+        window.setTimeout(() => {
+          if (active) setLoading(false);
+        }, remainingLoadingTime);
+      });
     fetch("/api/employers")
       .then(async (response) => {
         const data = await response.json();
         if (response.ok) setEmployers(data.employers);
       })
       .catch(() => {});
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const filteredEmployees = useMemo(() => {
@@ -215,12 +231,36 @@ export default function EmployeesPage() {
             </div>
           </div>
           <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees
+            {loading ? "Loading employees..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees</>}
           </p>
         </div>
 
         {message && <p className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
-        {filteredEmployees.length === 0 ? (
+        {loading ? (
+          <div role="status" aria-label="Loading employees" className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <span className="sr-only">Loading employees</span>
+            {Array.from({ length: 8 }, (_, index) => (
+              <div key={index} className="animate-pulse rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="mb-4 h-24 w-24 rounded-full bg-gray-200" />
+                <div className="h-4 w-2/3 rounded bg-gray-200" />
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="h-3 rounded bg-gray-100" />
+                  <div className="h-3 rounded bg-gray-100" />
+                  <div className="h-3 rounded bg-gray-100" />
+                  <div className="h-3 rounded bg-gray-100" />
+                </div>
+                <div className="mt-5 border-t border-gray-100 pt-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-3 rounded bg-gray-100" />
+                    <div className="h-3 rounded bg-gray-100" />
+                    <div className="h-3 rounded bg-gray-100" />
+                    <div className="h-3 rounded bg-gray-100" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredEmployees.length === 0 ? (
           <p className="mt-4 rounded-xl border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">No employees found.</p>
         ) : (
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
