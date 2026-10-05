@@ -38,11 +38,10 @@ type Employee = {
 };
 
 const profileTabs = [
-  "Personal Information",
-  "Contact Information",
-  "Emergency Information",
-  "Job Information",
-  "Government Information",
+  "Personal",
+  "Contacts",
+  "Employment",
+  "Government",
   "Assignment and Remarks",
 ] as const;
 
@@ -161,51 +160,68 @@ export default function EmployeeProfilePage() {
               </div>
 
               <div id="employee-profile-panel" role="tabpanel" aria-labelledby={`employee-profile-tab-${activeTabIndex}`} className="mt-4">
-              {activeTab === "Personal Information" && <ProfileSection title="Personal Information">
-                <Value label="First Name" value={employee.firstName} />
-                <Value label="Middle Name" value={employee.middleName} />
-                <Value label="Last Name" value={employee.lastName} />
-                <Value label="Date of Birth" value={dateText(employee.dateOfBirth)} />
-                <Value label="Age" value={employee.age} />
-                <Value label="Marital Status" value={employee.maritalStatus} />
-                <Value label="Gender" value={employee.gender} />
-              </ProfileSection>}
+              {activeTab === "Personal" && <div className="grid gap-5 xl:grid-cols-2">
+                <ProfileSection title="Personal">
+                  <div className="grid gap-5 sm:col-span-2">
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <Value label="First Name" value={employee.firstName} />
+                      <Value label="Middle Name" value={employee.middleName} />
+                      <Value label="Last Name" value={employee.lastName} />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <Value label="Date of Birth" value={dateText(employee.dateOfBirth)} />
+                      <Value label="Age" value={employee.age} />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <Value label="Gender" value={employee.gender} />
+                      <Value label="Marital Status" value={employee.maritalStatus} />
+                    </div>
+                  </div>
+                </ProfileSection>
+              </div>}
 
-              {activeTab === "Contact Information" && <ProfileSection title="Contact Information">
-                <Value label="Mobile Number" value={employee.mobileNumber} />
-                <Value label="Email" value={employee.email} />
-                <div className="sm:col-span-2"><Value label="Address" value={employee.address} /></div>
-              </ProfileSection>}
+              {activeTab === "Contacts" && <div className="grid gap-5 xl:grid-cols-2">
+                <ProfileSection title="Contact Information">
+                  <Value label="Mobile Number" value={employee.mobileNumber} />
+                  <Value label="Email" value={employee.email} />
+                  <div className="sm:col-span-2"><Value label="Address" value={employee.address} /></div>
+                </ProfileSection>
+                <ProfileSection title="Emergency Information">
+                  <Value label="Contact Person" value={employee.emergencyName} />
+                  <Value label="Contact Number" value={employee.emergencyNumber} />
+                  <Value label="Relation" value={employee.emergencyRelation} />
+                  <div className="sm:col-span-2"><Value label="Address" value={employee.emergencyAddress} /></div>
+                </ProfileSection>
+              </div>}
 
-              {activeTab === "Emergency Information" && <ProfileSection title="Emergency Information">
-                <Value label="Contact Person" value={employee.emergencyName} />
-                <Value label="Contact Number" value={employee.emergencyNumber} />
-                <Value label="Relation" value={employee.emergencyRelation} />
-                <div className="sm:col-span-2"><Value label="Address" value={employee.emergencyAddress} /></div>
-              </ProfileSection>}
+              {activeTab === "Employment" && <div className="grid gap-5 xl:grid-cols-2">
+                <ProfileSection title="Employment">
+                  <Value label="Biometric No." value={employee.biometricNo} />
+                  <Value label="Employer" value={employee.employer?.name} />
+                  <Value label="Status" value={employee.status} />
+                  <Value label="Branch" value={employee.branch} />
+                  <Value label="Position" value={employee.position} />
+                  <Value label="Date Started" value={dateText(employee.dateStarted)} />
+                  <Value label="Ended" value={dateText(employee.endDate)} />
+                </ProfileSection>
+              </div>}
 
-              {activeTab === "Job Information" && <ProfileSection title="Job Information">
-                <Value label="Biometric No." value={employee.biometricNo} />
-                <Value label="Employer" value={employee.employer?.name} />
-                <Value label="Status" value={employee.status} />
-                <Value label="Branch" value={employee.branch} />
-                <Value label="Position" value={employee.position} />
-                <Value label="Date Started" value={dateText(employee.dateStarted)} />
-                <Value label="Ended" value={dateText(employee.endDate)} />
-              </ProfileSection>}
+              {activeTab === "Government" && <div className="grid gap-5 xl:grid-cols-2">
+                <ProfileSection title="Government">
+                  <Value label="SSS" value={employee.sssNumber} />
+                  <Value label="Pag-IBIG" value={employee.pagIbigNumber} />
+                  <Value label="PhilHealth" value={employee.philHealth} />
+                  <Value label="TIN" value={employee.tinNumber} />
+                </ProfileSection>
+              </div>}
 
-              {activeTab === "Government Information" && <ProfileSection title="Government Information">
-                <Value label="SSS" value={employee.sssNumber} />
-                <Value label="Pag-IBIG" value={employee.pagIbigNumber} />
-                <Value label="PhilHealth" value={employee.philHealth} />
-                <Value label="TIN" value={employee.tinNumber} />
-              </ProfileSection>}
-
-              {activeTab === "Assignment and Remarks" && <ProfileSection title="Assignment and Remarks">
-                <Value label="Assigned By" value={employee.assignedBy} />
-                <Value label="Assigned At" value={dateText(employee.assignedAt)} />
-                <div className="sm:col-span-2"><Value label="Remarks" value={employee.remarks} /></div>
-              </ProfileSection>}
+              {activeTab === "Assignment and Remarks" && <div className="grid gap-5 xl:grid-cols-2">
+                <ProfileSection title="Assignment and Remarks">
+                  <Value label="Assigned By" value={employee.assignedBy} />
+                  <Value label="Assigned At" value={dateText(employee.assignedAt)} />
+                  <div className="sm:col-span-2"><Value label="Remarks" value={employee.remarks} /></div>
+                </ProfileSection>
+              </div>}
               </div>
             </div>
           </>

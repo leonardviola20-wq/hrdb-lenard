@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowPathIcon, BuildingOffice2Icon, BuildingStorefrontIcon, CakeIcon, ClipboardDocumentListIcon, FlagIcon, IdentificationIcon, UserGroupIcon, UserMinusIcon, UserPlusIcon, UsersIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Task = {
@@ -36,6 +36,7 @@ export default function DashboardPage() {
     overdue: 0,
   });
   const [error, setError] = useState("");
+  const [refreshingReminders, setRefreshingReminders] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({ totalEmployees: null, activeEmployees: null, inactiveEmployees: null, newlyHired: null, branches: null, employers: null, recentEmployees: null, canViewEmployees: false, canCreateTasks: false, canAddContact: false });
   const [reminders, setReminders] = useState<DashboardReminders>({ upcomingTasks: [], birthdayReminders: [], canViewBirthdays: false });
 
@@ -71,15 +72,23 @@ export default function DashboardPage() {
       .catch((err: Error) => setError(err.message));
   }, []);
 
-  useEffect(() => {
-    fetch("/api/dashboard/reminders")
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to load reminders");
-        setReminders(data);
-      })
-      .catch((reminderError: Error) => setError(reminderError.message));
+  const refreshReminders = useCallback(async () => {
+    setRefreshingReminders(true);
+    try {
+      const response = await fetch("/api/dashboard/reminders");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load reminders");
+      setReminders(data);
+    } catch (reminderError) {
+      setError(reminderError instanceof Error ? reminderError.message : "Unable to load reminders");
+    } finally {
+      setRefreshingReminders(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void refreshReminders();
+  }, [refreshReminders]);
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
@@ -129,7 +138,9 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid items-stretch gap-4 lg:grid-cols-3">
-          <section className="order-2 flex h-full flex-col rounded-lg bg-white p-5 shadow">
+          <section className="order-2 flex h-full flex-col rounded-lg bg-white p-5 shadow lg:col-span-2">
+            <div className="grid h-full gap-6 lg:grid-cols-2">
+            <div className="flex flex-col">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
               <Link
@@ -186,6 +197,43 @@ export default function DashboardPage() {
             <Link href="/tasks" className="mt-5 inline-flex w-fit items-center rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900">
               Open tasks
             </Link>
+            </div>
+            <div className="flex min-h-48 flex-col border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+              <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                <div>
+                  <h2 className="font-semibold text-gray-900">Upcoming Events</h2>
+                  <p className="mt-1 text-xs text-gray-500">Task due dates in the next 30 days</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void refreshReminders()}
+                  disabled={refreshingReminders}
+                  aria-label="Refresh upcoming events"
+                  title="Refresh upcoming events"
+                  className="rounded-md p-2 text-blue-700 transition hover:bg-blue-50 disabled:cursor-wait disabled:opacity-60"
+                >
+                  <ArrowPathIcon className={`h-5 w-5 ${refreshingReminders ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+              <div className="flex-1">
+                {reminders.upcomingTasks.length === 0 ? (
+                  <p className="py-4 text-sm text-gray-500">No upcoming task due dates.</p>
+                ) : (
+                  <ul className="divide-y divide-gray-100">
+                    {reminders.upcomingTasks.map((event) => (
+                      <li key={event.id} className="flex items-center justify-between gap-3 py-3 first:pt-3 last:pb-0">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-900">{event.title}</p>
+                          <p className="mt-0.5 text-xs text-gray-500">{new Date(event.dueDate).toLocaleDateString()} · {event.status === "IN_PROGRESS" ? "In progress" : "To do"}</p>
+                        </div>
+                        {event.isFlagged && <FlagIcon className="h-4 w-4 shrink-0 text-rose-600" aria-label="Flagged task" />}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+            </div>
         </section>
 
         <section className="order-1 flex h-full flex-col rounded-lg border border-amber-200 bg-amber-50/60 p-5">
@@ -223,33 +271,6 @@ export default function DashboardPage() {
           {reminders.canViewBirthdays && <Link href="/employees" className="mt-auto pt-3 text-sm font-semibold text-amber-900 hover:underline">Open employees</Link>}
         </section>
 
-        <section className="order-3 flex min-h-48 h-full flex-col rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
-              <div>
-                <h2 className="font-semibold text-gray-900">Upcoming Events</h2>
-                <p className="mt-1 text-xs text-gray-500">Task due dates in the next 30 days</p>
-              </div>
-              <ArrowPathIcon className="h-5 w-5 text-blue-700" />
-            </div>
-            <div className="flex-1">
-              {reminders.upcomingTasks.length === 0 ? (
-                <p className="py-4 text-sm text-gray-500">No upcoming task due dates.</p>
-              ) : (
-                <ul className="divide-y divide-gray-100">
-                  {reminders.upcomingTasks.map((event) => (
-                    <li key={event.id} className="flex items-center justify-between gap-3 py-3 first:pt-3 last:pb-0">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-900">{event.title}</p>
-                        <p className="mt-0.5 text-xs text-gray-500">{new Date(event.dueDate).toLocaleDateString()} · {event.status === "IN_PROGRESS" ? "In progress" : "To do"}</p>
-                      </div>
-                      {event.isFlagged && <FlagIcon className="h-4 w-4 shrink-0 text-rose-600" aria-label="Flagged task" />}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <Link href="/tasks" className="mt-auto pt-3 text-sm font-semibold text-blue-800 hover:underline">Open tasks</Link>
-        </section>
         </div>
 
       </div>

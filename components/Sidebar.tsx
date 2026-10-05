@@ -184,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const publicRoute = pathname === "/" || pathname === "/login" || pathname === "/register";
   const [user, setUser] = useState<CurrentUser | null>(null);
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pageTitle = getPageTitle(pathname);
   const pageSubtitle = getPageSubtitle(pathname);
@@ -259,7 +259,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         {children}
-        <footer className="sticky bottom-0 z-20 mt-auto flex items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-500 shadow-[0_-3px_10px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6">
+        <footer className={`${mobileOpen ? "hidden md:flex" : "flex"} sticky bottom-0 z-20 mt-auto items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-500 shadow-[0_-3px_10px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6`}>
           <span>© {new Date().getFullYear()} HRDB-Lenard</span>
           <span className="hidden sm:inline">Human Resources Management</span>
         </footer>
