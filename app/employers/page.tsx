@@ -164,7 +164,7 @@ export default function EmployersPage() {
         </header>
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employers..." className={`${inputClass} mb-6`} />
         {message && <p className="mb-4 font-medium text-red-700">{message}</p>}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filtered.map((employer) => (
             <article
               key={employer.id}

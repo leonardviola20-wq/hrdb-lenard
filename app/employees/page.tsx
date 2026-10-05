@@ -6,7 +6,6 @@ import { FunnelIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
-  employeeCode: string;
   firstName: string;
   middleName: string | null;
   lastName: string;
@@ -38,6 +37,8 @@ type Employee = {
   employer: { id: number; name: string; company: string | null } | null;
 };
 type Employer = { id: number; name: string; company: string | null };
+
+let employeeDirectoryCache: Employee[] | null = null;
 
 function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value: string) => void) {
   if (!file.type.startsWith("image/")) {
@@ -107,8 +108,8 @@ const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of co
 const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [employees, setEmployees] = useState<Employee[]>(() => employeeDirectoryCache ?? []);
+  const [loading, setLoading] = useState(() => employeeDirectoryCache === null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [employerFilter, setEmployerFilter] = useState("");
@@ -148,13 +149,18 @@ export default function EmployeesPage() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to load employees");
-        if (active) setEmployees(data.employees);
+        if (active) {
+          employeeDirectoryCache = data.employees;
+          setEmployees(data.employees);
+        }
       })
       .catch((error: Error) => {
-        if (active) setMessage(error.message);
+        if (active && employeeDirectoryCache === null) setMessage(error.message);
       })
       .finally(() => {
-        const remainingLoadingTime = Math.max(0, 600 - (Date.now() - loadingStartedAt));
+        const remainingLoadingTime = employeeDirectoryCache === null
+          ? Math.max(0, 600 - (Date.now() - loadingStartedAt))
+          : 0;
         window.setTimeout(() => {
           if (active) setLoading(false);
         }, remainingLoadingTime);
@@ -178,7 +184,7 @@ export default function EmployeesPage() {
       const employer = employee.employer
         ? `${employee.employer.name} ${employee.employer.company || ""}`.toLowerCase()
         : "";
-      return (!search || fullName.includes(search) || employee.employeeCode.toLowerCase().includes(search) || employer.includes(search))
+      return (!search || fullName.includes(search) || (employee.biometricNo || "").toLowerCase().includes(search) || employer.includes(search))
         && (statusFilter === "ALL"
           || (statusFilter === "ACTIVE"
             ? activeEmployeeStatuses.includes(employee.status || "")
@@ -224,7 +230,7 @@ export default function EmployeesPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Name, code, or employer"
+                placeholder="Name, biometric number, or employer"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
             </label>}
@@ -348,7 +354,11 @@ export default function EmployeesPage() {
                   const response = await fetch(`/api/employees/${selectedEmployee.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
                   const data = await response.json();
                   if (!response.ok) throw new Error(data.error || "Unable to update employee");
-                  setEmployees((current) => current.map((item) => item.id === data.employee.id ? data.employee : item));
+                  setEmployees((current) => {
+                    const updatedEmployees = current.map((item) => item.id === data.employee.id ? data.employee : item);
+                    employeeDirectoryCache = updatedEmployees;
+                    return updatedEmployees;
+                  });
                   setSelectedEmployee(null);
                   setEditing(false);
                 } catch (error) {
