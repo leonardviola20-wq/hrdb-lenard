@@ -259,6 +259,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         {children}
+        <footer className="sticky bottom-0 z-20 mt-auto flex items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-500 shadow-[0_-3px_10px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6">
+          <span>© {new Date().getFullYear()} HRDB-Lenard</span>
+          <span className="hidden sm:inline">Human Resources Management</span>
+        </footer>
       </div>
     </div>
   );
@@ -268,6 +272,7 @@ function getPageTitle(pathname: string) {
   if (pathname.startsWith("/tasks")) return "Tasks";
   if (pathname === "/dashboard") return "Dashboard";
   if (pathname === "/employees/new") return "Add New Employee";
+  if (pathname.startsWith("/employees/")) return "Employee Profile";
   if (pathname === "/employees") return "Employee Directory";
   if (pathname === "/attendance") return "Attendance";
   if (pathname === "/contacts") return "Contacts";
@@ -282,6 +287,7 @@ function getPageSubtitle(pathname: string) {
   if (pathname.startsWith("/tasks")) return "Plan, prioritize, and keep your work moving.";
   if (pathname === "/dashboard") return "Your personal workspace and task overview.";
   if (pathname === "/employees/new") return "Create an employee profile and record their work information.";
+  if (pathname.startsWith("/employees/")) return "Employee details and work information.";
   if (pathname === "/employees") return "Employee directory and assignment details.";
   if (pathname === "/attendance") return "Attendance tracking and records.";
   if (pathname === "/contacts") return "Suppliers, contractors, and office service providers.";
