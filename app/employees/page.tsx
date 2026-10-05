@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { FunnelIcon, MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FunnelIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -114,7 +114,7 @@ export default function EmployeesPage() {
   const [employerFilter, setEmployerFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -128,6 +128,17 @@ export default function EmployeesPage() {
     document.addEventListener("click", closeMenu);
     return () => document.removeEventListener("click", closeMenu);
   }, [openMenuId]);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !filterPanelRef.current?.contains(event.target)) {
+        setFiltersOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [filtersOpen]);
 
   useEffect(() => {
     let active = true;
@@ -182,7 +193,7 @@ export default function EmployeesPage() {
     [employees]
   );
   const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter);
-  const showSearchField = filtersOpen || mobileSearchOpen;
+  const showSearchField = filtersOpen;
   const clearFilters = () => {
     setQuery("");
     setStatusFilter("ACTIVE");
@@ -193,38 +204,32 @@ export default function EmployeesPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
-        <div className="mb-5 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => setMobileSearchOpen((current) => !current)} aria-expanded={mobileSearchOpen} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 md:hidden">
-                <MagnifyingGlassIcon className="h-4 w-4" /> {mobileSearchOpen ? "Close search" : "Search"}
-              </button>
+        <div ref={filterPanelRef} className="mb-5 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+          <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={() => setFiltersOpen((current) => !current)} aria-expanded={filtersOpen} className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition ${filtersOpen ? "border-blue-700 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}>
-                <FunnelIcon className="h-4 w-4" /> {filtersOpen ? "Hide filters" : "Filters"}
+                <FunnelIcon className="h-4 w-4" /> Filters
               </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <button type="button" onClick={clearFilters} disabled={!hasFilters} className="text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline">Clear all</button>
-              <Link href="/employees/new" aria-label="Add employee" title="Add employee" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#172554] text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <p className="whitespace-nowrap text-[11px] text-gray-600 sm:text-xs">
+                {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
+              </p>
+              <button type="button" onClick={clearFilters} disabled={!hasFilters} className="whitespace-nowrap px-1 text-xs font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline sm:text-sm">Clear all</button>
+              <Link href="/employees/new" aria-label="Add employee" title="Add employee" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#172554] text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300 sm:h-10 sm:w-10 xl:ml-auto">
                 <PlusIcon className="h-5 w-5" />
               </Link>
-            </div>
           </div>
 
-          {showSearchField && <div className="mt-3 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(130px,170px))]">
-            <label className="grid min-w-0 gap-1.5 text-sm sm:col-span-2 lg:col-span-4">
+          {(showSearchField || filtersOpen) && <div className="mt-3 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(150px,200px))]">
+            {showSearchField && <label className="grid min-w-0 gap-1.5 text-sm sm:col-span-2 lg:col-span-3 xl:col-span-1">
               <span className="font-semibold text-gray-800">Search</span>
               <input
-                autoFocus={mobileSearchOpen}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Name, code, or employer"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
-            </label>
-          </div>}
+            </label>}
 
-          {filtersOpen && <div className="mt-3 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-3">
+          {filtersOpen && <>
             <label className="grid min-w-0 gap-1.5 text-sm">
               <span className="font-semibold text-gray-800">Status</span>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
@@ -247,11 +252,8 @@ export default function EmployeesPage() {
                 {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
               </select>
             </label>
-          </div>
-          }
-          <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-600">
-            {loading ? "Loading employees..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span> employees</>}
-          </p>
+          </>}
+          </div>}
         </div>
 
         {message && <p className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
@@ -282,11 +284,11 @@ export default function EmployeesPage() {
         ) : filteredEmployees.length === 0 ? (
           <p className="mt-4 rounded-xl border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">No employees found.</p>
         ) : (
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="mt-4 grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {filteredEmployees.map((employee) => {
               const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
               return (
-                <article key={employee.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+                <article key={employee.id} className="w-full min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       {employee.photoUrl ? <img src={employee.photoUrl} alt="" className="mb-4 h-24 w-24 rounded-full border-2 border-gray-200 object-cover" /> : <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs text-gray-400">No photo</div>}
@@ -295,12 +297,12 @@ export default function EmployeesPage() {
                     <div className="relative shrink-0">
                       <button type="button" onClick={(event) => { event.stopPropagation(); setOpenMenuId(openMenuId === employee.id ? null : employee.id); }} className="rounded p-1 text-xl leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Actions for ${fullName}`}>•••</button>
                       {openMenuId === employee.id && <div onClick={(event) => event.stopPropagation()} className="absolute right-0 top-8 z-10 w-28 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg">
-                        <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(false); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">View</button>
+                        <Link href={`/employees/${employee.id}`} onClick={() => setOpenMenuId(null)} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">View</Link>
                         <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(true); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">Update</button>
                       </div>}
                     </div>
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
                     <div className="grid content-start gap-1">
                       {(() => {
                         const isActive = activeEmployeeStatuses.includes(employee.status || "");
@@ -317,11 +319,11 @@ export default function EmployeesPage() {
                       <span className="truncate text-gray-900">{employee.position || "Position not set"}</span>
                     </div>
                   </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
-                    <div><dt className="text-gray-500">Biometric No.</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
-                    <div><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.name || "Unassigned"}</dd></div>
-                    <div><dt className="text-gray-500">Phone</dt><dd className="mt-1 text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
-                    <div><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
+                  <dl className="mt-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
+                    <div className="min-w-0"><dt className="text-gray-500">Biometric No.</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
+                    <div className="min-w-0"><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.name || "Unassigned"}</dd></div>
+                    <div className="min-w-0"><dt className="text-gray-500">Phone</dt><dd className="mt-1 break-words text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
+                    <div className="min-w-0"><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
                   </dl>
                 </article>
               );
@@ -340,14 +342,14 @@ export default function EmployeesPage() {
               <button type="button" onClick={() => setSelectedEmployee(null)} className="text-2xl text-gray-400 hover:text-gray-700" aria-label="Close">×</button>
             </div>
             {editing ? (
-              <EmployeeEditForm employee={selectedEmployee} employers={employers} saving={saving} onCancel={() => setEditing(false)} onError={setMessage} onSave={async (changes) => {
+              <EmployeeEditForm employee={selectedEmployee} employers={employers} saving={saving} onCancel={() => { setSelectedEmployee(null); setEditing(false); }} onError={setMessage} onSave={async (changes) => {
                 setSaving(true);
                 try {
                   const response = await fetch(`/api/employees/${selectedEmployee.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
                   const data = await response.json();
                   if (!response.ok) throw new Error(data.error || "Unable to update employee");
                   setEmployees((current) => current.map((item) => item.id === data.employee.id ? data.employee : item));
-                  setSelectedEmployee(data.employee);
+                  setSelectedEmployee(null);
                   setEditing(false);
                 } catch (error) {
                   setMessage(error instanceof Error ? error.message : "Unable to update employee");

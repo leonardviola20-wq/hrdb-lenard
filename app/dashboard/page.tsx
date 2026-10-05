@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowPathIcon, CakeIcon, FlagIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BuildingOffice2Icon, BuildingStorefrontIcon, CakeIcon, ClipboardDocumentListIcon, FlagIcon, IdentificationIcon, UserGroupIcon, UserMinusIcon, UserPlusIcon, UsersIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Task = {
   status: "PENDING" | "COMPLETED";
@@ -15,6 +15,19 @@ type DashboardReminders = {
   canViewBirthdays: boolean;
 };
 
+type DashboardStats = {
+  totalEmployees: number | null;
+  activeEmployees: number | null;
+  inactiveEmployees: number | null;
+  newlyHired: number | null;
+  branches: number | null;
+  employers: number | null;
+  recentEmployees: { id: number; firstName: string; lastName: string; branch: string | null }[] | null;
+  canViewEmployees: boolean;
+  canCreateTasks: boolean;
+  canAddContact: boolean;
+};
+
 export default function DashboardPage() {
   const [taskSummary, setTaskSummary] = useState({
     total: 0,
@@ -23,7 +36,18 @@ export default function DashboardPage() {
     overdue: 0,
   });
   const [error, setError] = useState("");
+  const [stats, setStats] = useState<DashboardStats>({ totalEmployees: null, activeEmployees: null, inactiveEmployees: null, newlyHired: null, branches: null, employers: null, recentEmployees: null, canViewEmployees: false, canCreateTasks: false, canAddContact: false });
   const [reminders, setReminders] = useState<DashboardReminders>({ upcomingTasks: [], birthdayReminders: [], canViewBirthdays: false });
+
+  useEffect(() => {
+    fetch("/api/dashboard/stats")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load dashboard statistics");
+        setStats(data);
+      })
+      .catch((statsError: Error) => setError(statsError.message));
+  }, []);
 
   useEffect(() => {
     fetch("/api/tasks")
@@ -61,6 +85,48 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="w-full">
         {error && <p className="mb-4 text-red-600">{error}</p>}
+
+        <div className="mb-4 grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
+          <section className="col-span-2 rounded-lg border border-blue-200 bg-white p-3 shadow-sm sm:p-5 lg:col-span-3 xl:col-span-2 xl:row-span-2">
+            <h2 className="text-sm font-semibold text-gray-900 sm:text-base">Quick Access</h2>
+            <div className="mt-3 grid gap-2 xl:grid-cols-3">
+              {stats.canViewEmployees && <Link href="/employees/new" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"><UserPlusIcon className="h-4 w-4 text-blue-700" />Add Employee</Link>}
+              {stats.canAddContact && <Link href="/admin/contacts" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"><IdentificationIcon className="h-4 w-4 text-violet-700" />New Contact</Link>}
+              {stats.canCreateTasks && <Link href="/tasks?create=1" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"><ClipboardDocumentListIcon className="h-4 w-4 text-green-700" />New Task</Link>}
+            </div>
+            {stats.canViewEmployees && <div className="mt-4 border-t border-gray-100 pt-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800"><UsersIcon className="h-4 w-4 text-blue-700" />Recent Employees</h3>
+              {stats.recentEmployees?.length ? (
+                <ul className="mt-2 divide-y divide-gray-100">
+                  {stats.recentEmployees.map((employee) => (
+                    <li key={employee.id} className="py-2 first:pt-1 last:pb-0">
+                      <p className="truncate text-sm font-medium text-gray-900">{employee.firstName} {employee.lastName}</p>
+                      {employee.branch && <p className="truncate text-xs text-gray-500">{employee.branch}</p>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="mt-2 text-xs text-gray-500">No employees yet.</p>}
+            </div>}
+          </section>
+          {[
+            { label: "Total Employees", value: stats.totalEmployees, icon: UserGroupIcon, color: "text-blue-700", bg: "bg-blue-50" },
+            { label: "Active Employees", value: stats.activeEmployees, icon: UsersIcon, color: "text-green-700", bg: "bg-green-50" },
+            { label: "Inactive Employees", value: stats.inactiveEmployees, icon: UserMinusIcon, color: "text-gray-700", bg: "bg-gray-100" },
+            { label: "Newly Hired (30d)", value: stats.newlyHired, icon: UserPlusIcon, color: "text-violet-700", bg: "bg-violet-50" },
+            { label: "Branch", value: stats.branches, icon: BuildingOffice2Icon, color: "text-amber-700", bg: "bg-amber-50" },
+            { label: "Employers", value: stats.employers, icon: BuildingStorefrontIcon, color: "text-cyan-700", bg: "bg-cyan-50" },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <section key={label} className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+              <div className="flex items-center gap-2 sm:gap-3 xl:gap-4">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 xl:h-14 xl:w-14 ${bg}`}>
+                  <Icon className={`h-5 w-5 sm:h-6 sm:w-6 xl:h-7 xl:w-7 ${color}`} aria-hidden="true" />
+                </div>
+                <p className="text-xl font-bold text-gray-900 sm:text-2xl xl:text-3xl 2xl:text-4xl">{value ?? "—"}</p>
+              </div>
+              <h2 className="mt-2 text-xs font-medium leading-tight text-gray-600 sm:text-sm xl:mt-3">{label}</h2>
+            </section>
+          ))}
+        </div>
 
         <div className="grid items-stretch gap-4 lg:grid-cols-3">
           <section className="order-2 flex h-full flex-col rounded-lg bg-white p-5 shadow">
@@ -137,16 +203,16 @@ export default function DashboardPage() {
               <p className="py-4 text-sm text-gray-600">No upcoming birthdays this month.</p>
             ) : (
               <div className="mt-3 max-h-[190px] overflow-y-auto pr-4">
-                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_42px_76px] gap-x-3 text-xs">
+                <div className="grid grid-cols-[minmax(0,1fr)_max-content] gap-x-3 text-xs md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_42px_76px]">
                   <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600">Name</div>
-                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600">Branch</div>
-                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600">Day</div>
+                  <div className="sticky top-0 z-10 hidden border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600 md:block">Branch</div>
+                  <div className="sticky top-0 z-10 hidden border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600 md:block">Day</div>
                   <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600">Date</div>
                   {reminders.birthdayReminders.map((birthday) => (
                     <div key={`${birthday.name}-${birthday.date}`} className="contents">
                       <span className="truncate border-b border-amber-200/70 py-2 font-medium text-gray-900">{birthday.name}</span>
-                      <span className="truncate border-b border-amber-200/70 py-2 text-gray-700">{birthday.branch || "Not set"}</span>
-                      <span className="border-b border-amber-200/70 py-2 text-center text-gray-700">{birthday.day}</span>
+                      <span className="hidden truncate border-b border-amber-200/70 py-2 text-gray-700 md:block">{birthday.branch || "Not set"}</span>
+                      <span className="hidden border-b border-amber-200/70 py-2 text-center text-gray-700 md:block">{birthday.day}</span>
                       <time dateTime={birthday.date} className="whitespace-nowrap border-b border-amber-200/70 py-2 text-center text-amber-900">{new Date(birthday.date).toLocaleDateString("en-US", { month: "short", day: "2-digit", timeZone: "UTC" })}</time>
                     </div>
                   ))}

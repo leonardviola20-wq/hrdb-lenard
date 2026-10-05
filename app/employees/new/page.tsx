@@ -83,12 +83,13 @@ function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value
   reader.readAsDataURL(file);
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return <label className="grid gap-1.5 text-sm font-medium text-gray-700"><span>{label}{required && <span className="text-red-600"> *</span>}</span>{children}</label>;
+function Field({ label, required, className = "", children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
+  return <label className={`grid gap-1.5 text-sm font-medium text-gray-700 ${className}`}><span>{label}{required && <span className="text-red-600"> *</span>}</span>{children}</label>;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="border-b border-gray-100 pb-3 text-lg font-semibold text-gray-900">{title}</h2><div className="mt-5 grid gap-4 sm:grid-cols-2">{children}</div></section>;
+function Section({ title, columns = 2, children }: { title: string; columns?: 2 | 3 | 4; children: React.ReactNode }) {
+  const columnClass = columns === 4 ? "sm:grid-cols-4" : columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+  return <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="border-b border-gray-100 pb-3 text-lg font-semibold uppercase tracking-wide text-gray-900">{title}</h2><div className={`mt-5 grid gap-4 ${columnClass}`}>{children}</div></section>;
 }
 
 export default function NewEmployeePage() {
@@ -137,44 +138,33 @@ export default function NewEmployeePage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6">
+      <div className="w-full">
+        <div className="mb-5">
           <Link href="/employees" className="text-sm font-medium text-blue-600 hover:underline">← Employee Directory</Link>
         </div>
         {message && <p className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{message}</p>}
         <form onSubmit={submit} className="grid gap-5">
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-center gap-3">
+              {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-24 w-24 shrink-0 rounded-lg border border-gray-200 object-cover" /> : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400">No photo</div>}
+              <div className="grid justify-items-start gap-2">
+                <label className="inline-flex cursor-pointer items-center whitespace-nowrap rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                  Upload Photo
+                  <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), setMessage); }} className="sr-only" />
+                </label>
+                <p className="text-xs text-gray-500">JPG, PNG, or GIF up to 2 MB.</p>
+              </div>
+            </div>
+          </section>
+          <div className="grid gap-5 lg:grid-cols-2">
           <Section title="Personal Information">
             <Field label="First Name" required><input required value={form.firstName} onChange={(e) => update("firstName", e.target.value)} className={inputClass} /></Field>
             <Field label="Middle Name"><input value={form.middleName} onChange={(e) => update("middleName", e.target.value)} className={inputClass} /></Field>
             <Field label="Last Name" required><input required value={form.lastName} onChange={(e) => update("lastName", e.target.value)} className={inputClass} /></Field>
-            <div />
-            <Field label="Photo">
-              <div className="flex items-center gap-4 sm:col-span-2">
-                {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-24 w-24 rounded-lg border border-gray-200 object-cover" /> : <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400">No photo</div>}
-                <div className="grid gap-2">
-                  <label className="inline-flex cursor-pointer items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Choose photo
-                    <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) readPhoto(file, (value) => update("photoUrl", value), setMessage); }} className="sr-only" />
-                  </label>
-                  <p className="text-xs text-gray-500">JPG, PNG, or GIF up to 2 MB.</p>
-                </div>
-              </div>
-            </Field>
             <Field label="Date of Birth"><input type="date" value={form.dateOfBirth} onChange={(e) => updateDateOfBirth(e.target.value)} className={inputClass} /></Field>
             <Field label="Age"><input readOnly tabIndex={-1} value={form.age} placeholder="Calculated automatically" className={`${inputClass} cursor-not-allowed bg-gray-100`} /></Field>
             <Field label="Marital Status"><select value={form.maritalStatus} onChange={(e) => update("maritalStatus", e.target.value)} className={inputClass}><option value="">Select status</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></Field>
             <Field label="Gender"><select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={inputClass}><option value="">Select gender</option><option>Male</option><option>Female</option><option>Other</option></select></Field>
-          </Section>
-          <Section title="Contact Information">
-            <Field label="Mobile Number"><input inputMode="numeric" value={form.mobileNumber} onChange={(e) => update("mobileNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
-            <Field label="Email Address"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={inputClass} /></Field>
-            <Field label="Address"><textarea rows={3} value={form.address} onChange={(e) => update("address", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
-          </Section>
-          <Section title="Emergency Information">
-            <Field label="Contact Person"><input value={form.emergencyName} onChange={(e) => update("emergencyName", e.target.value)} className={inputClass} /></Field>
-            <Field label="Contact Number"><input inputMode="numeric" value={form.emergencyNumber} onChange={(e) => update("emergencyNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
-            <Field label="Relation"><select value={form.emergencyRelation} onChange={(e) => update("emergencyRelation", e.target.value)} className={inputClass}><option value="">Select relation</option><option>Family</option><option>Friend</option><option>Work / Colleague</option><option>Others</option></select></Field>
-            <Field label="Address"><textarea rows={3} value={form.emergencyAddress} onChange={(e) => update("emergencyAddress", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
           </Section>
           <Section title="Job Information">
             <Field label="Biometric ID"><input value={form.biometricNo} onChange={(e) => update("biometricNo", e.target.value)} className={inputClass} /></Field>
@@ -185,6 +175,21 @@ export default function NewEmployeePage() {
             <Field label="Date Started"><input type="date" value={form.dateStarted} onChange={(e) => update("dateStarted", e.target.value)} className={inputClass} /></Field>
             {endedStatuses.has(form.status) && <Field label="Ended"><input type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} className={inputClass} /></Field>}
           </Section>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+          <Section title="Contact Information">
+            <Field label="Mobile Number"><input inputMode="numeric" value={form.mobileNumber} onChange={(e) => update("mobileNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
+            <Field label="Email Address"><input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} className={inputClass} /></Field>
+            <Field label="Address" className="sm:col-span-2"><textarea rows={3} value={form.address} onChange={(e) => update("address", e.target.value)} className={inputClass} /></Field>
+          </Section>
+          <Section title="Emergency Information" columns={4}>
+            <Field label="Contact Person" className="sm:col-span-2"><input value={form.emergencyName} onChange={(e) => update("emergencyName", e.target.value)} className={inputClass} /></Field>
+            <Field label="Contact Number"><input inputMode="numeric" value={form.emergencyNumber} onChange={(e) => update("emergencyNumber", formatMobile(e.target.value))} placeholder="0000 000 0000" className={inputClass} /></Field>
+            <Field label="Relation"><select value={form.emergencyRelation} onChange={(e) => update("emergencyRelation", e.target.value)} className={inputClass}><option value="">Select relation</option><option>Family</option><option>Friend</option><option>Work / Colleague</option><option>Others</option></select></Field>
+            <Field label="Address" className="sm:col-span-4"><textarea rows={3} value={form.emergencyAddress} onChange={(e) => update("emergencyAddress", e.target.value)} className={inputClass} /></Field>
+          </Section>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
           <Section title="Government Information">
             <Field label="SSS"><input inputMode="numeric" value={form.sssNumber} onChange={(e) => update("sssNumber", formatDigits(e.target.value, [2, 7, 1]))} placeholder="00-0000000-0" className={inputClass} /></Field>
             <Field label="Pag-IBIG"><input inputMode="numeric" value={form.pagIbigNumber} onChange={(e) => update("pagIbigNumber", formatDigits(e.target.value, [4, 4, 4]))} placeholder="0000-0000-0000" className={inputClass} /></Field>
@@ -192,9 +197,10 @@ export default function NewEmployeePage() {
             <Field label="TIN"><input inputMode="numeric" value={form.tinNumber} onChange={(e) => update("tinNumber", formatDigits(e.target.value, [3, 3, 3, 5]))} placeholder="000-000-000-00000" className={inputClass} /></Field>
           </Section>
           <Section title="Remarks">
-            <Field label="Additional notes"><textarea rows={5} value={form.remarks} onChange={(e) => update("remarks", e.target.value)} className={`${inputClass} sm:col-span-2`} /></Field>
+            <Field label="Additional notes" className="sm:col-span-2"><textarea rows={5} value={form.remarks} onChange={(e) => update("remarks", e.target.value)} className={inputClass} /></Field>
           </Section>
-          <div className="flex justify-end gap-3 pb-6">
+          </div>
+          <div className="flex justify-end gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <Link href="/employees" className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</Link>
             <button type="submit" disabled={saving} className="rounded-lg bg-[#172554] px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-60">{saving ? "Saving..." : "Create employee"}</button>
           </div>
