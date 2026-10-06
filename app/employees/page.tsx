@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, ChevronLeftIcon, EyeIcon, PencilSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { parseCsv, toCsv } from "@/lib/csv";
 
 type Employee = {
   id: number;
@@ -39,6 +40,21 @@ type Employee = {
 type Employer = { id: number; name: string; company: string | null };
 
 let employeeDirectoryCache: Employee[] | null = null;
+
+type EmployeeDirectoryFilters = {
+  query: string;
+  statusFilter: string;
+  employerFilter: string;
+  branchFilter: string;
+};
+
+// Survives client-side navigation so returning from add/update keeps the user's filters.
+let employeeDirectoryFilters: EmployeeDirectoryFilters = {
+  query: "",
+  statusFilter: "ACTIVE",
+  employerFilter: "",
+  branchFilter: "",
+};
 
 function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value: string) => void) {
   if (!file.type.startsWith("image/")) {
@@ -107,27 +123,33 @@ const positions = ["President", "Corporate Secretary", "Treasurer", "Accountant"
 const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
 const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
+const employeeCsvHeaders = ["firstName", "middleName", "lastName", "dateOfBirth", "age", "maritalStatus", "gender", "mobileNumber", "email", "address", "emergencyName", "emergencyNumber", "emergencyRelation", "emergencyAddress", "biometricNo", "employer", "status", "dateStarted", "endDate", "sssNumber", "pagIbigNumber", "philHealth", "tinNumber", "remarks", "branch", "position"];
+
+function csvDate(value: string | null) {
+  return value ? value.slice(0, 10) : "";
+}
+
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>(() => employeeDirectoryCache ?? []);
   const [loading, setLoading] = useState(() => employeeDirectoryCache === null);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ACTIVE");
-  const [employerFilter, setEmployerFilter] = useState("");
-  const [branchFilter, setBranchFilter] = useState("");
+  const [query, setQuery] = useState(employeeDirectoryFilters.query);
+  const [statusFilter, setStatusFilter] = useState(employeeDirectoryFilters.statusFilter);
+  const [employerFilter, setEmployerFilter] = useState(employeeDirectoryFilters.employerFilter);
+  const [branchFilter, setBranchFilter] = useState(employeeDirectoryFilters.branchFilter);
   const [message, setMessage] = useState("");
   const [showFirstEmployeePrompt, setShowFirstEmployeePrompt] = useState(false);
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (openMenuId === null) return;
-    const closeMenu = () => setOpenMenuId(null);
-    document.addEventListener("click", closeMenu);
-    return () => document.removeEventListener("click", closeMenu);
-  }, [openMenuId]);
+    employeeDirectoryFilters = { query, statusFilter, employerFilter, branchFilter };
+  }, [query, statusFilter, employerFilter, branchFilter]);
 
   useEffect(() => {
     let active = true;
@@ -158,6 +180,13 @@ export default function EmployeesPage() {
       .then(async (response) => {
         const data = await response.json();
         if (response.ok) setEmployers(data.employers);
+      })
+      .catch(() => {});
+    fetch("/api/me")
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = await response.json();
+        setIsAdmin(data.user?.role === "ADMIN");
       })
       .catch(() => {});
 
@@ -197,10 +226,109 @@ export default function EmployeesPage() {
     setBranchFilter("");
   };
 
+  const exportEmployees = () => {
+    if (filteredEmployees.length === 0) return;
+    const rows: (string | number)[][] = [employeeCsvHeaders];
+    for (const employee of filteredEmployees) {
+      rows.push([
+        employee.firstName,
+        employee.middleName ?? "",
+        employee.lastName,
+        csvDate(employee.dateOfBirth),
+        employee.age ?? "",
+        employee.maritalStatus ?? "",
+        employee.gender ?? "",
+        employee.mobileNumber ?? "",
+        employee.email ?? "",
+        employee.address ?? "",
+        employee.emergencyName ?? "",
+        employee.emergencyNumber ?? "",
+        employee.emergencyRelation ?? "",
+        employee.emergencyAddress ?? "",
+        employee.biometricNo ?? "",
+        employee.employer?.name ?? "",
+        employee.status ?? "",
+        csvDate(employee.dateStarted),
+        csvDate(employee.endDate),
+        employee.sssNumber ?? "",
+        employee.pagIbigNumber ?? "",
+        employee.philHealth ?? "",
+        employee.tinNumber ?? "",
+        employee.remarks ?? "",
+        employee.branch ?? "",
+        employee.position ?? "",
+      ]);
+    }
+    const blob = new Blob([`\uFEFF${toCsv(rows)}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `employees-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setMessage("");
+    setNotice(`Exported ${filteredEmployees.length} employee(s) to CSV.`);
+  };
+
+  const importEmployees = async (file: File) => {
+    setImporting(true);
+    setNotice("");
+    setMessage("");
+    try {
+      const rows = parseCsv(await file.text());
+      if (rows.length < 2) throw new Error("The CSV must include a header row and at least one employee row.");
+      const [header, ...dataRows] = rows;
+      const records = dataRows
+        .filter((row) => row.some((value) => value.trim()))
+        .map((row) => Object.fromEntries(header.map((column, index) => [column.trim(), (row[index] ?? "").trim()])));
+      if (records.length === 0) throw new Error("The CSV must include at least one employee row.");
+
+      const response = await fetch("/api/employees/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employees: records }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        const details = Array.isArray(data.rowErrors) && data.rowErrors.length > 0
+          ? `${data.error} ${data.rowErrors.slice(0, 3).join(" ")}${data.rowErrors.length > 3 ? " ..." : ""}`
+          : data.error || "Unable to import employees";
+        throw new Error(details);
+      }
+
+      const refreshed = await fetch("/api/employees");
+      if (refreshed.ok) {
+        const refreshedData = await refreshed.json();
+        employeeDirectoryCache = refreshedData.employees;
+        setEmployees(refreshedData.employees);
+        setShowFirstEmployeePrompt(refreshedData.employees.length === 0);
+      }
+
+      const parts = [`Imported ${data.created} employee(s)`];
+      if (data.skipped > 0) parts.push(`${data.skipped} duplicate(s) skipped`);
+      if (Array.isArray(data.unmatchedEmployers) && data.unmatchedEmployers.length > 0) {
+        parts.push(`employer name not found: ${data.unmatchedEmployers.join(", ")}`);
+      }
+      setNotice(`${parts.join(" · ")}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to import employees");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) void importEmployees(file);
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
-        <div className="mb-4 grid grid-cols-2 items-center gap-2 lg:grid-cols-[auto_auto_minmax(180px,1fr)_repeat(3,minmax(130px,180px))]">
+        <div className="mb-4 grid grid-cols-2 items-center gap-2 lg:grid-cols-[auto_auto_minmax(180px,1fr)_repeat(3,minmax(130px,180px))_auto]">
           <Link
             href="/dashboard"
             onClick={(event) => {
@@ -221,24 +349,45 @@ export default function EmployeesPage() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search employees..."
             aria-label="Search employees"
-            className="col-span-2 h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1"
+            className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block"
           />
-          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
             <option value="ACTIVE">Active employees</option>
             <option value="INACTIVE">Inactive employees</option>
             <option value="ALL">All statuses</option>
             {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
-          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
             <option value="">All employers</option>
             {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
           </select>
-          <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="col-span-2 h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1">
+          <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block">
             <option value="">All branches</option>
             {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
           </select>
+          {isAdmin && (
+            <div className="hidden items-center justify-end gap-2 lg:flex">
+              <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleImportFile} className="hidden" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50"
+              >
+                <ArrowUpTrayIcon className="h-4 w-4" /> {importing ? "Importing..." : "Import"}
+              </button>
+              <button
+                type="button"
+                onClick={exportEmployees}
+                disabled={filteredEmployees.length === 0}
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowDownTrayIcon className="h-4 w-4" /> Export
+              </button>
+            </div>
+          )}
         </div>
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="mb-4 hidden flex-wrap items-center gap-2 lg:flex">
           <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
           {[
             { value: "ACTIVE", label: "Active employees" },
@@ -260,7 +409,8 @@ export default function EmployeesPage() {
           <button type="button" onClick={clearFilters} disabled={!hasFilters} className="whitespace-nowrap px-1 text-xs font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline sm:text-sm">Clear all</button>
         </div>
 
-        {message && <p className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
+        {notice && <p role="status" className="mb-4 mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{notice}</p>}
+        {message && <p role="alert" className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
         {loading ? (
           <div role="status" aria-label="Loading employees" className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             <span className="sr-only">Loading employees</span>
@@ -298,12 +448,13 @@ export default function EmployeesPage() {
                       {employee.photoUrl ? <img src={employee.photoUrl} alt="" className="mb-4 h-24 w-24 rounded-full border-2 border-gray-200 object-cover" /> : <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs text-gray-400">No photo</div>}
                       <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
                     </div>
-                    <div className="relative shrink-0">
-                      <button type="button" onClick={(event) => { event.stopPropagation(); setOpenMenuId(openMenuId === employee.id ? null : employee.id); }} className="rounded p-1 text-xl leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label={`Actions for ${fullName}`}>•••</button>
-                      {openMenuId === employee.id && <div onClick={(event) => event.stopPropagation()} className="absolute right-0 top-8 z-10 w-28 rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg">
-                        <Link href={`/employees/${employee.id}`} onClick={() => setOpenMenuId(null)} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">View</Link>
-                        <button type="button" onClick={() => { setSelectedEmployee(employee); setEditing(true); setOpenMenuId(null); }} className="block w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50">Update</button>
-                      </div>}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Link href={`/employees/${employee.id}`} title={`View ${fullName}`} aria-label={`View ${fullName}`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <EyeIcon className="h-5 w-5" />
+                      </Link>
+                      <Link href={`/employees/new/${employee.id}`} title={`Update ${fullName}`} aria-label={`Update ${fullName}`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <PencilSquareIcon className="h-5 w-5" />
+                      </Link>
                     </div>
                   </div>
                   <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">

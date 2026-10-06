@@ -60,7 +60,7 @@ function Value({ label, value }: { label: string; value: string | number | null 
 
 function ProfileSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="h-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="border-b border-gray-100 pb-3 text-base font-semibold uppercase tracking-wide text-gray-900">{title}</h2>
       <dl className="mt-4 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2">{children}</dl>
     </section>
@@ -97,16 +97,15 @@ export default function EmployeeProfilePage() {
   const activeTabIndex = profileTabs.indexOf(activeTab);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <div className="w-full">
-        <Link href="/employees" className="text-sm font-medium text-blue-700 hover:underline">← Employee Directory</Link>
+    <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
+      <div className="flex w-full flex-1 flex-col">
         {loading ? (
           <p role="status" className="mt-5 text-sm text-gray-600">Loading employee profile...</p>
         ) : error ? (
           <p role="alert" className="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>
         ) : employee ? (
           <>
-            <header className="mt-5 flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <header className="mt-1 flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
               {employee.photoUrl ? (
                 <img src={employee.photoUrl} alt={`${fullName} profile`} className="h-20 w-20 rounded-full border-2 border-gray-200 object-cover" />
               ) : (
@@ -122,8 +121,8 @@ export default function EmployeeProfilePage() {
               </div>
             </header>
 
-            <div className="mt-5">
-              <div role="tablist" aria-label="Employee profile sections" className="overflow-x-auto border-b border-gray-200">
+            <div className="mt-5 flex flex-1 flex-col">
+              <div role="tablist" aria-label="Employee profile sections" className="shrink-0 overflow-x-auto border-b border-gray-200">
                 <div className="flex min-w-max">
                   {profileTabs.map((tab, index) => (
                     <button
@@ -159,8 +158,8 @@ export default function EmployeeProfilePage() {
                 </div>
               </div>
 
-              <div id="employee-profile-panel" role="tabpanel" aria-labelledby={`employee-profile-tab-${activeTabIndex}`} className="mt-4">
-              {activeTab === "Personal" && <div className="grid gap-5 xl:grid-cols-2">
+              <div id="employee-profile-panel" role="tabpanel" aria-labelledby={`employee-profile-tab-${activeTabIndex}`} className="mt-4 flex flex-1">
+              {activeTab === "Personal" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
                 <ProfileSection title="Personal">
                   <div className="grid gap-5 sm:col-span-2">
                     <div className="grid gap-4 sm:grid-cols-3">
@@ -180,7 +179,7 @@ export default function EmployeeProfilePage() {
                 </ProfileSection>
               </div>}
 
-              {activeTab === "Contacts" && <div className="grid gap-5 xl:grid-cols-2">
+              {activeTab === "Contacts" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
                 <ProfileSection title="Contact Information">
                   <Value label="Mobile Number" value={employee.mobileNumber} />
                   <Value label="Email" value={employee.email} />
@@ -194,7 +193,7 @@ export default function EmployeeProfilePage() {
                 </ProfileSection>
               </div>}
 
-              {activeTab === "Employment" && <div className="grid gap-5 xl:grid-cols-2">
+              {activeTab === "Employment" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
                 <ProfileSection title="Employment">
                   <Value label="Biometric No." value={employee.biometricNo} />
                   <Value label="Employer" value={employee.employer?.name} />
@@ -206,7 +205,7 @@ export default function EmployeeProfilePage() {
                 </ProfileSection>
               </div>}
 
-              {activeTab === "Government" && <div className="grid gap-5 xl:grid-cols-2">
+              {activeTab === "Government" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
                 <ProfileSection title="Government">
                   <Value label="SSS" value={employee.sssNumber} />
                   <Value label="Pag-IBIG" value={employee.pagIbigNumber} />
@@ -215,7 +214,7 @@ export default function EmployeeProfilePage() {
                 </ProfileSection>
               </div>}
 
-              {activeTab === "Assignment and Remarks" && <div className="grid gap-5 xl:grid-cols-2">
+              {activeTab === "Assignment and Remarks" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
                 <ProfileSection title="Assignment and Remarks">
                   <Value label="Assigned By" value={employee.assignedBy} />
                   <Value label="Assigned At" value={dateText(employee.assignedAt)} />

@@ -33,3 +33,10 @@ body {
 .sidebar-scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
+
+/* Print only the per-employee attendance report when it is open. */
+@media print {
+  body > *:not(#attendance-print-overlay) {
+    display: none !important;
+  }
+}
