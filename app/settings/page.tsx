@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeftIcon, ArrowUpRightIcon, EyeIcon, EyeSlashIcon, KeyIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowUpRightIcon, EyeIcon, EyeSlashIcon, KeyIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
@@ -205,9 +205,6 @@ export default function SettingsPage() {
           </Link>
         )}
 
-        <Link href="/dashboard" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-800 hover:text-blue-950 hover:underline">
-          <ArrowLeftIcon className="h-4 w-4" /> Back to dashboard
-        </Link>
       </div>
     </main>
   );

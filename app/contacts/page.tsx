@@ -48,7 +48,6 @@ export default function ContactsPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl">
-        <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">Back to dashboard</Link>
         <div className="mb-6 mt-2 flex flex-wrap items-start justify-between gap-3">
           <Link href="/admin/contacts" className="rounded border border-gray-500 bg-white px-4 py-2 font-medium text-gray-900 hover:bg-gray-100">Manage contacts</Link>
         </div>

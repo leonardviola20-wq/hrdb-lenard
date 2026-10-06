@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId } from "@/lib/auth";
-import { getNextOccurrence, isTaskRecurrence } from "@/lib/taskRecurrence";
+import { getNextOccurrence, getRecurrenceAnchor, isTaskRecurrence, isValidRepeatDay } from "@/lib/taskRecurrence";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -18,6 +18,14 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   }
 
   const body = await req.json();
+  const rescheduleReason = typeof body.rescheduleReason === "string" ? body.rescheduleReason.trim() : "";
+  const prerequisitesToAdd = body.prerequisitesToAdd === undefined ? [] : body.prerequisitesToAdd;
+  if (!Array.isArray(prerequisitesToAdd) || prerequisitesToAdd.some((title: unknown) => typeof title !== "string" || !title.trim() || title.trim().length > 200)) {
+    return NextResponse.json({ error: "Prerequisite steps must be non-empty and 200 characters or fewer" }, { status: 400 });
+  }
+  if (rescheduleReason.length > 500) {
+    return NextResponse.json({ error: "Reschedule reason must be 500 characters or fewer" }, { status: 400 });
+  }
   const data: {
     status?: string;
     title?: string;
@@ -28,6 +36,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     recurrence?: string;
     isFlagged?: boolean;
     dueDate?: Date | null;
+    recurrenceAnchor?: Date | null;
   } = {};
   if (body.status !== undefined) {
     if (!["PENDING", "IN_PROGRESS", "COMPLETED"].includes(body.status)) {
@@ -84,22 +93,89 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
     data.dueDate = dueDate;
   }
+  if (body.preserveRecurrenceSchedule !== undefined && typeof body.preserveRecurrenceSchedule !== "boolean") {
+    return NextResponse.json({ error: "Invalid recurrence schedule option" }, { status: 400 });
+  }
   const existingTask = await prisma.task.findFirst({ where: { id: taskId, userId } });
   if (!existingTask) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
   const recurrence = data.recurrence ?? existingTask.recurrence;
+  if (!isTaskRecurrence(recurrence)) {
+    return NextResponse.json({ error: "Invalid recurrence" }, { status: 400 });
+  }
   const dueDate = data.dueDate === undefined ? existingTask.dueDate : data.dueDate;
+  const dateKey = (date: Date | null) => date?.toISOString().slice(0, 10) ?? null;
+  const dueDateChanged = body.dueDate !== undefined && dateKey(dueDate) !== dateKey(existingTask.dueDate);
+  const repeatDay = body.repeatDay === undefined || body.repeatDay === "" ? null : Number(body.repeatDay);
+  const repeatMonth = body.repeatMonth === undefined || body.repeatMonth === "" ? null : Number(body.repeatMonth);
+  if (recurrence === "MONTHLY" && (body.recurrence !== undefined || body.repeatDay !== undefined)
+    && (!Number.isInteger(repeatDay) || repeatDay! < 1 || repeatDay! > 31)) {
+    return NextResponse.json({ error: "Choose a valid day of the month" }, { status: 400 });
+  }
+  if (recurrence === "YEARLY" && (body.recurrence !== undefined || body.repeatDay !== undefined || body.repeatMonth !== undefined)
+    && (!Number.isInteger(repeatMonth) || !Number.isInteger(repeatDay) || !isValidRepeatDay(repeatMonth!, repeatDay!))) {
+    return NextResponse.json({ error: "Choose a valid month and day for the yearly repeat" }, { status: 400 });
+  }
+  if (dueDateChanged && !rescheduleReason) {
+    return NextResponse.json({ error: "Add a reason when changing the due date" }, { status: 400 });
+  }
+  if (body.rescheduleReason !== undefined && !dueDateChanged) {
+    return NextResponse.json({ error: "Choose a different due date to reschedule this task" }, { status: 400 });
+  }
   if (recurrence !== "NONE" && !dueDate) {
     return NextResponse.json({ error: "Set a due date for recurring tasks" }, { status: 400 });
   }
-  if (Object.keys(data).length === 0) {
+  if (body.preserveRecurrenceSchedule !== true) {
+    if (recurrence === "NONE") {
+      if (existingTask.recurrenceAnchor) data.recurrenceAnchor = null;
+    } else {
+      const recurrenceChanged = body.recurrence !== undefined && recurrence !== existingTask.recurrence;
+      const repeatAnchorSubmitted = (recurrence === "MONTHLY" && body.repeatDay !== undefined)
+        || (recurrence === "YEARLY" && (body.repeatDay !== undefined || body.repeatMonth !== undefined));
+      const shouldUpdateAnchor = recurrenceChanged || dueDateChanged || repeatAnchorSubmitted || !existingTask.recurrenceAnchor;
+      if (shouldUpdateAnchor) {
+        const anchorDueDate = dueDate ?? existingTask.dueDate;
+        const currentAnchor = existingTask.recurrenceAnchor ?? anchorDueDate;
+        const anchorDay = repeatDay ?? currentAnchor?.getUTCDate();
+        const anchorMonth = repeatMonth ?? (currentAnchor ? currentAnchor.getUTCMonth() + 1 : undefined);
+        data.recurrenceAnchor = getRecurrenceAnchor(recurrence, anchorDueDate, anchorDay, anchorMonth);
+      }
+    }
+  }
+  if (body.status === "COMPLETED") {
+    const incompletePrerequisites = await prisma.taskPrerequisiteItem.findMany({
+      where: { taskId, isCompleted: false },
+      select: { title: true },
+    });
+    if (incompletePrerequisites.length > 0) {
+      return NextResponse.json({
+        error: `Complete prerequisite${incompletePrerequisites.length > 1 ? "s" : ""} first: ${incompletePrerequisites.map(({ title }) => title).join(", ")}`,
+      }, { status: 409 });
+    }
+  }
+  if (Object.keys(data).length === 0 && prerequisitesToAdd.length === 0) {
     return NextResponse.json({ error: "No task changes provided" }, { status: 400 });
   }
 
   try {
     const result = await prisma.$transaction(async (tx) => {
       const task = await tx.task.update({ where: { id: taskId }, data });
+      const reschedule = dueDateChanged
+        ? await tx.taskReschedule.create({
+            data: {
+              taskId,
+              previousDueDate: existingTask.dueDate,
+              newDueDate: dueDate,
+              reason: rescheduleReason,
+            },
+          })
+        : null;
+      const addedPrerequisites = prerequisitesToAdd.length > 0
+        ? await tx.taskPrerequisiteItem.createManyAndReturn({
+            data: prerequisitesToAdd.map((title: string) => ({ taskId, title: title.trim() })),
+          })
+        : [];
       const recurringFrequency = isTaskRecurrence(task.recurrence) && task.recurrence !== "NONE"
         ? task.recurrence
         : null;
@@ -116,13 +192,14 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
               priority: task.priority,
               recurrence: task.recurrence,
               isFlagged: task.isFlagged,
-              dueDate: getNextOccurrence(dueDate, recurringFrequency),
+              dueDate: getNextOccurrence(dueDate, recurringFrequency, task.recurrenceAnchor ?? dueDate),
+              recurrenceAnchor: task.recurrenceAnchor ?? dueDate,
               sortOrder: task.sortOrder,
               userId,
             },
           })
         : null;
-      return { task, nextTask };
+      return { task, nextTask, reschedule, addedPrerequisites };
     });
     return NextResponse.json({ message: "Task updated", ...result });
   } catch (error) {

@@ -143,14 +143,19 @@ export default function DashboardPage() {
             <div className="flex flex-col">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
-              <Link
-                href="/tasks?create=1"
-                aria-label="Add a new task"
-                title="Add a new task"
-                className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              >
-                <PlusIcon className="h-5 w-5" />
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/tasks" className="rounded-lg bg-[#172554] px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-900">
+                  Open tasks
+                </Link>
+                <Link
+                  href="/tasks?create=1"
+                  aria-label="Add a new task"
+                  title="Add a new task"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                </Link>
+              </div>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-gray-300 bg-white p-5 shadow">
@@ -194,9 +199,6 @@ export default function DashboardPage() {
                 />
               </div>
             </div>
-            <Link href="/tasks" className="mt-5 inline-flex w-fit items-center rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900">
-              Open tasks
-            </Link>
             </div>
             <div className="flex min-h-48 flex-col border-t border-gray-100 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
