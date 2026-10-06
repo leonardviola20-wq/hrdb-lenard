@@ -1,4 +1,4 @@
-export const RECURRENCE_OPTIONS = ["NONE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"] as const;
+export const RECURRENCE_OPTIONS = ["NONE", "DAILY", "WEEKLY", "SEMI_MONTHLY", "MONTHLY", "YEARLY"] as const;
 
 export type TaskRecurrence = (typeof RECURRENCE_OPTIONS)[number];
 
@@ -48,6 +48,18 @@ export function getNextOccurrence(
     if (daysUntil === 0) daysUntil = 7;
     current.setUTCDate(current.getUTCDate() + daysUntil);
     return current;
+  }
+  if (recurrence === "SEMI_MONTHLY") {
+    const lastDay = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 0)).getUTCDate();
+    if (current.getUTCDate() < 15) {
+      current.setUTCDate(15);
+      return current;
+    }
+    if (current.getUTCDate() < lastDay) {
+      current.setUTCDate(lastDay);
+      return current;
+    }
+    return new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 15));
   }
   if (recurrence === "MONTHLY") {
     const day = anchor?.getUTCDate() ?? current.getUTCDate();

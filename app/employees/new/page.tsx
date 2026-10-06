@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 type Employer = { id: number; name: string; company: string | null };
@@ -94,18 +94,65 @@ function Section({ title, columns = 2, children }: { title: string; columns?: 2 
 
 export default function NewEmployeePage() {
   const router = useRouter();
+  const { id } = useParams<{ id?: string }>();
+  const employeeId = id ?? null;
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loadingEmployee, setLoadingEmployee] = useState(Boolean(employeeId));
 
   useEffect(() => {
-    fetch("/api/employers").then(async (response) => {
+    let active = true;
+    setLoadingEmployee(Boolean(employeeId));
+    setMessage("");
+    if (!employeeId) setForm(emptyForm);
+    const employerRequest = fetch("/api/employers").then(async (response) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load employers");
-      setEmployers(data.employers);
-    }).catch((error: Error) => setMessage(error.message));
-  }, []);
+      if (active) setEmployers(data.employers);
+    });
+    const employeeRequest = employeeId
+      ? fetch(`/api/employees/${employeeId}`).then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Unable to load employee");
+          const employee = data.employee;
+          if (active) setForm({
+            firstName: employee.firstName || "",
+            middleName: employee.middleName || "",
+            lastName: employee.lastName || "",
+            dateOfBirth: employee.dateOfBirth?.slice(0, 10) || "",
+            age: employee.age == null ? "" : String(employee.age),
+            maritalStatus: employee.maritalStatus || "",
+            gender: employee.gender || "",
+            mobileNumber: formatMobile(employee.mobileNumber || ""),
+            photoUrl: employee.photoUrl || "",
+            email: employee.email || "",
+            address: employee.address || "",
+            emergencyName: employee.emergencyName || "",
+            emergencyNumber: formatMobile(employee.emergencyNumber || ""),
+            emergencyRelation: employee.emergencyRelation || "",
+            emergencyAddress: employee.emergencyAddress || "",
+            biometricNo: employee.biometricNo || "",
+            branch: employee.branch || "",
+            position: employee.position || "",
+            employerId: employee.employer?.id == null ? "" : String(employee.employer.id),
+            status: employee.status || "Trainee",
+            dateStarted: employee.dateStarted?.slice(0, 10) || "",
+            endDate: employee.endDate?.slice(0, 10) || "",
+            sssNumber: formatDigits(employee.sssNumber || "", [2, 7, 1]),
+            pagIbigNumber: formatDigits(employee.pagIbigNumber || "", [4, 4, 4]),
+            philHealth: formatDigits(employee.philHealth || "", [2, 9, 1]),
+            tinNumber: formatDigits(employee.tinNumber || "", [3, 3, 3, 5]),
+            remarks: employee.remarks || "",
+          });
+        })
+      : Promise.resolve();
+    Promise.all([employerRequest, employeeRequest])
+      .catch((error: Error) => { if (active) setMessage(error.message); })
+      .finally(() => { if (active) setLoadingEmployee(false); });
+    return () => { active = false; };
+  }, [employeeId]);
 
   const update = (field: keyof EmployeeForm, value: string) => setForm((current) => ({ ...current, [field]: value }));
   const updateDateOfBirth = (value: string) => {
@@ -125,12 +172,16 @@ export default function NewEmployeePage() {
     setSaving(true);
     setMessage("");
     try {
-      const response = await fetch("/api/employees", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const response = await fetch(employeeId ? `/api/employees/${employeeId}` : "/api/employees", {
+        method: employeeId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to create employee");
+      if (!response.ok) throw new Error(data.error || (employeeId ? "Unable to update employee" : "Unable to create employee"));
       router.push("/employees");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to create employee");
+      setMessage(error instanceof Error ? error.message : (employeeId ? "Unable to update employee" : "Unable to create employee"));
     } finally {
       setSaving(false);
     }
@@ -139,11 +190,8 @@ export default function NewEmployeePage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="w-full">
-        <div className="mb-5">
-          <Link href="/employees" className="text-sm font-medium text-blue-600 hover:underline">← Employee Directory</Link>
-        </div>
         {message && <p className="mb-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{message}</p>}
-        <form onSubmit={submit} className="grid gap-5">
+        {employeeId && message ? null : loadingEmployee ? <p role="status" className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-gray-600">Loading employee details...</p> : <form onSubmit={submit} className="grid gap-5">
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-center gap-3">
               {form.photoUrl ? <img src={form.photoUrl} alt="Employee preview" className="h-24 w-24 shrink-0 rounded-lg border border-gray-200 object-cover" /> : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400">No photo</div>}
@@ -202,9 +250,9 @@ export default function NewEmployeePage() {
           </div>
           <div className="flex justify-end gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <Link href="/employees" className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</Link>
-            <button type="submit" disabled={saving} className="rounded-lg bg-[#172554] px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-60">{saving ? "Saving..." : "Create employee"}</button>
+            <button type="submit" disabled={saving} className="rounded-lg bg-[#172554] px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-60">{saving ? (employeeId ? "Saving changes..." : "Creating...") : (employeeId ? "Save changes" : "Create employee")}</button>
           </div>
-        </form>
+        </form>}
       </div>
     </main>
   );

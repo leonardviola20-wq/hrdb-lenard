@@ -182,6 +182,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const profileBackToDirectory = pathname === "/employees/new" || pathname.startsWith("/employees/");
   const publicRoute = pathname === "/" || pathname === "/login" || pathname === "/register";
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -189,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const pageTitle = getPageTitle(pathname);
   const pageSubtitle = getPageSubtitle(pathname);
-  const showDashboardBack = pathname !== "/dashboard" && !pathname.startsWith("/tasks") && pathname !== "/employees";
+  const showDashboardBack = pathname !== "/dashboard" && pathname !== "/attendance" && !pathname.startsWith("/tasks") && pathname !== "/employees";
   const dateTimeValue = currentDateTime?.toISOString();
   const dateLabel = currentDateTime?.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   const timeLabel = currentDateTime?.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -261,7 +262,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {pageSubtitle && <p className="mt-0.5 truncate text-xs text-blue-100">{pageSubtitle}</p>}
           </div>
         )}
-        <time dateTime={dateTimeValue} className="ml-auto shrink-0 px-2 text-right text-[10px] leading-tight text-blue-100">
+        <time dateTime={dateTimeValue} className="hidden ml-auto shrink-0 px-2 text-right text-[10px] leading-tight text-blue-100">
           {dateLabel && <span className="block">{dateLabel}</span>}
           {timeLabel && <span className="mt-1 block text-xs font-semibold text-white">{timeLabel}</span>}
         </time>
@@ -284,11 +285,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {timeLabel && <span className="mt-1 block text-base font-semibold text-white">{timeLabel}</span>}
           </time>
         </header>
-        {showDashboardBack && <div className="px-4 pt-3 sm:px-6">
+        {showDashboardBack && <div className="px-4 pt-6 sm:px-6">
           <Link
-            href="/dashboard"
+            href={profileBackToDirectory ? "/employees" : "/dashboard"}
             onClick={(event) => {
-              if (window.matchMedia("(max-width: 767px)").matches) {
+              if (!profileBackToDirectory && window.matchMedia("(max-width: 767px)").matches) {
                 event.preventDefault();
                 setMobileOpen(true);
               }
@@ -312,6 +313,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function getPageTitle(pathname: string) {
   if (pathname.startsWith("/tasks")) return "Tasks";
   if (pathname === "/dashboard") return "Dashboard";
+  if (pathname.startsWith("/employees/new/")) return "Update Employee";
   if (pathname === "/employees/new") return "Add New Employee";
   if (pathname.startsWith("/employees/")) return "Employee Profile";
   if (pathname === "/employees") return "Employee Directory";

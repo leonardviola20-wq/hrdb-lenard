@@ -90,6 +90,7 @@ function describeRecurrence(task: Task) {
     const weekday = anchor ? new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(anchor) : "same weekday";
     return `Weekly on ${weekday}`;
   }
+  if (task.recurrence === "SEMI_MONTHLY") return "Semi-monthly on the 15th and last day";
   if (task.recurrence === "MONTHLY") return `Monthly on day ${anchor?.getUTCDate() ?? "not set"}`;
   const month = anchor ? new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" }).format(anchor) : "month not set";
   return `Yearly on ${month} ${anchor?.getUTCDate() ?? ""}`.trim();
@@ -485,7 +486,7 @@ export default function TasksPage() {
               repeatMonth: values.repeatMonth || (firstDueDate ? String(firstDueDate.getUTCMonth() + 1) : ""),
             });
           }} className="min-w-48 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100">
-            {RECURRENCE_OPTIONS.map((option) => <option key={option} value={option}>{option === "NONE" ? "Does not repeat" : option.charAt(0) + option.slice(1).toLowerCase()}</option>)}
+            {RECURRENCE_OPTIONS.map((option) => <option key={option} value={option}>{option === "NONE" ? "Does not repeat" : option === "SEMI_MONTHLY" ? "Semi-monthly" : option.charAt(0) + option.slice(1).toLowerCase()}</option>)}
           </select>
         </label>
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm">
@@ -495,6 +496,7 @@ export default function TasksPage() {
       </div>
       {values.recurrence === "DAILY" && <p className="text-xs text-slate-500">Repeats every day after the first due date.</p>}
       {values.recurrence === "WEEKLY" && <p className="text-xs text-slate-500">Repeats weekly on the same weekday as the first due date.</p>}
+      {values.recurrence === "SEMI_MONTHLY" && <p className="text-xs text-slate-500">Repeats on the 15th and the last day of each month, after the first due date.</p>}
       {values.recurrence === "MONTHLY" && <div className="rounded-lg border border-slate-200 bg-white p-3">
         <label className="grid max-w-48 gap-1.5 text-sm font-medium text-slate-700">
           <span>Repeat on day</span>
@@ -556,7 +558,7 @@ export default function TasksPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] p-4 sm:p-5">
+    <main className="min-h-screen bg-[#f5f7fb] px-4 pb-4 pt-6 sm:px-5 sm:pb-5 sm:pt-6">
       <div className="w-full min-w-0">
         <div className="mb-4 grid grid-cols-2 items-center gap-2 md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]">
           <Link
@@ -567,7 +569,7 @@ export default function TasksPage() {
                 window.dispatchEvent(new Event("hrdb-open-sidebar"));
               }
             }}
-            className="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+            className="ml-1 inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
           >
             <ChevronLeftIcon className="h-4 w-4" /> Back
           </Link>

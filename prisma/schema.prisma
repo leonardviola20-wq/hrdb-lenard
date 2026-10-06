@@ -129,8 +129,61 @@ model employee {
   assignedBy        String?
   assignedAt        DateTime?
   employer          employer? @relation(fields: [employerId], references: [id])
+  attendanceRecords Attendance[]
+  attendancePunches AttendancePunch[]
 
   @@index([employerId])
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  date       DateTime @db.Date
+  timeIn     String?
+  timeOut    String?
+  status     String
+  branch     String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  employee   employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  punches    AttendancePunch[]
+
+  @@unique([employeeId, date])
+  @@index([date, status])
+}
+
+model AttendanceImport {
+  id             Int               @id @default(autoincrement())
+  branch         String
+  fileName       String
+  totalRows      Int
+  importedRows   Int
+  duplicateRows  Int
+  unmatchedRows  Int
+  createdAt      DateTime          @default(now())
+  punches        AttendancePunch[]
+
+  @@index([createdAt])
+}
+
+model AttendancePunch {
+  id           Int              @id @default(autoincrement())
+  employeeId   Int
+  attendanceId Int
+  importId     Int
+  date         DateTime         @db.Date
+  time         String
+  deviceNumber String
+  branch       String
+  createdAt    DateTime         @default(now())
+  employee     employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attendance   Attendance       @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  importBatch  AttendanceImport @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date, time, deviceNumber, branch])
+  @@index([date, branch])
+  @@index([attendanceId, time])
 }
 
 model employer {
