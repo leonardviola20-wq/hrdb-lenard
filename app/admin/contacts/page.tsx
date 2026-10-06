@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
 type Contact = {
@@ -173,7 +172,6 @@ export default function AdminContactsPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-5xl">
-        <Link href="/admin" className="text-sm text-blue-600 hover:underline">Back to admin dashboard</Link>
         {message && <p className="mb-4 text-red-600">{message}</p>}
         <form onSubmit={addContact} className="mb-8 grid gap-3 rounded-lg bg-white p-5 shadow md:grid-cols-2">
           <h2 className="text-lg font-semibold text-gray-900 md:col-span-2">Add contact</h2>

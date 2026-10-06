@@ -186,8 +186,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const pageTitle = getPageTitle(pathname);
   const pageSubtitle = getPageSubtitle(pathname);
+  const showDashboardBack = pathname !== "/dashboard" && !pathname.startsWith("/tasks") && pathname !== "/employees";
+  const dateTimeValue = currentDateTime?.toISOString();
+  const dateLabel = currentDateTime?.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const timeLabel = currentDateTime?.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+  useEffect(() => {
+    const updateDateTime = () => setCurrentDateTime(new Date());
+    updateDateTime();
+    const interval = window.setInterval(updateDateTime, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -197,6 +209,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [mobileOpen]);
+
+  useEffect(() => {
+    const openMobileSidebar = () => setMobileOpen(true);
+    window.addEventListener("hrdb-open-sidebar", openMobileSidebar);
+    return () => window.removeEventListener("hrdb-open-sidebar", openMobileSidebar);
+  }, []);
 
   useEffect(() => {
     if (publicRoute) return;
@@ -238,11 +256,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="truncate text-base font-bold tracking-tight">HRDB-Lenard</span>
           </div>
         ) : (
-          <div className="min-w-0 px-3">
+          <div className="min-w-0 flex-1 px-3">
             <h1 className="truncate text-lg font-bold">{pageTitle}</h1>
             {pageSubtitle && <p className="mt-0.5 truncate text-xs text-blue-100">{pageSubtitle}</p>}
           </div>
         )}
+        <time dateTime={dateTimeValue} className="ml-auto shrink-0 px-2 text-right text-[10px] leading-tight text-blue-100">
+          {dateLabel && <span className="block">{dateLabel}</span>}
+          {timeLabel && <span className="mt-1 block text-xs font-semibold text-white">{timeLabel}</span>}
+        </time>
       </header>
       <Sidebar
         collapsed={collapsed}
@@ -257,7 +279,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <h1 className="truncate text-xl font-bold sm:text-2xl">{pageTitle}</h1>
             {pageSubtitle && <p className="mt-0.5 max-w-full truncate text-xs text-blue-100 sm:text-sm">{pageSubtitle}</p>}
           </div>
+          <time dateTime={dateTimeValue} className="ml-auto shrink-0 px-5 text-right text-sm text-blue-100 md:px-7">
+            {dateLabel && <span className="block">{dateLabel}</span>}
+            {timeLabel && <span className="mt-1 block text-base font-semibold text-white">{timeLabel}</span>}
+          </time>
         </header>
+        {showDashboardBack && <div className="px-4 pt-3 sm:px-6">
+          <Link
+            href="/dashboard"
+            onClick={(event) => {
+              if (window.matchMedia("(max-width: 767px)").matches) {
+                event.preventDefault();
+                setMobileOpen(true);
+              }
+            }}
+            className="inline-flex h-10 items-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+            <span>Back</span>
+          </Link>
+        </div>}
         {children}
         <footer className={`${mobileOpen ? "hidden md:flex" : "flex"} sticky bottom-0 z-20 mt-auto items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-500 shadow-[0_-3px_10px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6`}>
           <span>© {new Date().getFullYear()} HRDB-Lenard</span>

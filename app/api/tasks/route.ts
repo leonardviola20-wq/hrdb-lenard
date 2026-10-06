@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId } from "@/lib/auth";
-import { isTaskRecurrence } from "@/lib/taskRecurrence";
+import { getRecurrenceAnchor, isTaskRecurrence, isValidRepeatDay } from "@/lib/taskRecurrence";
 
 export async function GET(req: NextRequest) {
   const userId = getAuthenticatedUserId(req);
@@ -11,10 +11,14 @@ export async function GET(req: NextRequest) {
   }
 
   const tasks = await prisma.task.findMany({
-    where: { userId },
+    where: { userId, prerequisiteFor: { none: {} } },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    include: {
+      rescheduleHistory: { orderBy: { createdAt: "desc" } },
+      prerequisiteItems: { orderBy: { createdAt: "asc" } },
+    },
   });
-  return NextResponse.json({ tasks });
+  return NextResponse.json({ tasks: tasks.map((task) => ({ ...task, prerequisites: task.prerequisiteItems })) });
 }
 
 export async function POST(req: NextRequest) {
@@ -33,6 +37,8 @@ export async function POST(req: NextRequest) {
   const recurrence = body.recurrence ?? "NONE";
   const isFlagged = body.isFlagged ?? false;
   const dueDate = body.dueDate ? new Date(body.dueDate) : null;
+  const repeatDay = body.repeatDay === undefined || body.repeatDay === "" ? null : Number(body.repeatDay);
+  const repeatMonth = body.repeatMonth === undefined || body.repeatMonth === "" ? null : Number(body.repeatMonth);
 
   if (!title) {
     return NextResponse.json({ error: "Task title is required" }, { status: 400 });
@@ -55,9 +61,17 @@ export async function POST(req: NextRequest) {
   if (recurrence !== "NONE" && !dueDate) {
     return NextResponse.json({ error: "Set a due date for recurring tasks" }, { status: 400 });
   }
+  if (recurrence === "MONTHLY" && (!Number.isInteger(repeatDay) || repeatDay! < 1 || repeatDay! > 31)) {
+    return NextResponse.json({ error: "Choose a valid day of the month" }, { status: 400 });
+  }
+  if (recurrence === "YEARLY" && (!Number.isInteger(repeatMonth) || !Number.isInteger(repeatDay) || !isValidRepeatDay(repeatMonth!, repeatDay!))) {
+    return NextResponse.json({ error: "Choose a valid month and day for the yearly repeat" }, { status: 400 });
+  }
+
+  const recurrenceAnchor = getRecurrenceAnchor(recurrence, dueDate, repeatDay ?? undefined, repeatMonth ?? undefined);
 
   const task = await prisma.task.create({
-    data: { title, description, notes, category, priority, dueDate, recurrence, isFlagged, userId },
+    data: { title, description, notes, category, priority, dueDate, recurrence, recurrenceAnchor, isFlagged, userId },
   });
   return NextResponse.json({ task }, { status: 201 });
 }

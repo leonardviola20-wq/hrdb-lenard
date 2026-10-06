@@ -12,9 +12,10 @@ export async function GET(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } });
     if (!user?.accessiblePages.includes("/employees")) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
   }
-  const employees = await prisma.employee.findMany({
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    select: {
+  try {
+    const employees = await prisma.employee.findMany({
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      select: {
       id: true,
       employeeCode: true,
       firstName: true,
@@ -46,10 +47,17 @@ export async function GET(req: NextRequest) {
       assignedBy: true,
       assignedAt: true,
       employer: { select: { id: true, name: true, company: true } },
-    },
-  });
+      },
+    });
 
-  return NextResponse.json({ employees });
+    return NextResponse.json({ employees });
+  } catch (error) {
+    console.error("Load employees error:", error);
+    const details = error instanceof Error ? error.message : "Unknown database error";
+    return NextResponse.json({
+      error: process.env.NODE_ENV === "development" ? details : "Unable to load employees",
+    }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {

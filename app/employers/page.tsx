@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 type Employer = {
   id: number;
@@ -59,6 +60,7 @@ export default function EmployersPage() {
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [showFirstEmployerPrompt, setShowFirstEmployerPrompt] = useState(false);
   const [form, setForm] = useState<FormState>({ ...emptyForm });
   const [editing, setEditing] = useState<Employer | null>(null);
   const [selectedEmployer, setSelectedEmployer] = useState<Employer | null>(null);
@@ -70,6 +72,7 @@ export default function EmployersPage() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Unable to load employers");
     setEmployers(data.employers);
+    setShowFirstEmployerPrompt(data.employers.length === 0);
   }).catch((error: Error) => setMessage(error.message));
 
   useEffect(() => { void load(); }, []);
@@ -146,11 +149,11 @@ export default function EmployersPage() {
       <input type={type} value={form[key]} onChange={(event) => update(key, event.target.value)} className={inputClass} />
     </label>
   );
-  const agencyField = (label: string, valueKey: keyof FormState, dateKey: keyof FormState, groups?: number[]) => (
+  const agencyField = (label: string, valueKey: keyof FormState, dateKey: keyof FormState, groups?: number[], required = false) => (
     <div className="grid gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:col-span-2 sm:grid-cols-2">
       <label className="grid gap-1.5 text-sm">
-        <span className="font-semibold text-gray-900">{label}</span>
-        <input value={form[valueKey]} onChange={(event) => update(valueKey, groups ? formatNumber(event.target.value, groups) : event.target.value)} className={inputClass} />
+        <span className="font-semibold text-gray-900">{label}{required ? " *" : ""}</span>
+        <input required={required} value={form[valueKey]} onChange={(event) => update(valueKey, groups ? formatNumber(event.target.value, groups) : event.target.value)} className={inputClass} />
       </label>
       {field("Registration Date", dateKey, "date")}
     </div>
@@ -159,8 +162,8 @@ export default function EmployersPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="w-full">
-        <header className="mb-6 flex items-start justify-between gap-4">
-          <button type="button" onClick={() => openForm()} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white">Add employer</button>
+        <header className="mb-6 flex items-center justify-between gap-4">
+          <button type="button" onClick={() => openForm()} className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900"><PlusIcon className="h-4 w-4" />Add employer</button>
         </header>
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employers..." className={`${inputClass} mb-6`} />
         {message && <p className="mb-4 font-medium text-red-700">{message}</p>}
@@ -199,6 +202,19 @@ export default function EmployersPage() {
             </article>
           ))}
         </div>
+        {showFirstEmployerPrompt && !message && employers.length === 0 && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="first-employer-title" className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+              <span className="text-2xl font-semibold">+</span>
+            </div>
+            <h2 id="first-employer-title" className="mt-4 text-xl font-bold text-gray-900">No employers yet</h2>
+            <p className="mt-2 text-sm text-gray-600">Add your first employer to start organizing employers and branches.</p>
+            <div className="mt-6 flex justify-center gap-2">
+              <button type="button" onClick={() => setShowFirstEmployerPrompt(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Maybe later</button>
+              <button type="button" onClick={() => { setShowFirstEmployerPrompt(false); openForm(); }} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Add first employer</button>
+            </div>
+          </section>
+        </div>}
         {selectedEmployer && (
           <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setSelectedEmployer(null)}>
             <section role="dialog" aria-modal="true" aria-labelledby="employer-details-title" onClick={(event) => event.stopPropagation()} className="my-auto w-full max-w-3xl rounded-xl bg-white p-5 shadow-xl sm:p-6">
@@ -263,7 +279,7 @@ export default function EmployersPage() {
                 <label className="grid gap-1.5 text-sm sm:col-span-2"><span className="font-semibold text-gray-900">Short Address</span><textarea value={form.shortAddress} onChange={(event) => update("shortAddress", event.target.value)} rows={3} className={inputClass} /></label>
                 <div className="grid gap-2 text-sm sm:col-span-2"><span className="font-semibold text-gray-900">Logo</span><div className="flex items-center gap-3"><label className="cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2 font-semibold text-gray-800 hover:bg-gray-50"><span>Upload logo</span><input type="file" accept="image/*" onChange={(event) => uploadLogo(event.target.files?.[0])} className="sr-only" /></label>{form.logo && <img src={form.logo} alt="Logo preview" className="h-14 w-14 rounded-lg border border-gray-300 object-cover" />} {form.logo && <button type="button" onClick={() => update("logo", "")} className="text-sm font-medium text-red-700">Remove</button>}</div></div>
                 <h3 className="border-b pb-2 pt-2 text-base font-bold text-gray-950 sm:col-span-2">Government Agencies</h3>
-                {agencyField("SEC / DTI", "secDti", "secDtiRegistrationDate")}
+                {agencyField("SEC / DTI Registration Number", "secDti", "secDtiRegistrationDate", undefined, true)}
                 {agencyField("TIN", "tin", "tinRegistrationDate", [3, 3, 3, 5])}
                 {agencyField("SSS", "sss", "sssRegistrationDate", [2, 7, 1])}
                 {agencyField("HDMF", "hdmf", "hdmfRegistrationDate", [4, 4, 4])}

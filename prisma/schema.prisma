@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String?
-  name      String?
-  password  String
-  role      String   @default("USER")
-  canAccessEmployees Boolean @default(false)
-  accessiblePages String[] @default(["/dashboard", "/tasks", "/settings"])
-  emailVerified Boolean @default(true)
-  verificationTokenHash String? @unique
+  id                       Int       @id @default(autoincrement())
+  email                    String    @unique
+  username                 String?
+  name                     String?
+  password                 String
+  role                     String    @default("USER")
+  canAccessEmployees       Boolean   @default(false)
+  accessiblePages          String[]  @default(["/dashboard", "/tasks", "/settings"])
+  emailVerified            Boolean   @default(true)
+  verificationTokenHash    String?   @unique
   verificationTokenExpires DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  posts     Post[]
-  tasks     Task[]
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  posts                    Post[]
+  tasks                    Task[]
 }
 
 model Post {
@@ -36,23 +36,62 @@ model Post {
 }
 
 model Task {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  status      String   @default("PENDING")
-  priority    String   @default("MEDIUM")
-  category    String?
-  notes       String?
-  recurrence  String   @default("NONE")
-  isFlagged   Boolean  @default(false)
-  dueDate     DateTime?
-  sortOrder   Int      @default(0)
-  userId      Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                Int                    @id @default(autoincrement())
+  title             String
+  description       String?
+  status            String                 @default("PENDING")
+  priority          String                 @default("MEDIUM")
+  category          String?
+  notes             String?
+  recurrence        String                 @default("NONE")
+  recurrenceAnchor  DateTime?
+  isFlagged         Boolean                @default(false)
+  dueDate           DateTime?
+  sortOrder         Int                    @default(0)
+  userId            Int
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rescheduleHistory TaskReschedule[]
+  prerequisiteLinks TaskDependency[]       @relation("BlockedTask")
+  prerequisiteFor   TaskDependency[]       @relation("PrerequisiteTask")
+  prerequisiteItems TaskPrerequisiteItem[]
 
   @@index([userId, status])
+}
+
+model TaskReschedule {
+  id              Int       @id @default(autoincrement())
+  taskId          Int
+  previousDueDate DateTime?
+  newDueDate      DateTime?
+  reason          String
+  createdAt       DateTime  @default(now())
+  task            Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+}
+
+model TaskDependency {
+  blockedTaskId      Int
+  prerequisiteTaskId Int
+  blockedTask        Task @relation("BlockedTask", fields: [blockedTaskId], references: [id], onDelete: Cascade)
+  prerequisiteTask   Task @relation("PrerequisiteTask", fields: [prerequisiteTaskId], references: [id], onDelete: Cascade)
+
+  @@id([blockedTaskId, prerequisiteTaskId])
+  @@index([prerequisiteTaskId])
+}
+
+model TaskPrerequisiteItem {
+  id          Int       @id @default(autoincrement())
+  taskId      Int
+  title       String
+  isCompleted Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
 }
 
 model employee {
@@ -95,29 +134,29 @@ model employee {
 }
 
 model employer {
-  id        Int        @id @default(autoincrement())
-  name      String
-  company   String?
-  branches  String?
-  status String @default("Active")
-  email String?
-  contactNumber String?
-  branchStatus String @default("Open")
-  president String?
-  longAddress String?
-  shortAddress String?
-  logo String?
-  secDti String?
+  id                     Int        @id @default(autoincrement())
+  name                   String
+  company                String?
+  branches               String?
+  status                 String     @default("Active")
+  email                  String?
+  contactNumber          String?
+  branchStatus           String     @default("Open")
+  president              String?
+  longAddress            String?
+  shortAddress           String?
+  logo                   String?
+  secDti                 String?     @unique
   secDtiRegistrationDate DateTime?
-  tin String?
-  tinRegistrationDate DateTime?
-  sss String?
-  sssRegistrationDate DateTime?
-  hdmf String?
-  hdmfRegistrationDate DateTime?
-  phic String?
-  phicRegistrationDate DateTime?
-  employees employee[]
+  tin                    String?
+  tinRegistrationDate    DateTime?
+  sss                    String?
+  sssRegistrationDate    DateTime?
+  hdmf                   String?
+  hdmfRegistrationDate   DateTime?
+  phic                   String?
+  phicRegistrationDate   DateTime?
+  employees              employee[]
 }
 
 model OfficeContact {

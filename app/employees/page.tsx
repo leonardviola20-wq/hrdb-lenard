@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FunnelIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -114,9 +114,8 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [employerFilter, setEmployerFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterPanelRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
+  const [showFirstEmployeePrompt, setShowFirstEmployeePrompt] = useState(false);
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -131,17 +130,6 @@ export default function EmployeesPage() {
   }, [openMenuId]);
 
   useEffect(() => {
-    if (!filtersOpen) return;
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (event.target instanceof Node && !filterPanelRef.current?.contains(event.target)) {
-        setFiltersOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [filtersOpen]);
-
-  useEffect(() => {
     let active = true;
     const loadingStartedAt = Date.now();
 
@@ -152,6 +140,7 @@ export default function EmployeesPage() {
         if (active) {
           employeeDirectoryCache = data.employees;
           setEmployees(data.employees);
+          setShowFirstEmployeePrompt(data.employees.length === 0);
         }
       })
       .catch((error: Error) => {
@@ -188,7 +177,9 @@ export default function EmployeesPage() {
         && (statusFilter === "ALL"
           || (statusFilter === "ACTIVE"
             ? activeEmployeeStatuses.includes(employee.status || "")
-            : employee.status === statusFilter))
+            : statusFilter === "INACTIVE"
+              ? !activeEmployeeStatuses.includes(employee.status || "")
+              : employee.status === statusFilter))
         && (!employerFilter || employee.employer?.id.toString() === employerFilter)
         && (!branchFilter || employee.branch === branchFilter);
     });
@@ -199,7 +190,6 @@ export default function EmployeesPage() {
     [employees]
   );
   const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter);
-  const showSearchField = filtersOpen;
   const clearFilters = () => {
     setQuery("");
     setStatusFilter("ACTIVE");
@@ -210,56 +200,64 @@ export default function EmployeesPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
-        <div ref={filterPanelRef} className="mb-5 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-          <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => setFiltersOpen((current) => !current)} aria-expanded={filtersOpen} className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition ${filtersOpen ? "border-blue-700 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"}`}>
-                <FunnelIcon className="h-4 w-4" /> Filters
-              </button>
-              <p className="whitespace-nowrap text-[11px] text-gray-600 sm:text-xs">
-                {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
-              </p>
-              <button type="button" onClick={clearFilters} disabled={!hasFilters} className="whitespace-nowrap px-1 text-xs font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline sm:text-sm">Clear all</button>
-              <Link href="/employees/new" aria-label="Add employee" title="Add employee" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#172554] text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300 sm:h-10 sm:w-10 xl:ml-auto">
-                <PlusIcon className="h-5 w-5" />
-              </Link>
-          </div>
-
-          {(showSearchField || filtersOpen) && <div className="mt-3 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(150px,200px))]">
-            {showSearchField && <label className="grid min-w-0 gap-1.5 text-sm sm:col-span-2 lg:col-span-3 xl:col-span-1">
-              <span className="font-semibold text-gray-800">Search</span>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Name, biometric number, or employer"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-              />
-            </label>}
-
-          {filtersOpen && <>
-            <label className="grid min-w-0 gap-1.5 text-sm">
-              <span className="font-semibold text-gray-800">Status</span>
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="ACTIVE">Active employees</option>
-                <option value="ALL">All statuses</option>
-                {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-              </select>
-            </label>
-            <label className="grid min-w-0 gap-1.5 text-sm">
-              <span className="font-semibold text-gray-800">Employer</span>
-              <select value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="">All employers</option>
-                {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
-              </select>
-            </label>
-            <label className="grid min-w-0 gap-1.5 text-sm">
-              <span className="font-semibold text-gray-800">Branch</span>
-              <select value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="">All branches</option>
-                {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-              </select>
-            </label>
-          </>}
-          </div>}
+        <div className="mb-4 grid grid-cols-2 items-center gap-2 lg:grid-cols-[auto_auto_minmax(180px,1fr)_repeat(3,minmax(130px,180px))]">
+          <Link
+            href="/dashboard"
+            onClick={(event) => {
+              if (window.matchMedia("(max-width: 767px)").matches) {
+                event.preventDefault();
+                window.dispatchEvent(new Event("hrdb-open-sidebar"));
+              }
+            }}
+            className="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          >
+            <ChevronLeftIcon className="h-4 w-4" /> Back
+          </Link>
+          <Link href="/employees/new" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
+            <PlusIcon className="h-4 w-4" /> Add employee
+          </Link>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search employees..."
+            aria-label="Search employees"
+            className="col-span-2 h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1"
+          />
+          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            <option value="ACTIVE">Active employees</option>
+            <option value="INACTIVE">Inactive employees</option>
+            <option value="ALL">All statuses</option>
+            {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            <option value="">All employers</option>
+            {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
+          </select>
+          <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="col-span-2 h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1">
+            <option value="">All branches</option>
+            {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+          </select>
+        </div>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
+          {[
+            { value: "ACTIVE", label: "Active employees" },
+            { value: "ALL", label: "All employees" },
+            { value: "INACTIVE", label: "Inactive employees" },
+          ].map((quickFilter) => (
+            <button
+              key={quickFilter.value}
+              type="button"
+              onClick={() => setStatusFilter(quickFilter.value)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === quickFilter.value ? "border-blue-200 bg-blue-100 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
+            >
+              {quickFilter.label}
+            </button>
+          ))}
+          <span className="ml-auto whitespace-nowrap text-xs text-gray-600">
+            {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
+          </span>
+          <button type="button" onClick={clearFilters} disabled={!hasFilters} className="whitespace-nowrap px-1 text-xs font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline sm:text-sm">Clear all</button>
         </div>
 
         {message && <p className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
@@ -337,6 +335,21 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
+      {showFirstEmployeePrompt && !loading && !message && employees.length === 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="first-employee-title" className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+              <PlusIcon className="h-7 w-7" />
+            </div>
+            <h2 id="first-employee-title" className="mt-4 text-xl font-bold text-gray-900">No employees yet</h2>
+            <p className="mt-2 text-sm text-gray-600">Add your first employee to start building the employee directory.</p>
+            <div className="mt-6 flex justify-center gap-2">
+              <button type="button" onClick={() => setShowFirstEmployeePrompt(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Maybe later</button>
+              <Link href="/employees/new" className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Add first employee</Link>
+            </div>
+          </section>
+        </div>
+      )}
       {selectedEmployee && (
         <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setSelectedEmployee(null)}>
           <div className="w-full max-w-3xl rounded-xl bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>

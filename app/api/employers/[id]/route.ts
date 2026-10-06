@@ -16,12 +16,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
+  const secDti = typeof body.secDti === "string" ? body.secDti.trim().toUpperCase() : "";
+  if (!secDti) return NextResponse.json({ error: "SEC / DTI registration number is required" }, { status: 400 });
   try {
+    const existingNumbers = await prisma.employer.findMany({ where: { id: { not: id } }, select: { id: true, secDti: true } });
+    if (existingNumbers.some((employer) => employer.secDti?.trim().toUpperCase() === secDti)) {
+      return NextResponse.json({ error: "An employer with this SEC / DTI registration number already exists" }, { status: 409 });
+    }
     const employer = await prisma.employer.update({ where: { id }, data: {
       name: body.name.trim(), company: text("tradeName"), branches: text("branchName"),
       status: text("status") || "Active", email: text("email"), contactNumber: text("contactNumber"),
       branchStatus: text("branchStatus") || "Open", president: text("president"), longAddress: text("longAddress"),
-      shortAddress: text("shortAddress"), logo: text("logo"), secDti: text("secDti"), tin: text("tin"),
+      shortAddress: text("shortAddress"), logo: text("logo"), secDti, tin: text("tin"),
       sss: text("sss"), hdmf: text("hdmf"), phic: text("phic"),
       secDtiRegistrationDate: date("secDtiRegistrationDate"),
       tinRegistrationDate: date("tinRegistrationDate"),
@@ -32,6 +38,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ employer });
   } catch (error) {
     console.error("Update employer error:", error);
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: "An employer with this SEC / DTI registration number already exists" }, { status: 409 });
+    }
     return NextResponse.json({ error: "Unable to update employer" }, { status: 500 });
   }
 }
