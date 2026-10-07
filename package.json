@@ -8,6 +8,7 @@
     "prebuild": "npx prisma generate",
     "build": "next build",
     "start": "next start",
+    "test": "tsx --test \"lib/**/*.test.ts\"",
     "lint": "eslint",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
@@ -40,6 +41,7 @@
     "prisma": "^5.22.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

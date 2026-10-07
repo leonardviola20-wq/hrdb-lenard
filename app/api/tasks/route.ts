@@ -2,7 +2,76 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId } from "@/lib/auth";
-import { getRecurrenceAnchor, isTaskRecurrence, isValidRepeatDay } from "@/lib/taskRecurrence";
+import { getRecurrenceAnchor, isTaskRecurrence, isValidRepeatDay, type TaskRecurrence } from "@/lib/taskRecurrence";
+
+type CreateTaskInput = {
+  title: string;
+  description: string | null;
+  notes: string | null;
+  category: string | null;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  recurrence: TaskRecurrence;
+  isFlagged: boolean;
+  dueDate: Date | null;
+  repeatDay: number | null;
+  repeatMonth: number | null;
+};
+
+function parseTaskInput(body: unknown): { input: CreateTaskInput } | { error: string } {
+  const raw = (body ?? {}) as Record<string, unknown>;
+
+  const title = typeof raw.title === "string" ? raw.title.trim() : "";
+  const description = typeof raw.description === "string" ? raw.description.trim() : null;
+  const notes = typeof raw.notes === "string" ? raw.notes.trim() : null;
+  const category = typeof raw.category === "string" ? raw.category.trim() : null;
+  const priority = raw.priority || "MEDIUM";
+  const recurrence = raw.recurrence ?? "NONE";
+  const isFlagged = raw.isFlagged ?? false;
+  const dueDate = raw.dueDate ? new Date(raw.dueDate as string | number | Date) : null;
+  const repeatDay = raw.repeatDay === undefined || raw.repeatDay === "" ? null : Number(raw.repeatDay);
+  const repeatMonth = raw.repeatMonth === undefined || raw.repeatMonth === "" ? null : Number(raw.repeatMonth);
+
+  if (!title) return { error: "Task title is required" };
+  if (title.length > 120 || (description && description.length > 500) || (notes && notes.length > 2000)) {
+    return { error: "Task details are too long" };
+  }
+  if (!isTaskRecurrence(recurrence) || typeof isFlagged !== "boolean") {
+    return { error: "Invalid recurrence or flag value" };
+  }
+  if (priority !== "LOW" && priority !== "MEDIUM" && priority !== "HIGH") {
+    return { error: "Invalid priority" };
+  }
+  if (category && category.length > 60) {
+    return { error: "Category is too long" };
+  }
+  if (dueDate && Number.isNaN(dueDate.getTime())) {
+    return { error: "Invalid due date" };
+  }
+  if (recurrence !== "NONE" && !dueDate) {
+    return { error: "Set a due date for recurring tasks" };
+  }
+  if (recurrence === "MONTHLY" && (!Number.isInteger(repeatDay) || repeatDay! < 1 || repeatDay! > 31)) {
+    return { error: "Choose a valid day of the month" };
+  }
+  if (recurrence === "YEARLY" && (!Number.isInteger(repeatMonth) || repeatMonth! < 1 || repeatMonth! > 12 || !Number.isInteger(repeatDay) || !isValidRepeatDay(repeatMonth!, repeatDay!))) {
+    return { error: "Choose a valid month and day for the yearly repeat" };
+  }
+
+  return {
+    input: {
+      title,
+      description,
+      notes,
+      category,
+      priority,
+      recurrence,
+      isFlagged,
+      dueDate,
+      repeatDay,
+      repeatMonth,
+    },
+  };
+}
 
 export async function GET(req: NextRequest) {
   const userId = getAuthenticatedUserId(req);
@@ -27,46 +96,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const title = typeof body.title === "string" ? body.title.trim() : "";
-  const description =
-    typeof body.description === "string" ? body.description.trim() : null;
-  const notes = typeof body.notes === "string" ? body.notes.trim() : null;
-  const category = typeof body.category === "string" ? body.category.trim() : null;
-  const priority = body.priority || "MEDIUM";
-  const recurrence = body.recurrence ?? "NONE";
-  const isFlagged = body.isFlagged ?? false;
-  const dueDate = body.dueDate ? new Date(body.dueDate) : null;
-  const repeatDay = body.repeatDay === undefined || body.repeatDay === "" ? null : Number(body.repeatDay);
-  const repeatMonth = body.repeatMonth === undefined || body.repeatMonth === "" ? null : Number(body.repeatMonth);
+  const body = await req.json().catch(() => null);
+  const parsed = parseTaskInput(body);
+  if ("error" in parsed) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
 
-  if (!title) {
-    return NextResponse.json({ error: "Task title is required" }, { status: 400 });
-  }
-  if (title.length > 120 || (description && description.length > 500) || (notes && notes.length > 2000)) {
-    return NextResponse.json({ error: "Task details are too long" }, { status: 400 });
-  }
-  if (!isTaskRecurrence(recurrence) || typeof isFlagged !== "boolean") {
-    return NextResponse.json({ error: "Invalid recurrence or flag value" }, { status: 400 });
-  }
-  if (!["LOW", "MEDIUM", "HIGH"].includes(priority)) {
-    return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
-  }
-  if (category && category.length > 60) {
-    return NextResponse.json({ error: "Category is too long" }, { status: 400 });
-  }
-  if (body.dueDate && Number.isNaN(dueDate?.getTime())) {
-    return NextResponse.json({ error: "Invalid due date" }, { status: 400 });
-  }
-  if (recurrence !== "NONE" && !dueDate) {
-    return NextResponse.json({ error: "Set a due date for recurring tasks" }, { status: 400 });
-  }
-  if (recurrence === "MONTHLY" && (!Number.isInteger(repeatDay) || repeatDay! < 1 || repeatDay! > 31)) {
-    return NextResponse.json({ error: "Choose a valid day of the month" }, { status: 400 });
-  }
-  if (recurrence === "YEARLY" && (!Number.isInteger(repeatMonth) || !Number.isInteger(repeatDay) || !isValidRepeatDay(repeatMonth!, repeatDay!))) {
-    return NextResponse.json({ error: "Choose a valid month and day for the yearly repeat" }, { status: 400 });
-  }
+  const { title, description, notes, category, priority, dueDate, recurrence, isFlagged, repeatDay, repeatMonth } = parsed.input;
 
   const recurrenceAnchor = getRecurrenceAnchor(recurrence, dueDate, repeatDay ?? undefined, repeatMonth ?? undefined);
 

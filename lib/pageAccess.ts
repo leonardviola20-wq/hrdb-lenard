@@ -19,3 +19,14 @@ export function isPageAccessHref(value: unknown): value is PageAccessHref {
 export function hasPageAccess(pathname: string, accessiblePages: readonly string[]) {
   return accessiblePages.some((page) => pathname === page || pathname.startsWith(`${page}/`));
 }
+
+type PageAccessSubject = {
+  role?: string | null;
+  accessiblePages?: readonly string[] | null;
+};
+
+export function canViewPage(subject: PageAccessSubject | null | undefined, href: PageAccessHref) {
+  if (!subject) return false;
+  if (subject.role === "ADMIN") return true;
+  return Boolean(subject.accessiblePages?.includes(href));
+}

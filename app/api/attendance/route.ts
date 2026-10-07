@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getAuthenticatedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
+import { toCsv } from "@/lib/csv";
 
 const activeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 const maxUploadSize = 10 * 1024 * 1024;
@@ -53,6 +54,12 @@ function splitRow(line: string, delimiter: string) {
 
 function parseDeviceFile(text: string) {
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  // ZKTeco-style export: "No | Mchn | EnNo | Name | Mode | IOMd | DateTime" (e.g. 005_GLog.txt).
+  const glogHeader = (lines[0] ?? "").split(String.fromCharCode(9));
+  if (glogHeader[0] === "No" && glogHeader[1] === "Mchn" && glogHeader[2] === "EnNo") {
+    return parseGlogFile(lines);
+  }
+
   const sampleLine = lines.find((line) => !/^\s*(biometric|employee|user)/i.test(line)) ?? lines[0] ?? "";
   const delimiter = sampleLine.includes("\t") ? "\t" : sampleLine.includes(",") ? "," : ";";
   const records: ParsedPunch[] = [];
@@ -80,6 +87,40 @@ function parseDeviceFile(text: string) {
       date,
       dateText: timestampMatch[1],
       time: `${String(timeParts[0]).padStart(2, "0")}:${String(timeParts[1]).padStart(2, "0")}:${String(timeParts[2] ?? 0).padStart(2, "0")}`,
+      deviceNumber,
+    });
+  }
+  return { records, skippedRows, error: null };
+}
+
+// Parses the tab-delimited "No | Mchn | EnNo | Name | Mode | IOMd | DateTime" export.
+// Mode/IOMd are device state codes; the pipeline derives in/out from the first/last
+// punch, so those columns are intentionally skipped.
+function parseGlogFile(lines: string[]) {
+  const records: ParsedPunch[] = [];
+  let skippedRows = 0;
+  for (let index = 1; index < lines.length; index += 1) {
+    const fields = lines[index].split("\t");
+    const deviceNumber = fields[1]?.trim();
+    const biometricNo = fields[2]?.trim();
+    const timestamp = fields[6]?.trim();
+    const match = timestamp?.match(/^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})$/);
+    if (!biometricNo || !deviceNumber || !match) {
+      skippedRows += 1;
+      continue;
+    }
+    const dateText = `${match[1]}-${match[2]}-${match[3]}`;
+    const date = getDate(dateText);
+    const timeParts = match[4].split(":").map(Number);
+    if (!date || timeParts[0] > 23 || timeParts[1] > 59 || timeParts[2] > 59) {
+      skippedRows += 1;
+      continue;
+    }
+    records.push({
+      biometricNo,
+      date,
+      dateText,
+      time: `${String(timeParts[0]).padStart(2, "0")}:${String(timeParts[1]).padStart(2, "0")}:${String(timeParts[2]).padStart(2, "0")}`,
       deviceNumber,
     });
   }
@@ -178,6 +219,49 @@ export async function GET(req: NextRequest) {
   const access = await canAccessAttendance(req);
   if ("error" in access) return access.error;
 
+  if (req.nextUrl.searchParams.get("format") === "csv") {
+    try {
+      const days = await prisma.attendance.findMany({
+        orderBy: [{ date: "asc" }, { employeeId: "asc" }],
+        select: {
+          date: true,
+          timeIn: true,
+          timeOut: true,
+          status: true,
+          branch: true,
+          punches: { select: { time: true }, orderBy: { time: "asc" } },
+          employee: { select: { biometricNo: true, firstName: true, middleName: true, lastName: true, branch: true, position: true } },
+        },
+      });
+      const rows = [["biometricNo", "firstName", "middleName", "lastName", "branch", "position", "date", "timeIn", "timeOut", "status", "punches"]];
+      for (const day of days) {
+        rows.push([
+          day.employee.biometricNo ?? "",
+          day.employee.firstName,
+          day.employee.middleName ?? "",
+          day.employee.lastName,
+          day.employee.branch ?? day.branch ?? "",
+          day.employee.position ?? "",
+          day.date.toISOString().slice(0, 10),
+          day.timeIn ?? "",
+          day.timeOut ?? "",
+          day.status,
+          day.punches.map((punch) => punch.time).join(";"),
+        ]);
+      }
+      const csv = "\uFEFF" + toCsv(rows);
+      return new NextResponse(csv, {
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="attendance-backup-${new Date().toISOString().slice(0, 10)}.csv"`,
+        },
+      });
+    } catch (error) {
+      console.error("Backup attendance error:", error);
+      return NextResponse.json({ error: "Unable to back up attendance records" }, { status: 500 });
+    }
+  }
+
   const fromValue = req.nextUrl.searchParams.get("from");
   const toValue = req.nextUrl.searchParams.get("to");
   if (fromValue || toValue) {
@@ -211,7 +295,7 @@ export async function GET(req: NextRequest) {
   if (!date) return NextResponse.json({ error: "Choose a valid attendance date" }, { status: 400 });
 
   try {
-    const [employees, imports] = await Promise.all([
+    const [employees, imports, importTotals] = await Promise.all([
       prisma.employee.findMany({
         where: {
           OR: [
@@ -250,6 +334,7 @@ export async function GET(req: NextRequest) {
         take: 5,
         select: { id: true, branch: true, fileName: true, totalRows: true, importedRows: true, duplicateRows: true, unmatchedRows: true, createdAt: true },
       }),
+      prisma.attendanceImport.aggregate({ _sum: { importedRows: true } }),
     ]);
 
     return NextResponse.json({
@@ -258,6 +343,7 @@ export async function GET(req: NextRequest) {
         attendance: attendanceRecords[0] ?? null,
       })),
       imports,
+      totalImported: importTotals._sum.importedRows ?? 0,
     });
   } catch (error) {
     console.error("Load attendance error:", error);
@@ -303,15 +389,25 @@ export async function POST(req: NextRequest) {
 
   try {
     const biometricNos = [...new Set(records.map((record) => record.biometricNo))];
+    const candidateBiometricNos = [...new Set([...biometricNos, ...biometricNos.map((biometricNo) => biometricNo.padStart(9, "0"))])];
     const employees = await prisma.employee.findMany({
-      where: { biometricNo: { in: biometricNos } },
+      where: { biometricNo: { in: candidateBiometricNos } },
       select: { id: true, biometricNo: true, branch: true },
     });
+    // Match on the stored value or its 9-digit padded form (Excel strips leading zeros).
     const employeesByBiometric = new Map<string, (typeof employees)[number]>();
     for (const employee of employees) {
-      if (employee.biometricNo) employeesByBiometric.set(employee.biometricNo, employee);
+      if (employee.biometricNo) {
+        employeesByBiometric.set(employee.biometricNo, employee);
+        employeesByBiometric.set(employee.biometricNo.padStart(9, "0"), employee);
+      }
     }
-    const noBranchRecords = records.filter((record) => employeesByBiometric.has(record.biometricNo) && !employeesByBiometric.get(record.biometricNo)?.branch?.trim());
+    const resolveEmployee = (biometricNo: string) =>
+      employeesByBiometric.get(biometricNo) ?? employeesByBiometric.get(biometricNo.padStart(9, "0"));
+    const noBranchRecords = records.filter((record) => {
+      const employee = resolveEmployee(record.biometricNo);
+      return Boolean(employee && !employee.branch?.trim());
+    });
     const noBranchBiometricNos = [...new Set(noBranchRecords.map((record) => record.biometricNo))];
     if (noBranchBiometricNos.length > 0) {
       return NextResponse.json({
@@ -320,10 +416,10 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     const matched = records.flatMap((record) => {
-      const employee = employeesByBiometric.get(record.biometricNo);
+      const employee = resolveEmployee(record.biometricNo);
       return employee?.branch ? [{ ...record, employeeId: employee.id, branch: employee.branch.trim() }] : [];
     });
-    const unmatchedRecords = records.filter((record) => !employeesByBiometric.has(record.biometricNo));
+    const unmatchedRecords = records.filter((record) => !resolveEmployee(record.biometricNo));
     const unmatchedBiometricNos = [...new Set(unmatchedRecords.map((record) => record.biometricNo))];
     const groups = new Map<string, typeof matched>();
     for (const record of matched) {
@@ -403,7 +499,7 @@ export async function POST(req: NextRequest) {
         data: { importedRows: inserted.count, duplicateRows },
       });
       return { importRecord, importedRows: inserted.count, duplicateRows };
-    });
+    }, { timeout: 60_000, maxWait: 10_000 });
 
     return NextResponse.json({
       import: result.importRecord,
@@ -416,5 +512,28 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Import attendance error:", error);
     return NextResponse.json({ error: "Unable to import attendance records" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const access = await canAccessAttendance(req);
+  if ("error" in access) return access.error;
+
+  try {
+    // Punches reference attendance days and import batches, so delete them first.
+    const [punches, days, imports] = await prisma.$transaction([
+      prisma.attendancePunch.deleteMany(),
+      prisma.attendance.deleteMany(),
+      prisma.attendanceImport.deleteMany(),
+    ]);
+    return NextResponse.json({
+      deletedPunches: punches.count,
+      deletedDays: days.count,
+      deletedImports: imports.count,
+      message: `Deleted ${punches.count} uploaded attendance records across ${days.count} day(s).`,
+    });
+  } catch (error) {
+    console.error("Delete attendance error:", error);
+    return NextResponse.json({ error: "Unable to delete attendance records" }, { status: 500 });
   }
 }

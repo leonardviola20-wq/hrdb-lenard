@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { PrinterIcon } from "@heroicons/react/24/outline";
+import { formatDurationClock } from "@/lib/duration";
 
 export type PrintReportEmployee = {
   firstName: string;
@@ -48,10 +49,6 @@ function toMinutes(value: string) {
   return (hour || 0) * 60 + (minute || 0);
 }
 
-function durationText(minutes: number) {
-  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
-}
-
 function dateList(from: string, to: string) {
   const dates: string[] = [];
   const cursor = new Date(`${from}T00:00:00Z`);
@@ -75,17 +72,32 @@ function buildRows(records: PrintReportRecord[], from: string, to: string): Repo
 
     let timeIn = punches[0] ?? "";
     let timeOut = punches.length > 1 ? punches[punches.length - 1] : "";
+    let breakOut = "";
+    let breakIn = "";
+    let otIn = "";
+    let otOut = "";
+
     if (punches.length === 0 && attendance) {
       timeIn = attendance.timeIn?.slice(0, 5) ?? "";
       timeOut = attendance.timeOut?.slice(0, 5) ?? "";
+    } else if (punches.length === 5) {
+      // 5 punches: in, breaks, out plus a trailing re-scan. Keep the last punch as
+      // Time Out and leave OT blank so OT can never appear before Time Out.
+      breakOut = punches[1];
+      breakIn = punches[2];
+    } else if (punches.length >= 6) {
+      // Overtime day: in, break out, break in, Time Out, OT In, OT Out (strict chronological order).
+      breakOut = punches[1];
+      breakIn = punches[2];
+      timeOut = punches[3];
+      otIn = punches[4];
+      otOut = punches[5];
+    } else if (punches.length >= 2) {
+      // 2-4 punches: in, optional breaks, out.
+      const middle = punches.slice(1, punches.length - 1);
+      breakOut = middle[0] ?? "";
+      breakIn = middle[1] ?? "";
     }
-
-    // First/last punch are in/out; middle punches fill break (and then overtime) columns.
-    const middle = punches.slice(1, Math.max(1, punches.length - 1));
-    const breakOut = middle[0] ?? "";
-    const breakIn = middle[1] ?? "";
-    const otIn = middle[2] ?? "";
-    const otOut = middle[3] ?? "";
 
     let minutes = 0;
     if (timeIn && timeOut) {
@@ -100,6 +112,14 @@ function buildRows(records: PrintReportRecord[], from: string, to: string): Repo
 }
 
 const columns = ["Time In", "Break Out", "Break In", "Time Out", "OT In", "OT Out"] as const;
+
+// Break-adjusted minutes for a single attendance day, using the exact same
+// calculation as the printable report so list totals always match the report.
+export function attendanceMinutes(attendance: PrintReportRecord["attendance"]): number | null {
+  if (!attendance) return null;
+  const row = buildRows([{ attendance }], attendance.date.slice(0, 10), attendance.date.slice(0, 10))[0];
+  return row ? row.minutes : null;
+}
 
 export default function AttendancePrintReport({ employee, records, from, to, autoPrint, onClose }: Props) {
   useEffect(() => {
@@ -152,8 +172,8 @@ function ReportSheet({ employee, rows }: { employee: PrintReportEmployee; rows: 
   const idNumber = employee.biometricNo ? employee.biometricNo.padStart(9, "0") : "Not set";
 
   return (
-    <div id="attendance-report" className="text-slate-900">
-      <h1 className="border-b-[3px] border-slate-900 pb-2 text-2xl font-bold tracking-tight">Attendance Report</h1>
+    <div id="attendance-report" className="text-slate-900 [-webkit-print-color-adjust:exact] [print-color-adjust:exact]">
+      <h1 className="border-b-[3px] border-slate-900 pb-2 text-xl font-bold tracking-tight">Attendance Report</h1>
 
       <p className="mt-4 flex items-center gap-2 text-sm">
         <span className="font-semibold">Branch:</span>
@@ -171,31 +191,31 @@ function ReportSheet({ employee, rows }: { employee: PrintReportEmployee; rows: 
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="bg-slate-700 text-[11px] uppercase tracking-wide text-white">
-              <th scope="col" className="px-2 py-2 font-semibold">LogDate</th>
-              {columns.map((column) => <th key={column} scope="col" className="px-2 py-2 font-semibold">{column}</th>)}
-              <th scope="col" className="px-2 py-2 text-right font-semibold">Duration</th>
+              <th scope="col" className="px-1.5 py-1.5 font-semibold">LogDate</th>
+              {columns.map((column) => <th key={column} scope="col" className="px-1.5 py-1.5 font-semibold">{column}</th>)}
+              <th scope="col" className="px-1.5 py-1.5 text-right font-semibold">Duration</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.date} className="border-b border-slate-200 odd:bg-slate-50">
-                <td className="whitespace-nowrap px-2 py-1.5">{row.date}</td>
-                <td className="whitespace-nowrap px-2 py-1.5">{row.timeIn}</td>
-                <td className="whitespace-nowrap px-2 py-1.5">{row.breakOut}</td>
-                <td className="whitespace-nowrap px-2 py-1.5">{row.breakIn}</td>
-                <td className="whitespace-nowrap px-2 py-1.5">{row.timeOut}</td>
-                <td className="whitespace-nowrap px-2 py-1.5">{row.otIn}</td>
-                <td className="whitespace-nowrap px-2 py-1.5">{row.otOut}</td>
-                <td className="whitespace-nowrap px-2 py-1.5 text-right font-medium">{durationText(row.minutes)}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.date}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.timeIn}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.breakOut}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.breakIn}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.timeOut}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.otIn}</td>
+                <td className="whitespace-nowrap px-1.5 py-1">{row.otOut}</td>
+                <td className="whitespace-nowrap px-1.5 py-1 text-right font-medium">{formatDurationClock(row.minutes)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
-        <div className="h-8 w-56 border-b border-slate-600" aria-hidden="true" />
-        <p className="text-right text-base font-bold">Total Duration = {Math.floor(totalMinutes / 60)} hours {totalMinutes % 60} minutes</p>
+      <div className="mt-5 flex items-end justify-between gap-4 border-b border-slate-600 pb-1">
+        <div className="h-8" aria-hidden="true" />
+        <p className="text-base font-bold">Total Duration = {Math.floor(totalMinutes / 60)} hours {totalMinutes % 60} minutes</p>
       </div>
     </div>
   );

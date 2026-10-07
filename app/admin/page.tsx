@@ -48,28 +48,29 @@ export default function AdminPage() {
     );
   }, [query, users]);
 
-  const updateVerification = async (user: AdminUser) => {
-    setBusyUserId(user.id);
-    setMessage("");
+  const patchUser = async (userId: number, payload: Record<string, unknown>) => {
+    setBusyUserId(userId);
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailVerified: !user.emailVerified }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Unable to update account");
-      setUsers((current) =>
-        current.map((item) =>
-          item.id === user.id
-            ? { ...item, emailVerified: data.user.emailVerified }
-            : item
-        )
-      );
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to update account");
+      setUsers((current) => current.map((item) => item.id === userId ? { ...item, ...data.user } : item));
+      return data.user as AdminUser;
     } finally {
       setBusyUserId(null);
+    }
+  };
+
+  const updateVerification = async (user: AdminUser) => {
+    setMessage("");
+    try {
+      await patchUser(user.id, { emailVerified: !user.emailVerified });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to update account");
     }
   };
 
@@ -87,23 +88,13 @@ export default function AdminPage() {
 
   const savePageAccess = async () => {
     if (!accessUser || selectedPages.length === 0) return;
-    setBusyUserId(accessUser.id);
     setAccessError("");
     try {
-      const res = await fetch(`/api/admin/users/${accessUser.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessiblePages: selectedPages }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unable to update page access");
-      setUsers((current) => current.map((item) => item.id === accessUser.id ? { ...item, accessiblePages: data.user.accessiblePages } : item));
+      await patchUser(accessUser.id, { accessiblePages: selectedPages });
       setMessage(`Page access updated for ${accessUser.name || accessUser.username || accessUser.email}. Changes apply at the next sign-in.`);
       setAccessUser(null);
     } catch (error) {
       setAccessError(error instanceof Error ? error.message : "Unable to update page access");
-    } finally {
-      setBusyUserId(null);
     }
   };
 

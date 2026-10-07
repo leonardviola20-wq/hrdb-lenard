@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAuthenticatedSession } from "@/lib/auth";
+import { canViewPage } from "@/lib/pageAccess";
 import { prisma } from "@/lib/prisma";
 
 const activeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
@@ -17,10 +18,9 @@ export async function GET(req: NextRequest) {
   });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  const canViewEmployees = user.role === "ADMIN" || user.accessiblePages.includes("/employees");
-  const canViewEmployers = user.role === "ADMIN"
-    || user.accessiblePages.some((page) => page === "/employers" || page === "/employees");
-  const canCreateTasks = user.role === "ADMIN" || user.accessiblePages.includes("/tasks");
+  const canViewEmployees = canViewPage(user, "/employees");
+  const canViewEmployers = canViewPage(user, "/employers");
+  const canCreateTasks = canViewPage(user, "/tasks");
 
   try {
     const [totalEmployees, activeEmployees, newlyHired, branches, employers, recentEmployees] = await Promise.all([

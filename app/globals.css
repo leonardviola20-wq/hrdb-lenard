@@ -36,6 +36,10 @@ body {
 
 /* Print only the per-employee attendance report when it is open. */
 @media print {
+  @page {
+    margin: 1in;
+  }
+
   body > *:not(#attendance-print-overlay) {
     display: none !important;
   }
