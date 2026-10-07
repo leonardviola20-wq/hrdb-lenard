@@ -75,6 +75,8 @@ export default function EmployeeProfilePage() {
   const [activeTab, setActiveTab] = useState<(typeof profileTabs)[number]>(profileTabs[0]);
 
   useEffect(() => {
+    if (!id) return;
+
     let active = true;
     fetch(`/api/employees/${id}`)
       .then(async (response) => {

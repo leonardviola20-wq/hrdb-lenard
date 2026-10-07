@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAuthenticatedSession } from "@/lib/auth";
+import { validateEmployeePayload } from "@/lib/employeePayload";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
@@ -69,80 +70,22 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } });
     if (!user?.accessiblePages.includes("/employees")) return NextResponse.json({ error: "Employees access required" }, { status: 403 });
   }
-  const body = await req.json();
-  const requiredFields = ["firstName", "lastName"];
-  if (requiredFields.some((field) => typeof body[field] !== "string" || !body[field].trim())) {
-    return NextResponse.json(
-      { error: "First name and last name are required" },
-      { status: 400 }
-    );
+  const parsed = validateEmployeePayload(await req.json().catch(() => null));
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-
-  const optionalString = (field: string) =>
-    typeof body[field] === "string" ? body[field].trim() || null : null;
-  const optionalDate = (field: string) => {
-    const value = optionalString(field);
-    if (!value) return null;
-    const date = new Date(`${value}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? undefined : date;
-  };
-
-  const dateOfBirth = optionalDate("dateOfBirth");
-  const dateStarted = optionalDate("dateStarted");
-  const status = optionalString("status");
-  const endedStatuses = new Set(["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"]);
-  const endDate = endedStatuses.has(status || "") ? optionalDate("endDate") : null;
-  if (dateOfBirth === undefined || dateStarted === undefined || endDate === undefined) {
-    return NextResponse.json({ error: "Enter valid dates" }, { status: 400 });
-  }
-
-  const ageValue = body.age === "" || body.age === null || body.age === undefined
-    ? null
-    : Number(body.age);
-  if (ageValue !== null && (!Number.isInteger(ageValue) || ageValue < 0 || ageValue > 130)) {
-    return NextResponse.json({ error: "Enter a valid age" }, { status: 400 });
-  }
-
-  const employerId = body.employerId ? Number(body.employerId) : null;
-  if (employerId !== null && !Number.isInteger(employerId)) {
-    return NextResponse.json({ error: "Select a valid employer" }, { status: 400 });
-  }
+  const { employerId, ...fields } = parsed.data;
 
   try {
     const employee = await prisma.$transaction(async (tx) => {
       const created = await tx.employee.create({
-      data: {
-        employeeCode: `PENDING-${crypto.randomUUID()}`,
-        firstName: body.firstName.trim(),
-        middleName: optionalString("middleName"),
-        lastName: body.lastName.trim(),
-        dateOfBirth,
-        age: ageValue,
-        maritalStatus: optionalString("maritalStatus"),
-        gender: optionalString("gender"),
-        mobileNumber: optionalString("mobileNumber"),
-        email: optionalString("email"),
-        address: optionalString("address"),
-        emergencyName: optionalString("emergencyName"),
-        emergencyNumber: optionalString("emergencyNumber"),
-        emergencyRelation: optionalString("emergencyRelation"),
-        emergencyAddress: optionalString("emergencyAddress"),
-        biometricNo: optionalString("biometricNo"),
-        employerId,
-        status,
-        dateStarted,
-        endDate,
-        sssNumber: optionalString("sssNumber"),
-        pagIbigNumber: optionalString("pagIbigNumber"),
-        philHealth: optionalString("philHealth"),
-        tinNumber: optionalString("tinNumber"),
-        remarks: optionalString("remarks"),
-        photoUrl: optionalString("photoUrl"),
-        branch: optionalString("branch"),
-        position: optionalString("position"),
-        assignedBy: String(session.id ?? session.email ?? "ADMIN"),
-        assignedAt: new Date(),
-      },
+        data: {
+          employeeCode: `PENDING-${crypto.randomUUID()}`,
+          ...fields,
+          employerId,
+          assignedBy: String(session.id ?? session.email ?? "ADMIN"),
+          assignedAt: new Date(),
+        },
       });
       return tx.employee.update({
         where: { id: created.id },

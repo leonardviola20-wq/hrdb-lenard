@@ -1,9 +1,10 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpTrayIcon, ChevronLeftIcon, DocumentTextIcon, EyeIcon, PrinterIcon } from "@heroicons/react/24/outline";
-import AttendancePrintReport, { AttendancePrintAllReport } from "@/components/AttendancePrintReport";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronLeftIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { formatDuration } from "@/lib/duration";
+import AttendancePrintReport, { AttendancePrintAllReport, attendanceMinutes } from "@/components/AttendancePrintReport";
 
 type Punch = { time: string; deviceNumber: string; branch: string };
 type AttendanceEmployee = {
@@ -22,12 +23,47 @@ type AttendanceListRow = AttendanceEmployee & { totalMinutes: number | null; has
 
 const inputClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
+// Shared column tracks so the list header and its rows can never drift apart.
+const GRID_COLS = "sm:grid-cols-3 xl:grid-cols-[minmax(180px,1.35fr)_minmax(145px,1fr)_minmax(110px,0.8fr)_minmax(125px,0.9fr)_minmax(170px,1.3fr)_minmax(130px,auto)_auto]";
+const GRID_ROW = `grid grid-cols-1 gap-x-4 px-3 sm:px-4 ${GRID_COLS}`;
+
 function localDateValue(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function localMonthStart(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+const RANGE_STORAGE_KEY = "hrdb-attendance-range";
+
+type SavedRange = { from: string; to: string; active: boolean };
+
+function isDateText(value: unknown): value is string {
+  return typeof value === "string" && value.length === 10 && !Number.isNaN(new Date(`${value}T00:00:00`).getTime());
+}
+
+// The date range survives sign-out/restart so returning users see their last report.
+function readSavedRange(): SavedRange | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(RANGE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedRange>;
+    if (!isDateText(parsed.from) || !isDateText(parsed.to) || parsed.from > parsed.to) return null;
+    return { from: parsed.from, to: parsed.to, active: Boolean(parsed.active) };
+  } catch {
+    return null;
+  }
+}
+
+function saveSavedRange(from: string, to: string, active: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(RANGE_STORAGE_KEY, JSON.stringify({ from, to, active }));
+  } catch {
+    // Storage may be unavailable (private mode); the page still works without it.
+  }
 }
 
 function formatTime(value: string | null) {
@@ -37,35 +73,14 @@ function formatTime(value: string | null) {
   return `${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
 }
 
-function durationMinutes(timeIn: string | null | undefined, timeOut: string | null | undefined) {
-  if (!timeIn || !timeOut) return null;
-  const [inHour, inMinute] = timeIn.split(":").map(Number);
-  const [outHour, outMinute] = timeOut.split(":").map(Number);
-  const start = inHour * 60 + inMinute;
-  let end = outHour * 60 + outMinute;
-  if (end < start) end += 24 * 60;
-  return end - start;
-}
-
-function formatDuration(minutes: number | null) {
-  if (minutes === null) return "—";
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-}
-
-function formatDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
 
 export default function AttendancePage() {
   const [date, setDate] = useState(() => localDateValue());
   const [employees, setEmployees] = useState<AttendanceEmployee[]>([]);
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<{ employee: AttendanceListRow; scope: "range" | "day"; autoPrint: boolean } | null>(null);
   const [printAllOpen, setPrintAllOpen] = useState(false);
-  const [reportFrom, setReportFrom] = useState(() => localMonthStart());
-  const [reportTo, setReportTo] = useState(() => localDateValue());
+  const [reportFrom, setReportFrom] = useState(localMonthStart);
+  const [reportTo, setReportTo] = useState(localDateValue);
   const [rangeRecords, setRangeRecords] = useState<AttendanceEmployee[] | null>(null);
   const [rangeLabel, setRangeLabel] = useState("");
   const [rangeLoading, setRangeLoading] = useState(false);
@@ -74,8 +89,12 @@ export default function AttendancePage() {
   const [rangePage, setRangePage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [totalImported, setTotalImported] = useState<number | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
+  const [noticeTitle, setNoticeTitle] = useState("Upload complete");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadReport = useCallback(async (signal?: AbortSignal) => {
@@ -85,7 +104,10 @@ export default function AttendancePage() {
       const response = await fetch(`/api/attendance?date=${encodeURIComponent(date)}`, { signal });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load attendance report");
-      if (!signal?.aborted) setEmployees(data.employees as AttendanceEmployee[]);
+      if (!signal?.aborted) {
+        setEmployees(data.employees as AttendanceEmployee[]);
+        setTotalImported(typeof data.totalImported === "number" ? data.totalImported : 0);
+      }
     } catch (error) {
       if (!signal?.aborted) setMessage(error instanceof Error ? error.message : "Unable to load attendance report");
     } finally {
@@ -99,14 +121,45 @@ export default function AttendancePage() {
     return () => controller.abort();
   }, [loadReport]);
 
+  // Restore the last saved date range so returning users don't have to set it again.
+  // Saved values are applied after hydration (async boundary) so the SSR markup stays
+  // deterministic — reading localStorage in useState caused an attribute mismatch.
+  useEffect(() => {
+    const saved = readSavedRange();
+    if (!saved) return;
+    let active = true;
+    (async () => {
+      try {
+        await Promise.resolve();
+        if (!active) return;
+        setReportFrom(saved.from);
+        setReportTo(saved.to);
+        if (!saved.active) return;
+        const params = new URLSearchParams({ from: saved.from, to: saved.to });
+        const response = await fetch(`/api/attendance?${params}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to restore attendance report");
+        if (!active) return;
+        setRangeRecords(data.records as AttendanceEmployee[]);
+        setRangeLabel(`${saved.from} to ${saved.to}`);
+        setDate(saved.to);
+      } catch {
+        // Ignore restore failures; the user can generate the report again.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const dailyRows: AttendanceListRow[] = employees.map((employee) => ({
     ...employee,
-    totalMinutes: durationMinutes(employee.attendance?.timeIn, employee.attendance?.timeOut),
+    totalMinutes: attendanceMinutes(employee.attendance),
     hasPunches: Boolean(employee.attendance?.punches.length),
   }));
   const rangeRowsByEmployee = new Map<number, AttendanceListRow>();
   for (const employee of rangeRecords ?? []) {
-    const minutes = durationMinutes(employee.attendance?.timeIn, employee.attendance?.timeOut);
+    const minutes = attendanceMinutes(employee.attendance);
     const existing = rangeRowsByEmployee.get(employee.id);
     if (existing) {
       existing.totalMinutes = existing.totalMinutes === null && minutes === null ? null : (existing.totalMinutes ?? 0) + (minutes ?? 0);
@@ -153,8 +206,7 @@ export default function AttendancePage() {
     return data.records as AttendanceEmployee[];
   };
 
-  const generateRangeReport = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const generateRangeReport = async () => {
     if (reportFrom > reportTo) {
       setMessage("The from date must be on or before the to date.");
       return;
@@ -166,7 +218,7 @@ export default function AttendancePage() {
       setRangeRecords(records);
       setRangeLabel(`${reportFrom} to ${reportTo}`);
       setDate(reportTo);
-      setReportDialogOpen(false);
+      saveSavedRange(reportFrom, reportTo, true);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to generate attendance report");
     } finally {
@@ -175,18 +227,34 @@ export default function AttendancePage() {
   };
 
   const uploadFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
     setUploading(true);
     setMessage("");
     setNotice("");
-    const formData = new FormData();
-    formData.set("file", file);
+    let imported = 0;
+    let duplicates = 0;
+    let unmatched = 0;
+    let skipped = 0;
+    const failures: string[] = [];
     try {
-      const response = await fetch("/api/attendance", { method: "POST", body: formData });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to upload attendance records");
-      setNotice(`${file.name}: ${data.importedRows} punches imported, ${data.duplicateRows} duplicates skipped, ${data.unmatchedRows} unmatched biometric numbers, and ${data.skippedRows} invalid rows skipped.`);
+      // Upload sequentially so each file gets its own transaction and counts stay accurate.
+      for (const file of files) {
+        const formData = new FormData();
+        formData.set("file", file);
+        try {
+          const response = await fetch("/api/attendance", { method: "POST", body: formData });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Unable to upload attendance records");
+          imported += data.importedRows || 0;
+          duplicates += data.duplicateRows || 0;
+          unmatched += data.unmatchedRows || 0;
+          skipped += data.skippedRows || 0;
+        } catch (error) {
+          failures.push(`${file.name}: ${error instanceof Error ? error.message : "upload failed"}`);
+        }
+      }
+
       await loadReport();
       if (rangeRecords) {
         try {
@@ -195,6 +263,17 @@ export default function AttendancePage() {
           setMessage(refreshError instanceof Error ? refreshError.message : "Unable to refresh the attendance report");
         }
       }
+
+      if (failures.length === files.length) {
+        setMessage(`Upload failed. ${failures.join(" · ")}`);
+        return;
+      }
+
+      setNoticeTitle("Upload complete");
+      const summary = files.length === 1
+        ? `${files[0].name}: ${imported} punches imported, ${duplicates} duplicates skipped, ${unmatched} unmatched biometric numbers, and ${skipped} invalid rows skipped.`
+        : `${files.length} files processed: ${imported} punches imported, ${duplicates} duplicates skipped, ${unmatched} unmatched biometric numbers, and ${skipped} invalid rows skipped.`;
+      setNotice(failures.length > 0 ? `${summary} Failed: ${failures.join(" · ")}` : summary);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to upload attendance records");
     } finally {
@@ -203,92 +282,193 @@ export default function AttendancePage() {
     }
   };
 
+  const backupRecords = async () => {
+    setMessage("");
+    try {
+      const response = await fetch("/api/attendance?format=csv");
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Unable to back up attendance records");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `attendance-backup-${localDateValue()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to back up attendance records");
+    }
+  };
+
+  const deleteAllRecords = async () => {
+    setDeleting(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/attendance", { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to delete attendance records");
+      setConfirmDeleteOpen(false);
+      await loadReport();
+      if (rangeRecords) {
+        try {
+          setRangeRecords(await fetchRangeRecords(reportFrom, reportTo));
+        } catch (refreshError) {
+          setMessage(refreshError instanceof Error ? refreshError.message : "Unable to refresh the attendance report");
+        }
+      }
+      setNoticeTitle("Records deleted");
+      setNotice(data.message || "All uploaded attendance records have been deleted.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to delete attendance records");
+      setConfirmDeleteOpen(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const renderEmployeeRow = (employee: AttendanceListRow, rowKey: string, scope: "range" | "day") => {
     const name = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
-    const employer = employee.employer
-      ? [employee.employer.name, employee.employer.company].filter(Boolean).join(" · ")
-      : "Not set";
-    const values = [name || "Not set", employee.biometricNo || "Not set", employee.branch || "Not set", employee.position || "Not set", employer, formatDuration(employee.totalMinutes)];
-    return <article key={rowKey} className="grid grid-cols-1 gap-x-4 gap-y-3 border-b border-slate-100 px-3 py-3 last:border-b-0 sm:grid-cols-3 sm:px-4 xl:grid-cols-[minmax(180px,1.35fr)_minmax(145px,1fr)_minmax(110px,0.8fr)_minmax(125px,0.9fr)_minmax(170px,1.3fr)_minmax(100px,0.7fr)_minmax(96px,auto)]">
+    const employer = employee.employer?.name || "Not set";
+    const values = [name || "Not set", employee.biometricNo || "Not set", employee.branch || "Not set", employee.position || "Not set", employer];
+    const duration = formatDuration(employee.totalMinutes);
+    return <article key={rowKey} className={`${GRID_ROW} gap-y-2 border-b border-slate-100 py-2 last:border-b-0`}>
       {values.map((value, index) => <div key={`${rowKey}-${index}`} className={`${index === 0 ? "" : "hidden sm:block"} min-w-0 break-words text-sm font-medium text-slate-900`}>{value}</div>)}
+      <div key={`${rowKey}-duration`} className="hidden whitespace-nowrap text-sm font-medium text-slate-900 sm:block">{duration}</div>
       <div key={`${rowKey}-actions`} className="flex items-center gap-1">
         <button type="button" onClick={() => setReportTarget({ employee, scope, autoPrint: false })} aria-label={`View attendance report for ${name}`} title="View report" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <EyeIcon className="h-4 w-4" />
-        </button>
-        <button type="button" onClick={() => setReportTarget({ employee, scope, autoPrint: true })} aria-label={`Print attendance report for ${name}`} title="Print report" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <PrinterIcon className="h-4 w-4" />
         </button>
       </div>
     </article>;
   };
 
-  const renderEmployeeList = (rows: AttendanceListRow[], keyPrefix: string) => <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-    <div className="grid grid-cols-1 gap-x-4 bg-slate-100 px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:grid-cols-3 sm:px-4 xl:grid-cols-[minmax(180px,1.35fr)_minmax(145px,1fr)_minmax(110px,0.8fr)_minmax(125px,0.9fr)_minmax(170px,1.3fr)_minmax(100px,0.7fr)_minmax(96px,auto)]">
-      <div>Name</div><div className="hidden sm:block">Biometric Number</div><div className="hidden sm:block">Branch</div><div className="hidden sm:block">Position</div><div className="hidden sm:block">Employer</div><div className="hidden sm:block">Total Hours</div>
+  const renderEmployeeList = (rows: AttendanceListRow[], keyPrefix: string, emptyMessage: string) => <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className={`${GRID_ROW} bg-slate-100 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600`}>
+      <div>Name</div><div className="hidden sm:block">Biometric Number</div><div className="hidden sm:block">Branch</div><div className="hidden sm:block">Position</div>      <div className="hidden sm:block">Employer</div>
+      <div className="hidden whitespace-nowrap sm:block">Total Duration</div>
       <div className="hidden sm:block">Report</div>
     </div>
+    {rows.length === 0 && <p className="m-4 rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">{emptyMessage}</p>}
     {rows.map((employee, index) => renderEmployeeRow(employee, `${keyPrefix}-${employee.id}-${index}`, keyPrefix === "range" ? "range" : "day"))}
-    {rows.length > 0 && <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 sm:px-4">
+    <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 sm:px-4">
       <span>Showing {keyPrefix === "range" ? Math.min((rangePage - 1) * pageSize + 1, filteredRangeRecords?.length ?? 0) : Math.min((dailyPage - 1) * pageSize + 1, filteredEmployees.length)}–{keyPrefix === "range" ? Math.min(rangePage * pageSize, filteredRangeRecords?.length ?? 0) : Math.min(dailyPage * pageSize, filteredEmployees.length)} of {keyPrefix === "range" ? filteredRangeRecords?.length ?? 0 : filteredEmployees.length}</span>
       {((keyPrefix === "range" ? rangePageCount : dailyPageCount) > 1) && <nav aria-label={`${keyPrefix} attendance pages`} className="flex items-center gap-1">
         <button type="button" disabled={(keyPrefix === "range" ? rangePage : dailyPage) <= 1} onClick={() => keyPrefix === "range" ? setRangePage((page) => Math.max(1, page - 1)) : setDailyPage((page) => Math.max(1, page - 1))} className="rounded border border-slate-300 bg-white px-2.5 py-1.5 font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40">Previous</button>
         <span className="px-2">Page {keyPrefix === "range" ? rangePage : dailyPage} of {keyPrefix === "range" ? rangePageCount : dailyPageCount}</span>
         <button type="button" disabled={(keyPrefix === "range" ? rangePage : dailyPage) >= (keyPrefix === "range" ? rangePageCount : dailyPageCount)} onClick={() => keyPrefix === "range" ? setRangePage((page) => page + 1) : setDailyPage((page) => page + 1)} className="rounded border border-slate-300 bg-white px-2.5 py-1.5 font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40">Next</button>
       </nav>}
-    </div>}
+    </div>
   </div>;
 
   return (
     <main className="flex min-h-[calc(100dvh-8rem)] w-full min-w-0 flex-col overflow-x-hidden bg-slate-50 p-4 sm:p-6">
       <div className="flex w-full min-w-0 flex-1 flex-col space-y-4">
-        <div className="flex w-fit flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard" onClick={(event) => { if (window.matchMedia("(max-width: 767px)").matches) { event.preventDefault(); window.dispatchEvent(new Event("hrdb-open-sidebar")); } }} className="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
             <ChevronLeftIcon className="h-4 w-4" /> Back
           </Link>
-          <input ref={fileInputRef} type="file" accept=".dat,.txt,.xls,.xlsx,application/vnd.ms-excel" onChange={uploadFile} className="hidden" />
+          <input ref={fileInputRef} type="file" multiple accept=".dat,.txt,.xls,.xlsx,application/vnd.ms-excel" onChange={uploadFile} className="hidden" />
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-900 disabled:opacity-50">
             <ArrowUpTrayIcon className="h-4 w-4" /> {uploading ? "Uploading..." : "Upload"}
           </button>
-          <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="h-10 min-w-[145px] rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            <option value="">All branches</option>{branches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-          </select>
-          <button type="button" onClick={() => setReportDialogOpen(true)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-            <DocumentTextIcon className="h-4 w-4" /> Generate report
-          </button>
-          <button type="button" onClick={() => setPrintAllOpen(true)} disabled={printAllItems.length === 0} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-            <PrinterIcon className="h-4 w-4" /> Print all
-          </button>
+          {totalImported !== null && (
+            <span className="inline-flex h-10 items-center whitespace-nowrap rounded-lg border border-slate-200 bg-slate-100 px-3 text-sm font-semibold text-slate-600">
+              {totalImported.toLocaleString()} records uploaded
+            </span>
+          )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {totalImported !== null && totalImported > 0 && (
+              <>
+                <button type="button" onClick={() => void backupRecords()} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-sky-300 bg-white px-3.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50">
+                  <ArrowDownTrayIcon className="h-4 w-4" /> Backup
+                </button>
+                <button type="button" onClick={() => setConfirmDeleteOpen(true)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50">
+                  <TrashIcon className="h-4 w-4" /> Delete
+                </button>
+              </>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="whitespace-nowrap text-base font-bold text-slate-500">Date Range:</span>
+            <label className="flex items-center gap-1.5 whitespace-nowrap text-sm text-slate-600">
+              From:
+              <input type="date" value={reportFrom} max={reportTo} onChange={(event) => setReportFrom(event.target.value)} className={`${inputClass} h-10`} />
+            </label>
+            <label className="flex items-center gap-1.5 whitespace-nowrap text-sm text-slate-600">
+              To:
+              <input type="date" value={reportTo} min={reportFrom} onChange={(event) => setReportTo(event.target.value)} className={`${inputClass} h-10`} />
+            </label>
+            <button type="button" onClick={() => void generateRangeReport()} disabled={rangeLoading} className="inline-flex h-10 items-center justify-center rounded-lg bg-[#172554] px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-900 disabled:opacity-50">
+              {rangeLoading ? "Loading..." : "Go"}
+            </button>
+            <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="h-10 min-w-[200px] rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              <option value="">All branches</option>{branches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+            </select>
+            <button type="button" onClick={() => setPrintAllOpen(true)} disabled={printAllItems.length === 0} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+              <PrinterIcon className="h-4 w-4" /> Print
+            </button>
+          </div>
         </div>
-        {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
+        {notice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setNotice("")}>
+            <div role="alertdialog" aria-modal="true" aria-labelledby="upload-notice-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-xl bg-white p-6 text-left shadow-xl">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon className="h-6 w-6 text-emerald-600" />
+                <h2 id="upload-notice-title" className="text-lg font-semibold text-slate-900">{noticeTitle}</h2>
+              </div>
+              <p className="mt-3 text-sm text-slate-700">{notice}</p>
+              <div className="mt-4 flex justify-end">
+                <button type="button" onClick={() => setNotice("")} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">OK</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {confirmDeleteOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setConfirmDeleteOpen(false)}>
+            <div role="alertdialog" aria-modal="true" aria-labelledby="delete-records-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-xl bg-white p-6 text-left shadow-xl">
+              <h2 id="delete-records-title" className="text-lg font-semibold text-slate-900">Delete all uploaded records?</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                This will permanently remove every uploaded attendance record ({totalImported?.toLocaleString() ?? 0} punches), attendance day, and import history. This action cannot be undone.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setConfirmDeleteOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button type="button" onClick={() => void deleteAllRecords()} disabled={deleting} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50">
+                  {deleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {message && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{message}</p>}
 
-        {rangeRecords && <section className="space-y-3 border-y border-slate-200 py-4">
+        {rangeRecords && <section className="flex flex-1 flex-col space-y-3 border-y border-slate-200 py-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><h2 className="font-semibold text-slate-900">Attendance report</h2><p className="mt-1 text-xs text-slate-500">{rangeLabel} · {filteredRangeRecords?.length ?? 0} employees · Daily hours are summed across the selected dates.</p></div>
-            <button type="button" onClick={() => setReportDialogOpen(true)} className="text-sm font-semibold text-blue-700 hover:underline">Change dates</button>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-1 text-sm text-slate-600">
+              <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Branch:</span><span>{branchFilter || "All branches"}</span></span>
+              <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Total Records:</span><span>{filteredRangeRecords?.length ?? 0} employees</span></span>
+              <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Period Covered:</span><span>{rangeLabel}</span></span>
+            </div>
+            <button type="button" onClick={() => { setRangeRecords(null); setDate(localDateValue()); saveSavedRange(reportFrom, reportTo, false); }} className="text-sm font-medium text-slate-500 transition hover:text-slate-700">Clear report</button>
           </div>
-          {filteredRangeRecords?.length === 0 ? <p className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">No attendance records match this date range and filter.</p>
-            : renderEmployeeList(visibleRangeRows ?? [], "range")}
+          {renderEmployeeList(visibleRangeRows ?? [], "range", "No attendance records match this date range and filter.")}
         </section>}
 
-        <section className="flex flex-1 flex-col space-y-3">
-          <p className="text-xs font-medium text-slate-500">From: <span className="font-semibold text-slate-700">{formatDate(reportFrom)}</span> to: <span className="font-semibold text-slate-700">{formatDate(reportTo)}</span></p>
-          {loading ? <p role="status" className="mt-5 rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">Loading report...</p>
-            : filteredEmployees.length === 0 ? <p className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">{employees.length ? "No employees match these filters." : "No active employees found."}</p>
-              : renderEmployeeList(visibleDailyRows, "day")}
-        </section>
-
-        {reportDialogOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setReportDialogOpen(false)}>
-          <form role="dialog" aria-modal="true" aria-labelledby="attendance-report-title" onSubmit={generateRangeReport} onClick={(event) => event.stopPropagation()} className="w-full max-w-md space-y-4 rounded-xl bg-white p-5 shadow-xl sm:p-6">
-            <div><h2 id="attendance-report-title" className="text-lg font-semibold text-slate-900">Attendance report</h2><p className="mt-1 text-sm text-slate-500">Choose the date range to include.</p></div>
-            <label className="grid gap-1 text-xs font-medium text-slate-600"><span>From</span><input type="date" value={reportFrom} max={reportTo} onChange={(event) => setReportFrom(event.target.value)} required className={inputClass} /></label>
-            <label className="grid gap-1 text-xs font-medium text-slate-600"><span>To</span><input type="date" value={reportTo} min={reportFrom} onChange={(event) => setReportTo(event.target.value)} required className={inputClass} /></label>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-              <button type="button" onClick={() => setReportDialogOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
-              <button type="submit" disabled={rangeLoading} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-50">{rangeLoading ? "Loading..." : "Generate report"}</button>
+        {!rangeRecords && (
+          <section className="flex flex-1 flex-col space-y-3">
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-1 text-sm text-slate-600">
+              <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Branch:</span><span>{branchFilter || "All branches"}</span></span>
+              <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Total Records:</span><span>{filteredEmployees.length} employees</span></span>
             </div>
-          </form>
-        </div>}
+            {loading ? <p role="status" className="mt-5 rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">Loading report...</p>
+              : renderEmployeeList(visibleDailyRows, "day", employees.length ? "No employees match these filters." : "No active employees found.")}
+          </section>
+        )}
 
         {reportTarget && (
           <AttendancePrintReport

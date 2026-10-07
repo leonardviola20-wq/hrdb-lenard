@@ -21,14 +21,15 @@ export function proxy(req: NextRequest) {
       const session = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload & {
         role?: string;
         accessiblePages?: unknown;
-        canAccessEmployees?: boolean;
       };
       const isAdmin = session.role === "ADMIN";
+      if (!isAdmin && !Array.isArray(session.accessiblePages)) {
+        // Legacy or malformed token without an explicit page list: force a fresh sign-in.
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
       const accessiblePages = Array.isArray(session.accessiblePages)
         ? session.accessiblePages.filter(isPageAccessHref)
-        : session.canAccessEmployees
-          ? [...DEFAULT_PAGE_ACCESS, "/employees" as const]
-          : DEFAULT_PAGE_ACCESS;
+        : DEFAULT_PAGE_ACCESS;
 
       if (!isAdmin && !hasPageAccess(pathname, accessiblePages)) {
         const fallback = PAGE_ACCESS_OPTIONS.find((page) => accessiblePages.includes(page.href))?.href || "/login";
