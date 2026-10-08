@@ -170,17 +170,32 @@ function parseExcelPunchFile(data: Uint8Array): { records: ParsedPunch[]; skippe
     if (!periodMatch) {
       return { records: [], skippedRows: 0, error: "Expected a \"Made Date:\" period row above the header in the Excel file." };
     }
-    const year = Number(periodMatch[1]);
-    const month = Number(periodMatch[2]);
+    const periodStart = getDate(`${periodMatch[1]}-${String(Number(periodMatch[2])).padStart(2, "0")}-${String(Number(periodMatch[3])).padStart(2, "0")}`);
+    const periodEnd = getDate(`${periodMatch[4]}-${String(Number(periodMatch[5])).padStart(2, "0")}-${String(Number(periodMatch[6])).padStart(2, "0")}`);
+    if (!periodStart || !periodEnd || periodStart > periodEnd) {
+      return { records: [], skippedRows: 0, error: "The \"Made Date:\" period in the Excel file is invalid." };
+    }
 
     const dayColumns: { column: number; dateText: string; date: Date | null }[] = [];
+    let nextDate = periodStart;
     for (let column = 3; column <= range.e.c; column += 1) {
       const header = cellText(headerRow, column);
       if (!/^\d{1,2}$/.test(header)) continue;
       const day = Number(header);
       if (day < 1 || day > 31) continue;
-      const dateText = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      dayColumns.push({ column, dateText, date: getDate(dateText) });
+
+      const candidate = new Date(nextDate);
+      while (candidate <= periodEnd && candidate.getUTCDate() !== day) {
+        candidate.setUTCDate(candidate.getUTCDate() + 1);
+      }
+      if (candidate <= periodEnd) {
+        const dateText = candidate.toISOString().slice(0, 10);
+        dayColumns.push({ column, dateText, date: candidate });
+        nextDate = new Date(candidate);
+        nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+      } else {
+        dayColumns.push({ column, dateText: "", date: null });
+      }
     }
 
     const records: ParsedPunch[] = [];
@@ -281,10 +296,34 @@ export async function GET(req: NextRequest) {
           status: true,
           branch: true,
           punches: { select: { time: true, deviceNumber: true, branch: true }, orderBy: { time: "asc" } },
-          employee: { select: { id: true, firstName: true, middleName: true, lastName: true, biometricNo: true, branch: true, position: true, status: true, employer: { select: { name: true, company: true } } } },
+          employee: { select: { id: true, firstName: true, middleName: true, lastName: true, biometricNo: true, branch: true, position: true, status: true, photoUrl: true, employer: { select: { name: true, company: true } } } },
         },
       });
-      return NextResponse.json({ records: records.map(({ employee, ...attendance }) => ({ ...employee, attendance })) });
+      const employeesWithoutRecords = await prisma.employee.findMany({
+        where: {
+          status: { in: activeStatuses },
+          attendanceRecords: { none: { date: { gte: from, lte: to } } },
+        },
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+        select: {
+          id: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          biometricNo: true,
+          branch: true,
+          position: true,
+          status: true,
+          photoUrl: true,
+          employer: { select: { name: true, company: true } },
+        },
+      });
+      return NextResponse.json({
+        records: [
+          ...records.map(({ employee, ...attendance }) => ({ ...employee, attendance })),
+          ...employeesWithoutRecords.map((employee) => ({ ...employee, attendance: null })),
+        ],
+      });
     } catch (error) {
       console.error("Load attendance date range error:", error);
       return NextResponse.json({ error: "Unable to load attendance report" }, { status: 500 });
@@ -312,6 +351,7 @@ export async function GET(req: NextRequest) {
           biometricNo: true,
           branch: true,
           position: true,
+          photoUrl: true,
           employer: { select: { name: true, company: true } },
           status: true,
           attendanceRecords: {

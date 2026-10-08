@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 type Employer = { id: number; name: string; company: string | null };
+type CategoryType = "BRANCH" | "POSITION" | "EMPLOYMENT_STATUS";
+type EmployeeCategory = { type: CategoryType; name: string; active: boolean };
+type EmployeeCategoryOptions = { branches: string[]; positions: string[]; statuses: string[] };
 
 type EmployeeForm = {
   firstName: string;
@@ -45,10 +48,12 @@ const emptyForm: EmployeeForm = {
   sssNumber: "", pagIbigNumber: "", philHealth: "", tinNumber: "", remarks: "",
 };
 
-const statuses = ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"];
+const defaultCategoryOptions: EmployeeCategoryOptions = {
+  statuses: ["Trainee", "Regular", "Contractual", "No Contract", "End of contract", "Resigned", "Terminated", "AWOL", "Leave"],
+  branches: ["Arya 1", "Arya 2", "Yasuo", "Shangri-la", "Greenhills", "Magnolia", "MyDay", "Warehouse", "Office", "Vape", "Commissary", "Others"],
+  positions: ["President", "Corporate Secretary", "Treasurer", "Accountant", "Purchaser", "IT", "Admin", "Admin Staff", "Office Staff", "Store In-charge", "Commissary Staff", "Driver", "Sales Staff", "Dining Staff", "Cashier", "Kitchen Staff", "Dispatcher", "Receptionist", "Warehouse Staff"],
+};
 const endedStatuses = new Set(["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"]);
-const branches = ["Arya 1", "Arya 2", "Yasuo", "Shangri-la", "Greenhills", "Magnolia", "MyDay", "Warehouse", "Office", "Vape", "Commissary", "Others"];
-const positions = ["President", "Corporate Secretary", "Treasurer", "Accountant", "Purchaser", "IT", "Admin", "Admin Staff", "Office Staff", "Store In-charge", "Commissary Staff", "Driver", "Sales Staff", "Dining Staff", "Cashier", "Kitchen Staff", "Dispatcher", "Receptionist", "Warehouse Staff"];
 const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
 
 function formatDigits(value: string, groups: number[]) {
@@ -98,6 +103,7 @@ export default function NewEmployeePage() {
   const employeeId = id ?? null;
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
   const [employers, setEmployers] = useState<Employer[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<EmployeeCategoryOptions>(defaultCategoryOptions);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [loadingEmployee, setLoadingEmployee] = useState(Boolean(employeeId));
@@ -111,6 +117,20 @@ export default function NewEmployeePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load employers");
       if (active) setEmployers(data.employers);
+    });
+    const categoryRequest = fetch("/api/management/categories").then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load employee categories");
+      const categories = (Array.isArray(data.categories) ? data.categories : []) as EmployeeCategory[];
+      const statuses = categories.filter((item) => item.type === "EMPLOYMENT_STATUS" && item.active).map((item) => item.name);
+      if (active) setCategoryOptions({
+        branches: categories.filter((item) => item.type === "BRANCH" && item.active).map((item) => item.name),
+        positions: categories.filter((item) => item.type === "POSITION" && item.active).map((item) => item.name),
+        statuses,
+      });
+      if (active && !employeeId) setForm((current) => ({ ...current, status: statuses.includes(current.status) ? current.status : statuses[0] || "" }));
+    }).catch((error: Error) => {
+      console.warn("Unable to load employee categories; using the built-in options.", error);
     });
     const employeeRequest = employeeId
       ? fetch(`/api/employees/${employeeId}`).then(async (response) => {
@@ -148,7 +168,7 @@ export default function NewEmployeePage() {
           });
         })
       : Promise.resolve();
-    Promise.all([employerRequest, employeeRequest])
+    Promise.all([employerRequest, categoryRequest, employeeRequest])
       .catch((error: Error) => { if (active) setMessage(error.message); })
       .finally(() => { if (active) setLoadingEmployee(false); });
     return () => { active = false; };
@@ -166,6 +186,10 @@ export default function NewEmployeePage() {
     if (today < new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate())) age -= 1;
     setForm((current) => ({ ...current, dateOfBirth: value, age: String(Math.max(0, age)) }));
   };
+
+  const statusOptions = [...new Set([form.status, ...categoryOptions.statuses].filter(Boolean))];
+  const branchOptions = [...new Set([form.branch, ...categoryOptions.branches].filter(Boolean))];
+  const positionOptions = [...new Set([form.position, ...categoryOptions.positions].filter(Boolean))];
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -217,9 +241,9 @@ export default function NewEmployeePage() {
           <Section title="Job Information">
             <Field label="Biometric ID"><input value={form.biometricNo} onChange={(e) => update("biometricNo", e.target.value)} className={inputClass} /></Field>
             <Field label="Employer"><select value={form.employerId} onChange={(e) => update("employerId", e.target.value)} className={inputClass}><option value="">Select employer</option>{employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}</select></Field>
-            <Field label="Status"><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value, endDate: endedStatuses.has(e.target.value) ? current.endDate : "" }))} className={inputClass}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></Field>
-            <Field label="Branch"><select value={form.branch} onChange={(e) => update("branch", e.target.value)} className={inputClass}><option value="">Select branch</option>{branches.map((branch) => <option key={branch}>{branch}</option>)}</select></Field>
-            <Field label="Position"><select value={form.position} onChange={(e) => update("position", e.target.value)} className={inputClass}><option value="">Select position</option>{positions.map((position) => <option key={position}>{position}</option>)}</select></Field>
+            <Field label="Status"><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value, endDate: endedStatuses.has(e.target.value) ? current.endDate : "" }))} className={inputClass}><option value="">Select status</option>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select></Field>
+            <Field label="Branch"><select value={form.branch} onChange={(e) => update("branch", e.target.value)} className={inputClass}><option value="">Select branch</option>{branchOptions.map((branch) => <option key={branch}>{branch}</option>)}</select></Field>
+            <Field label="Position"><select value={form.position} onChange={(e) => update("position", e.target.value)} className={inputClass}><option value="">Select position</option>{positionOptions.map((position) => <option key={position}>{position}</option>)}</select></Field>
             <Field label="Date Started"><input type="date" value={form.dateStarted} onChange={(e) => update("dateStarted", e.target.value)} className={inputClass} /></Field>
             {endedStatuses.has(form.status) && <Field label="Ended"><input type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} className={inputClass} /></Field>}
           </Section>

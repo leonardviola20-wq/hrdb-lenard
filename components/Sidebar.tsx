@@ -125,6 +125,30 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
           })}
         </div>
 
+        {isAdmin && <>
+          <p className={`mb-3 mt-8 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
+            Management
+          </p>
+          <Link
+            href="/management/system-configuration"
+            onClick={onMobileToggle}
+            title={isCollapsed ? "System Configuration" : undefined}
+            aria-current={pathname === "/management/system-configuration" ? "page" : undefined}
+            className={`group/item flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
+              pathname === "/management/system-configuration"
+                ? isCollapsed
+                  ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
+                  : "px-3 bg-white text-[#172554] shadow-sm"
+                : isCollapsed
+                  ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                  : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
+            <span className={collapsedText}>System Configuration</span>
+          </Link>
+        </>}
+
         <p className={`mb-3 mt-8 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
           Account
         </p>
@@ -321,6 +345,7 @@ function getPageTitle(pathname: string) {
   if (pathname === "/contacts") return "Contacts";
   if (pathname === "/employers") return "Employers";
   if (pathname === "/settings") return "Account Settings";
+  if (pathname === "/management/system-configuration") return "System Configuration";
   if (pathname === "/admin/contacts") return "Manage Office Contacts";
   if (pathname === "/admin") return "Admin Dashboard";
   return "HRDB-Lenard";
@@ -336,6 +361,7 @@ function getPageSubtitle(pathname: string) {
   if (pathname === "/contacts") return "Suppliers, contractors, and office service providers.";
   if (pathname === "/employers") return "Manage employer, branch, and government information.";
   if (pathname === "/settings") return "Profile details and account security.";
+  if (pathname === "/management/system-configuration") return "Manage branches, positions, and employment statuses.";
   if (pathname === "/admin/contacts") return "Manage office contacts and service providers.";
   if (pathname === "/admin") return "Manage user access and account verification.";
   return "";
