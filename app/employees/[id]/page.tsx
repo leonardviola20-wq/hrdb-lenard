@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -35,6 +34,17 @@ type Employee = {
   assignedBy: string | null;
   assignedAt: string | null;
   employer: { id: number; name: string; company: string | null } | null;
+  officeContacts: {
+    id: number;
+    companyName: string;
+    contactName: string;
+    category: string;
+    phone: string | null;
+    email: string | null;
+    address: string | null;
+    services: string | null;
+    branch: string | null;
+  }[];
 };
 
 const profileTabs = [
@@ -46,7 +56,11 @@ const profileTabs = [
 ] as const;
 
 function dateText(value: string | null) {
-  return value ? new Date(value).toLocaleDateString() : "Not set";
+  if (!value) return "Not set";
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  return year && month && day
+    ? new Date(year, month - 1, day).toLocaleDateString()
+    : "Not set";
 }
 
 function Value({ label, value }: { label: string; value: string | number | null | undefined }) {

@@ -2,8 +2,7 @@
 
 import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronLeftIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { formatDuration } from "@/lib/duration";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronUpDownIcon, ChevronUpIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AttendancePrintReport, { AttendancePrintAllReport, attendanceMinutes } from "@/components/AttendancePrintReport";
 
 type Punch = { time: string; deviceNumber: string; branch: string };
@@ -13,6 +12,7 @@ type AttendanceEmployee = {
   middleName: string | null;
   lastName: string;
   biometricNo: string | null;
+  photoUrl: string | null;
   branch: string | null;
   position: string | null;
   status: string | null;
@@ -20,11 +20,47 @@ type AttendanceEmployee = {
   attendance: { date: string; timeIn: string | null; timeOut: string | null; punches: Punch[] } | null;
 };
 type AttendanceListRow = AttendanceEmployee & { totalMinutes: number | null; hasPunches: boolean };
+type AttendanceSortColumn = "name" | "biometricNo" | "branch" | "position" | "employer" | "totalMinutes";
+type AttendanceSort = { column: AttendanceSortColumn; direction: "asc" | "desc" };
+
+function sortAttendanceRows(rows: AttendanceListRow[], sort: AttendanceSort) {
+  const direction = sort.direction === "asc" ? 1 : -1;
+  const compareText = (left: string | null | undefined, right: string | null | undefined) => {
+    const a = left?.trim() || "";
+    const b = right?.trim() || "";
+    if (!a && !b) return 0;
+    if (!a) return 1;
+    if (!b) return -1;
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }) * direction;
+  };
+
+  return [...rows].sort((a, b) => {
+    let result = 0;
+    if (sort.column === "name") {
+      result = compareText(`${a.firstName} ${a.middleName || ""} ${a.lastName}`, `${b.firstName} ${b.middleName || ""} ${b.lastName}`);
+    } else if (sort.column === "biometricNo") {
+      result = compareText(a.biometricNo, b.biometricNo);
+    } else if (sort.column === "branch") {
+      result = compareText(a.branch, b.branch);
+    } else if (sort.column === "position") {
+      result = compareText(a.position, b.position);
+    } else if (sort.column === "employer") {
+      result = compareText(a.employer?.name, b.employer?.name);
+    } else if (a.totalMinutes === null || b.totalMinutes === null) {
+      result = a.totalMinutes === b.totalMinutes ? 0 : a.totalMinutes === null ? 1 : -1;
+    } else {
+      result = (a.totalMinutes - b.totalMinutes) * direction;
+    }
+
+    if (result !== 0) return result;
+    return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, undefined, { sensitivity: "base" });
+  });
+}
 
 const inputClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
 // Shared column tracks so the list header and its rows can never drift apart.
-const GRID_COLS = "sm:grid-cols-3 xl:grid-cols-[minmax(180px,1.35fr)_minmax(145px,1fr)_minmax(110px,0.8fr)_minmax(125px,0.9fr)_minmax(170px,1.3fr)_minmax(130px,auto)_auto]";
+const GRID_COLS = "sm:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_110px_32px_40px]";
 const GRID_ROW = `grid grid-cols-1 gap-x-4 px-3 sm:px-4 ${GRID_COLS}`;
 
 function localDateValue(date = new Date()) {
@@ -87,6 +123,7 @@ export default function AttendancePage() {
   const [branchFilter, setBranchFilter] = useState("");
   const [dailyPage, setDailyPage] = useState(1);
   const [rangePage, setRangePage] = useState(1);
+  const [attendanceSort, setAttendanceSort] = useState<AttendanceSort>({ column: "name", direction: "asc" });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [totalImported, setTotalImported] = useState<number | null>(null);
@@ -174,10 +211,12 @@ export default function AttendancePage() {
   const filteredEmployees = filterRows(dailyRows);
   const filteredRangeRecords = rangeRecords ? filterRows(rangeRows) : null;
   const pageSize = 11;
-  const dailyPageCount = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
-  const rangePageCount = Math.max(1, Math.ceil((filteredRangeRecords?.length ?? 0) / pageSize));
-  const visibleDailyRows = filteredEmployees.slice((dailyPage - 1) * pageSize, dailyPage * pageSize);
-  const visibleRangeRows = filteredRangeRecords?.slice((rangePage - 1) * pageSize, rangePage * pageSize) ?? null;
+  const sortedDailyRows = sortAttendanceRows(filteredEmployees, attendanceSort);
+  const sortedRangeRows = filteredRangeRecords ? sortAttendanceRows(filteredRangeRecords, attendanceSort) : null;
+  const dailyPageCount = Math.max(1, Math.ceil(sortedDailyRows.length / pageSize));
+  const rangePageCount = Math.max(1, Math.ceil((sortedRangeRows?.length ?? 0) / pageSize));
+  const visibleDailyRows = sortedDailyRows.slice((dailyPage - 1) * pageSize, dailyPage * pageSize);
+  const visibleRangeRows = sortedRangeRows?.slice((rangePage - 1) * pageSize, rangePage * pageSize) ?? null;
 
   const printAllItems = (() => {
     if (rangeRecords) {
@@ -334,10 +373,13 @@ export default function AttendancePage() {
     const name = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
     const employer = employee.employer?.name || "Not set";
     const values = [name || "Not set", employee.biometricNo || "Not set", employee.branch || "Not set", employee.position || "Not set", employer];
-    const duration = formatDuration(employee.totalMinutes);
+    const duration = employee.totalMinutes === null
+      ? "—"
+      : `${String(Math.floor(employee.totalMinutes / 60)).padStart(3, "0")}:${String(employee.totalMinutes % 60).padStart(2, "0")}`;
     return <article key={rowKey} className={`${GRID_ROW} gap-y-2 border-b border-slate-100 py-2 last:border-b-0`}>
       {values.map((value, index) => <div key={`${rowKey}-${index}`} className={`${index === 0 ? "" : "hidden sm:block"} min-w-0 break-words text-sm font-medium text-slate-900`}>{value}</div>)}
-      <div key={`${rowKey}-duration`} className="hidden whitespace-nowrap text-sm font-medium text-slate-900 sm:block">{duration}</div>
+      <div key={`${rowKey}-duration`} className="hidden whitespace-nowrap text-right text-sm font-bold text-slate-900 sm:block">{duration}</div>
+      <div key={`${rowKey}-report-gap`} aria-hidden="true" className="hidden xl:block" />
       <div key={`${rowKey}-actions`} className="flex items-center gap-1">
         <button type="button" onClick={() => setReportTarget({ employee, scope, autoPrint: false })} aria-label={`View attendance report for ${name}`} title="View report" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <EyeIcon className="h-4 w-4" />
@@ -348,8 +390,17 @@ export default function AttendancePage() {
 
   const renderEmployeeList = (rows: AttendanceListRow[], keyPrefix: string, emptyMessage: string) => <div className="flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
     <div className={`${GRID_ROW} bg-slate-100 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600`}>
-      <div>Name</div><div className="hidden sm:block">Biometric Number</div><div className="hidden sm:block">Branch</div><div className="hidden sm:block">Position</div>      <div className="hidden sm:block">Employer</div>
-      <div className="hidden whitespace-nowrap sm:block">Total Duration</div>
+      {([ ["name", "Name", ""], ["biometricNo", "Biometric Number", "hidden sm:block"], ["branch", "Branch", "hidden sm:block"], ["position", "Position", "hidden sm:block"], ["employer", "Employer", "hidden sm:block"], ["totalMinutes", "Total Duration", "hidden whitespace-nowrap text-right sm:block"] ] as [AttendanceSortColumn, string, string][]).map(([column, label, className]) => <div key={column} role="columnheader" aria-sort={attendanceSort.column === column ? (attendanceSort.direction === "asc" ? "ascending" : "descending") : "none"} className={className}>
+        <button type="button" onClick={() => { setAttendanceSort((current) => ({ column, direction: current.column === column && current.direction === "asc" ? "desc" : "asc" })); setDailyPage(1); setRangePage(1); }} className={`inline-flex max-w-full items-center gap-1 rounded-sm text-left hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${column === "totalMinutes" ? "ml-auto" : ""}`}>
+          <span>{label}</span>
+          <span aria-hidden="true" className="shrink-0">
+            {attendanceSort.column === column
+              ? attendanceSort.direction === "asc" ? <ChevronUpIcon className="h-3.5 w-3.5" /> : <ChevronDownIcon className="h-3.5 w-3.5" />
+              : <ChevronUpDownIcon className="h-3.5 w-3.5 opacity-50" />}
+          </span>
+        </button>
+      </div>)}
+      <div aria-hidden="true" className="hidden xl:block" />
       <div className="hidden sm:block">Report</div>
     </div>
     {rows.length === 0 && <p className="m-4 rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">{emptyMessage}</p>}
@@ -447,7 +498,7 @@ export default function AttendancePage() {
         )}
         {message && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{message}</p>}
 
-        {rangeRecords && <section className="flex flex-1 flex-col space-y-3 border-y border-slate-200 py-4">
+        {rangeRecords && <section className="flex flex-1 flex-col space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="flex flex-wrap items-center gap-x-8 gap-y-1 text-sm text-slate-600">
               <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Branch:</span><span>{branchFilter || "All branches"}</span></span>

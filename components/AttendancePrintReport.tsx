@@ -10,6 +10,7 @@ export type PrintReportEmployee = {
   middleName: string | null;
   lastName: string;
   biometricNo: string | null;
+  photoUrl: string | null;
   branch: string | null;
   position: string | null;
   status: string | null;
@@ -32,7 +33,7 @@ type ReportRow = {
   timeOut: string;
   otIn: string;
   otOut: string;
-  minutes: number;
+  minutes: number | null;
 };
 
 type Props = {
@@ -68,7 +69,14 @@ function buildRows(records: PrintReportRecord[], from: string, to: string): Repo
 
   return dateList(from, to).map((date) => {
     const attendance = attendanceByDate.get(date) ?? null;
-    const punches = [...new Set((attendance?.punches ?? []).map((punch) => punch.time.slice(0, 5)))].sort();
+    const sortedPunches = [...new Set((attendance?.punches ?? []).map((punch) => punch.time.slice(0, 5)))].sort();
+    const punches = sortedPunches.reduce<string[]>((kept, punch) => {
+      const previousKeptPunch = kept[kept.length - 1];
+      if (!previousKeptPunch || toMinutes(punch) - toMinutes(previousKeptPunch) > DUPLICATE_PUNCH_WINDOW_MINUTES) {
+        kept.push(punch);
+      }
+      return kept;
+    }, []).slice(0, MAX_DAILY_PUNCHES);
 
     let timeIn = punches[0] ?? "";
     let timeOut = punches.length > 1 ? punches[punches.length - 1] : "";
@@ -80,11 +88,17 @@ function buildRows(records: PrintReportRecord[], from: string, to: string): Repo
     if (punches.length === 0 && attendance) {
       timeIn = attendance.timeIn?.slice(0, 5) ?? "";
       timeOut = attendance.timeOut?.slice(0, 5) ?? "";
-    } else if (punches.length === 5) {
-      // 5 punches: in, breaks, out plus a trailing re-scan. Keep the last punch as
-      // Time Out and leave OT blank so OT can never appear before Time Out.
+    } else if (punches.length === 3) {
+      // Keep three punches in their chronological slots; don't infer Time Out.
       breakOut = punches[1];
       breakIn = punches[2];
+      timeOut = "";
+    } else if (punches.length === 5) {
+      // A fifth valid punch starts overtime; a sixth valid punch completes it.
+      breakOut = punches[1];
+      breakIn = punches[2];
+      timeOut = punches[3];
+      otIn = punches[4];
     } else if (punches.length >= 6) {
       // Overtime day: in, break out, break in, Time Out, OT In, OT Out (strict chronological order).
       breakOut = punches[1];
@@ -99,12 +113,13 @@ function buildRows(records: PrintReportRecord[], from: string, to: string): Repo
       breakIn = middle[1] ?? "";
     }
 
-    let minutes = 0;
-    if (timeIn && timeOut) {
-      minutes = toMinutes(timeOut) - toMinutes(timeIn);
-      if (breakOut && breakIn) minutes -= toMinutes(breakIn) - toMinutes(breakOut);
-      if (otIn && otOut) minutes += toMinutes(otOut) - toMinutes(otIn);
-      if (minutes < 0) minutes = 0;
+    const durationPunches = punches.length > 0
+      ? punches
+      : timeIn && timeOut ? [timeIn, timeOut] : [];
+    let minutes: number | null = null;
+    for (let index = 0; index + 1 < durationPunches.length; index += 2) {
+      const intervalMinutes = toMinutes(durationPunches[index + 1]) - toMinutes(durationPunches[index]);
+      minutes = (minutes ?? 0) + Math.max(0, intervalMinutes);
     }
 
     return { date, timeIn, breakOut, breakIn, timeOut, otIn, otOut, minutes };
@@ -112,13 +127,15 @@ function buildRows(records: PrintReportRecord[], from: string, to: string): Repo
 }
 
 const columns = ["Time In", "Break Out", "Break In", "Time Out", "OT In", "OT Out"] as const;
+const DUPLICATE_PUNCH_WINDOW_MINUTES = 10;
+const MAX_DAILY_PUNCHES = 6;
 
 // Break-adjusted minutes for a single attendance day, using the exact same
 // calculation as the printable report so list totals always match the report.
 export function attendanceMinutes(attendance: PrintReportRecord["attendance"]): number | null {
   if (!attendance) return null;
   const row = buildRows([{ attendance }], attendance.date.slice(0, 10), attendance.date.slice(0, 10))[0];
-  return row ? row.minutes : null;
+  return row?.minutes ?? null;
 }
 
 export default function AttendancePrintReport({ employee, records, from, to, autoPrint, onClose }: Props) {
@@ -159,32 +176,43 @@ export default function AttendancePrintReport({ employee, records, from, to, aut
           </button>
         </div>
 
-        <ReportSheet employee={employee} rows={rows} />
+        <ReportSheet employee={employee} rows={rows} from={from} to={to} />
       </div>
     </div>,
     document.body
   );
 }
 
-function ReportSheet({ employee, rows }: { employee: PrintReportEmployee; rows: ReportRow[] }) {
-  const totalMinutes = rows.reduce((sum, row) => sum + row.minutes, 0);
+function ReportSheet({ employee, rows, from, to }: { employee: PrintReportEmployee; rows: ReportRow[]; from: string; to: string }) {
+  const totalMinutes = rows.reduce((sum, row) => sum + (row.minutes ?? 0), 0);
   const displayName = `${employee.lastName}, ${employee.firstName}${employee.middleName ? ` ${employee.middleName.charAt(0)}.` : ""}`;
   const idNumber = employee.biometricNo ? employee.biometricNo.padStart(9, "0") : "Not set";
 
   return (
     <div id="attendance-report" className="text-slate-900 [-webkit-print-color-adjust:exact] [print-color-adjust:exact]">
-      <h1 className="border-b-[3px] border-slate-900 pb-2 text-xl font-bold tracking-tight">Attendance Report</h1>
-
-      <p className="mt-4 flex items-center gap-2 text-sm">
-        <span className="font-semibold">Branch:</span>
-        <span className="min-w-[190px] border-b border-slate-500 pb-0.5">{employee.branch || "Not set"}</span>
-      </p>
-
-      <div className="mt-3 grid grid-cols-1 gap-x-10 gap-y-2 text-sm sm:grid-cols-2">
-        <p className="flex items-center gap-2"><span className="font-semibold">Name:</span><span className="min-w-0 flex-1 truncate border-b border-slate-500 pb-0.5">{displayName}</span></p>
-        <p className="flex items-center gap-2"><span className="font-semibold">Position:</span><span className="min-w-0 flex-1 truncate border-b border-slate-500 pb-0.5">{employee.position || "Not set"}</span></p>
-        <p className="flex items-center gap-2"><span className="font-semibold">ID Number:</span><span className="min-w-0 flex-1 border-b border-slate-500 pb-0.5 font-mono">{idNumber}</span></p>
-        <p className="flex items-center gap-2"><span className="font-semibold">Status:</span><span className="min-w-0 flex-1 truncate border-b border-slate-500 pb-0.5">{employee.status || "Not set"}</span></p>
+      <div className="flex items-center justify-between gap-4 border-b-[3px] border-slate-900 pb-2">
+        <h1 className="text-xl font-bold tracking-tight">Attendance Report</h1>
+        <span className="text-base font-semibold">{employee.branch || "Not set"}</span>
+      </div>
+      <div className="mt-2 grid grid-cols-[80px_minmax(0,1fr)] items-stretch gap-x-4 text-sm sm:grid-cols-[96px_minmax(0,1fr)]">
+        <div className="flex justify-start">
+          {employee.photoUrl
+            ? <img src={employee.photoUrl} alt={`${displayName} photo`} className="h-28 w-24 rounded border border-slate-300 object-cover" />
+            : <div aria-label={`${displayName} photo unavailable`} className="flex h-28 w-20 items-center justify-center rounded border border-slate-300 bg-slate-100 text-lg font-semibold text-slate-500 sm:w-24">{employee.firstName.charAt(0)}{employee.lastName.charAt(0)}</div>}
+        </div>
+        <div className="flex min-h-28 min-w-0 flex-col justify-between">
+          <div className="mt-2 truncate text-lg font-bold">{displayName}</div>
+          <div className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-2 sm:grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)] sm:gap-x-5">
+            <span className="font-semibold">Position:</span>
+            <span className="min-w-0 truncate border-b border-slate-500 pb-0.5">{employee.position || "Not set"}</span>
+            <span className="whitespace-nowrap font-semibold">ID Number:</span>
+            <span className="min-w-0 border-b border-slate-500 pb-0.5 font-mono">{idNumber}</span>
+            <span className="font-semibold">Status:</span>
+            <span className="min-w-0 truncate border-b border-slate-500 pb-0.5">{employee.status || "Not set"}</span>
+            <span className="whitespace-nowrap font-semibold">Cut-Off:</span>
+            <span className="min-w-0 whitespace-nowrap border-b border-slate-500 pb-0.5">{from} – {to}</span>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 overflow-x-auto">
@@ -206,7 +234,7 @@ function ReportSheet({ employee, rows }: { employee: PrintReportEmployee; rows: 
                 <td className="whitespace-nowrap px-1.5 py-1">{row.timeOut}</td>
                 <td className="whitespace-nowrap px-1.5 py-1">{row.otIn}</td>
                 <td className="whitespace-nowrap px-1.5 py-1">{row.otOut}</td>
-                <td className="whitespace-nowrap px-1.5 py-1 text-right font-medium">{formatDurationClock(row.minutes)}</td>
+                <td className="whitespace-nowrap px-1.5 py-1 text-right font-medium">{row.minutes === null ? "—" : formatDurationClock(row.minutes)}</td>
               </tr>
             ))}
           </tbody>
@@ -258,7 +286,7 @@ export function AttendancePrintAllReport({ items, from, to, onClose }: {
         {items.map((item, index) => (
           <div key={`${item.employee.lastName}-${item.employee.firstName}-${index}`} className="break-after-page rounded-lg bg-white p-6 shadow-xl last:break-after-auto print:m-0 print:rounded-none print:p-0 print:shadow-none">
             <p className="mb-3 border-b border-dashed border-slate-200 pb-1 text-right text-xs font-semibold text-slate-400 print:hidden">Employee {index + 1} of {items.length}</p>
-            <ReportSheet employee={item.employee} rows={buildRows(item.records, from, to)} />
+            <ReportSheet employee={item.employee} rows={buildRows(item.records, from, to)} from={from} to={to} />
           </div>
         ))}
       </div>

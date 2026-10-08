@@ -75,7 +75,7 @@ export default function DashboardPage() {
   const refreshReminders = useCallback(async () => {
     setRefreshingReminders(true);
     try {
-      const response = await fetch("/api/dashboard/reminders");
+      const response = await fetch("/api/dashboard/reminders", { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load reminders");
       setReminders(data);
@@ -88,6 +88,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     void refreshReminders();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refreshReminders();
+    };
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [refreshReminders]);
 
   return (

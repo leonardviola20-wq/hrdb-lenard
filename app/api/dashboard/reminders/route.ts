@@ -74,7 +74,10 @@ export async function GET(req: NextRequest) {
         }).sort((a, b) => a.date.localeCompare(b.date)))
       : [];
 
-    return NextResponse.json({ upcomingTasks, birthdayReminders, canViewBirthdays });
+    return NextResponse.json(
+      { upcomingTasks, birthdayReminders, canViewBirthdays },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error) {
     console.error("Load dashboard reminders error:", error);
     return NextResponse.json({ error: "Unable to load dashboard reminders" }, { status: 500 });

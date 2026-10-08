@@ -391,6 +391,8 @@ export default function EmployeesPage() {
           <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
           {[
             { value: "ACTIVE", label: "Active employees" },
+            { value: "Trainee", label: "Trainee" },
+            { value: "Contractual", label: "Contractual" },
             { value: "ALL", label: "All employees" },
             { value: "INACTIVE", label: "Inactive employees" },
           ].map((quickFilter) => (

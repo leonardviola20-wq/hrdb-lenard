@@ -1,0 +1,56 @@
+CREATE TABLE "EmployeeCategory" (
+    "id" SERIAL NOT NULL,
+    "type" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "EmployeeCategory_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "EmployeeCategory_type_name_key" ON "EmployeeCategory"("type", "name");
+CREATE INDEX "EmployeeCategory_type_active_sortOrder_idx" ON "EmployeeCategory"("type", "active", "sortOrder");
+
+INSERT INTO "EmployeeCategory" ("type", "name", "sortOrder", "updatedAt") VALUES
+('BRANCH', 'Arya 1', 0, CURRENT_TIMESTAMP),
+('BRANCH', 'Arya 2', 1, CURRENT_TIMESTAMP),
+('BRANCH', 'Yasuo', 2, CURRENT_TIMESTAMP),
+('BRANCH', 'Shangri-la', 3, CURRENT_TIMESTAMP),
+('BRANCH', 'Greenhills', 4, CURRENT_TIMESTAMP),
+('BRANCH', 'Magnolia', 5, CURRENT_TIMESTAMP),
+('BRANCH', 'MyDay', 6, CURRENT_TIMESTAMP),
+('BRANCH', 'Warehouse', 7, CURRENT_TIMESTAMP),
+('BRANCH', 'Office', 8, CURRENT_TIMESTAMP),
+('BRANCH', 'Vape', 9, CURRENT_TIMESTAMP),
+('BRANCH', 'Commissary', 10, CURRENT_TIMESTAMP),
+('BRANCH', 'Others', 11, CURRENT_TIMESTAMP),
+('POSITION', 'President', 0, CURRENT_TIMESTAMP),
+('POSITION', 'Corporate Secretary', 1, CURRENT_TIMESTAMP),
+('POSITION', 'Treasurer', 2, CURRENT_TIMESTAMP),
+('POSITION', 'Accountant', 3, CURRENT_TIMESTAMP),
+('POSITION', 'Purchaser', 4, CURRENT_TIMESTAMP),
+('POSITION', 'IT', 5, CURRENT_TIMESTAMP),
+('POSITION', 'Admin', 6, CURRENT_TIMESTAMP),
+('POSITION', 'Admin Staff', 7, CURRENT_TIMESTAMP),
+('POSITION', 'Office Staff', 8, CURRENT_TIMESTAMP),
+('POSITION', 'Store In-charge', 9, CURRENT_TIMESTAMP),
+('POSITION', 'Commissary Staff', 10, CURRENT_TIMESTAMP),
+('POSITION', 'Driver', 11, CURRENT_TIMESTAMP),
+('POSITION', 'Sales Staff', 12, CURRENT_TIMESTAMP),
+('POSITION', 'Dining Staff', 13, CURRENT_TIMESTAMP),
+('POSITION', 'Cashier', 14, CURRENT_TIMESTAMP),
+('POSITION', 'Kitchen Staff', 15, CURRENT_TIMESTAMP),
+('POSITION', 'Dispatcher', 16, CURRENT_TIMESTAMP),
+('POSITION', 'Receptionist', 17, CURRENT_TIMESTAMP),
+('POSITION', 'Warehouse Staff', 18, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'Trainee', 0, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'Regular', 1, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'Contractual', 2, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'No Contract', 3, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'End of contract', 4, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'Resigned', 5, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'Terminated', 6, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'AWOL', 7, CURRENT_TIMESTAMP),
+('EMPLOYMENT_STATUS', 'Leave', 8, CURRENT_TIMESTAMP);
