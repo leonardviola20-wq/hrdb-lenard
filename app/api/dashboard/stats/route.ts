@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAuthenticatedSession } from "@/lib/auth";
 import { canViewPage } from "@/lib/pageAccess";
+import { countEmployeesMissingRequirements } from "@/lib/employeeRequirements";
 import { prisma } from "@/lib/prisma";
 
 const activeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   const canCreateTasks = canViewPage(user, "/tasks");
 
   try {
-    const [totalEmployees, activeEmployees, newlyHired, branches, employers, recentEmployees] = await Promise.all([
+    const [totalEmployees, activeEmployees, newlyHired, branches, employers, recentEmployees, requirementEmployees] = await Promise.all([
       canViewEmployees ? prisma.employee.count() : Promise.resolve(null),
       canViewEmployees ? prisma.employee.count({ where: { status: { in: activeStatuses } } }) : Promise.resolve(null),
       canViewEmployees
@@ -36,6 +37,14 @@ export async function GET(req: NextRequest) {
         take: 3,
         select: { id: true, firstName: true, lastName: true, branch: true },
       }) : Promise.resolve(null),
+      canViewEmployees ? prisma.employee.findMany({
+        select: {
+          requirements: {
+            where: { isComplete: true },
+            select: { requirementKey: true },
+          },
+        },
+      }) : Promise.resolve(null),
     ]);
 
     return NextResponse.json({
@@ -46,6 +55,9 @@ export async function GET(req: NextRequest) {
       branches: branches === null ? null : branches.filter((item) => item.branch?.trim()).length,
       employers,
       recentEmployees,
+      employeesMissingRequirements: requirementEmployees === null
+        ? null
+        : countEmployeesMissingRequirements(requirementEmployees),
       canViewEmployees,
       canCreateTasks,
       canAddContact: user.role === "ADMIN",

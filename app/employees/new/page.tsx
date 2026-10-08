@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { JOB_LEVELS } from "@/lib/employeePayload";
 
 type Employer = { id: number; name: string; company: string | null };
+type SupervisorOption = { id: number; firstName: string; middleName: string | null; lastName: string; position: string | null };
 type CategoryType = "BRANCH" | "POSITION" | "EMPLOYMENT_STATUS";
 type EmployeeCategory = { type: CategoryType; name: string; active: boolean };
 type EmployeeCategoryOptions = { branches: string[]; positions: string[]; statuses: string[] };
@@ -28,6 +30,8 @@ type EmployeeForm = {
   biometricNo: string;
   branch: string;
   position: string;
+  jobLevel: string;
+  supervisorId: string;
   employerId: string;
   status: string;
   dateStarted: string;
@@ -44,7 +48,7 @@ const emptyForm: EmployeeForm = {
   age: "", maritalStatus: "", gender: "", mobileNumber: "", email: "", address: "",
   photoUrl: "",
   emergencyName: "", emergencyNumber: "", emergencyRelation: "", emergencyAddress: "",
-  biometricNo: "", branch: "", position: "", employerId: "", status: "Trainee", dateStarted: "", endDate: "",
+  biometricNo: "", branch: "", position: "", jobLevel: "", supervisorId: "", employerId: "", status: "Trainee", dateStarted: "", endDate: "",
   sssNumber: "", pagIbigNumber: "", philHealth: "", tinNumber: "", remarks: "",
 };
 
@@ -103,20 +107,27 @@ export default function NewEmployeePage() {
   const employeeId = id ?? null;
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
   const [employers, setEmployers] = useState<Employer[]>([]);
+  const [supervisors, setSupervisors] = useState<SupervisorOption[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<EmployeeCategoryOptions>(defaultCategoryOptions);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [loadingEmployee, setLoadingEmployee] = useState(Boolean(employeeId));
+  const [loadedEmployeeId, setLoadedEmployeeId] = useState<string | null>(null);
+  const loadingEmployee = Boolean(employeeId && loadedEmployeeId !== employeeId);
 
   useEffect(() => {
     let active = true;
-    setLoadingEmployee(Boolean(employeeId));
-    setMessage("");
-    if (!employeeId) setForm(emptyForm);
     const employerRequest = fetch("/api/employers").then(async (response) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load employers");
       if (active) setEmployers(data.employers);
+    });
+    const supervisorRequest = fetch("/api/employees").then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load supervisor options");
+      const eligibleSupervisors = data.employees.filter((candidate: SupervisorOption) =>
+        candidate.position === "Store In-charge" && String(candidate.id) !== employeeId
+      );
+      if (active) setSupervisors(eligibleSupervisors);
     });
     const categoryRequest = fetch("/api/management/categories").then(async (response) => {
       const data = await response.json();
@@ -156,6 +167,8 @@ export default function NewEmployeePage() {
             biometricNo: employee.biometricNo || "",
             branch: employee.branch || "",
             position: employee.position || "",
+            jobLevel: employee.jobLevel || "",
+            supervisorId: employee.supervisorId == null ? "" : String(employee.supervisorId),
             employerId: employee.employer?.id == null ? "" : String(employee.employer.id),
             status: employee.status || "Trainee",
             dateStarted: employee.dateStarted?.slice(0, 10) || "",
@@ -167,10 +180,13 @@ export default function NewEmployeePage() {
             remarks: employee.remarks || "",
           });
         })
-      : Promise.resolve();
-    Promise.all([employerRequest, categoryRequest, employeeRequest])
+      : Promise.resolve().then(() => {
+          if (active) setForm(emptyForm);
+        });
+    Promise.all([employerRequest, supervisorRequest, categoryRequest, employeeRequest])
+      .then(() => { if (active) setMessage(""); })
       .catch((error: Error) => { if (active) setMessage(error.message); })
-      .finally(() => { if (active) setLoadingEmployee(false); });
+      .finally(() => { if (active) setLoadedEmployeeId(employeeId); });
     return () => { active = false; };
   }, [employeeId]);
 
@@ -244,6 +260,8 @@ export default function NewEmployeePage() {
             <Field label="Status"><select value={form.status} onChange={(e) => setForm((current) => ({ ...current, status: e.target.value, endDate: endedStatuses.has(e.target.value) ? current.endDate : "" }))} className={inputClass}><option value="">Select status</option>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select></Field>
             <Field label="Branch"><select value={form.branch} onChange={(e) => update("branch", e.target.value)} className={inputClass}><option value="">Select branch</option>{branchOptions.map((branch) => <option key={branch}>{branch}</option>)}</select></Field>
             <Field label="Position"><select value={form.position} onChange={(e) => update("position", e.target.value)} className={inputClass}><option value="">Select position</option>{positionOptions.map((position) => <option key={position}>{position}</option>)}</select></Field>
+            <Field label="Job Level"><select value={form.jobLevel} onChange={(e) => update("jobLevel", e.target.value)} className={inputClass}><option value="">Select job level</option>{JOB_LEVELS.map((jobLevel) => <option key={jobLevel}>{jobLevel}</option>)}</select></Field>
+            <Field label="Supervisor"><select value={form.supervisorId} onChange={(e) => update("supervisorId", e.target.value)} className={inputClass}><option value="">No supervisor assigned</option>{supervisors.map((supervisor) => <option key={supervisor.id} value={supervisor.id}>{[supervisor.firstName, supervisor.middleName, supervisor.lastName].filter(Boolean).join(" ")}</option>)}</select></Field>
             <Field label="Date Started"><input type="date" value={form.dateStarted} onChange={(e) => update("dateStarted", e.target.value)} className={inputClass} /></Field>
             {endedStatuses.has(form.status) && <Field label="Ended"><input type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} className={inputClass} /></Field>}
           </Section>
