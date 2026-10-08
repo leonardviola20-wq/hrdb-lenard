@@ -95,26 +95,27 @@ model TaskPrerequisiteItem {
 }
 
 model employee {
-  id                Int       @id @default(autoincrement())
+  id                Int               @id @default(autoincrement())
   status            String?
   dateStarted       DateTime?
   employerId        Int?
   address           String?
   age               Int?
-  biometricNo       String?   @unique
+  biometricNo       String?           @unique
   branch            String?
   position          String?
-  createdAt         DateTime  @default(now())
+  createdAt         DateTime          @default(now())
   dateOfBirth       DateTime?
   email             String?
   emergencyAddress  String?
   emergencyName     String?
   emergencyNumber   String?
   emergencyRelation String?
-  employeeCode      String    @unique
+  employeeCode      String            @unique
   endDate           DateTime?
   firstName         String
   gender            String?
+  jobLevel          String?
   lastName          String
   maritalStatus     String?
   middleName        String?
@@ -125,15 +126,32 @@ model employee {
   remarks           String?
   sssNumber         String?
   tinNumber         String?
-  updatedAt         DateTime  @updatedAt
+  updatedAt         DateTime          @updatedAt
+  supervisorId      Int?
   assignedBy        String?
   assignedAt        DateTime?
-  employer          employer? @relation(fields: [employerId], references: [id])
+  employer          employer?         @relation(fields: [employerId], references: [id])
+  supervisor        employee?         @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  directReports     employee[]        @relation("EmployeeSupervisor")
   attendanceRecords Attendance[]
   attendancePunches AttendancePunch[]
   officeContacts    OfficeContact[]
+  requirements      EmployeeRequirement[]
 
   @@index([employerId])
+  @@index([supervisorId])
+}
+
+model EmployeeRequirement {
+  id              Int      @id @default(autoincrement())
+  employeeId      Int
+  requirementKey  String
+  isComplete      Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+  employee        employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, requirementKey])
+  @@index([employeeId, isComplete])
 }
 
 model EmployeeCategory {
@@ -150,17 +168,17 @@ model EmployeeCategory {
 }
 
 model Attendance {
-  id         Int      @id @default(autoincrement())
+  id         Int               @id @default(autoincrement())
   employeeId Int
-  date       DateTime @db.Date
+  date       DateTime          @db.Date
   timeIn     String?
   timeOut    String?
   status     String
   branch     String?
   notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  employee   employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  employee   employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   punches    AttendancePunch[]
 
   @@unique([employeeId, date])
@@ -168,15 +186,15 @@ model Attendance {
 }
 
 model AttendanceImport {
-  id             Int               @id @default(autoincrement())
-  branch         String
-  fileName       String
-  totalRows      Int
-  importedRows   Int
-  duplicateRows  Int
-  unmatchedRows  Int
-  createdAt      DateTime          @default(now())
-  punches        AttendancePunch[]
+  id            Int               @id @default(autoincrement())
+  branch        String
+  fileName      String
+  totalRows     Int
+  importedRows  Int
+  duplicateRows Int
+  unmatchedRows Int
+  createdAt     DateTime          @default(now())
+  punches       AttendancePunch[]
 
   @@index([createdAt])
 }
@@ -213,7 +231,7 @@ model employer {
   longAddress            String?
   shortAddress           String?
   logo                   String?
-  secDti                 String?     @unique
+  secDti                 String?    @unique
   secDtiRegistrationDate DateTime?
   tin                    String?
   tinRegistrationDate    DateTime?
@@ -227,7 +245,7 @@ model employer {
 }
 
 model OfficeContact {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   employeeId  Int?
   companyName String
   contactName String
@@ -238,9 +256,9 @@ model OfficeContact {
   services    String?
   branch      String?
   notes       String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   employee    employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
 
   @@index([category, active])

@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, ChevronLeftIcon, EyeIcon, PencilSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronLeftIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import { parseCsv, toCsv } from "@/lib/csv";
+import { JOB_LEVELS } from "@/lib/employeePayload";
+import { employeeProfileHref, matchesEmployeeStatus, sortNavigableEmployees } from "@/lib/employeeNavigation";
 
 type Employee = {
   id: number;
@@ -32,12 +35,23 @@ type Employee = {
   mobileNumber: string | null;
   branch: string | null;
   position: string | null;
+  jobLevel: string | null;
+  supervisorId: number | null;
   photoUrl: string | null;
   assignedBy: string | null;
   assignedAt: string | null;
   employer: { id: number; name: string; company: string | null } | null;
 };
 type Employer = { id: number; name: string; company: string | null };
+type CsvSaveFilePicker = (this: Window, options: {
+  suggestedName: string;
+  types: { description: string; accept: Record<string, string[]> }[];
+}) => Promise<{
+  createWritable: () => Promise<{
+    write: (data: Blob) => Promise<void>;
+    close: () => Promise<void>;
+  }>;
+}>;
 
 let employeeDirectoryCache: Employee[] | null = null;
 
@@ -110,6 +124,13 @@ function displayDate(value: string | null) {
   return value ? new Date(value).toLocaleDateString() : "Not set";
 }
 
+function displayJoinedDate(value: string | null) {
+  if (!value) return "Not set";
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "Not set";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "2-digit", year: "numeric" }).format(date);
+}
+
 function ViewSection({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="rounded-lg border border-gray-200 bg-gray-50 p-4"><h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-semibold text-gray-900">{title}</h3><dl className="grid gap-3 text-sm sm:grid-cols-2">{children}</dl></section>;
 }
@@ -129,16 +150,26 @@ function csvDate(value: string | null) {
   return value ? value.slice(0, 10) : "";
 }
 
-export default function EmployeesPage() {
+function EmployeesPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [employees, setEmployees] = useState<Employee[]>(() => employeeDirectoryCache ?? []);
   const [loading, setLoading] = useState(() => employeeDirectoryCache === null);
   const [query, setQuery] = useState(employeeDirectoryFilters.query);
-  const [statusFilter, setStatusFilter] = useState(employeeDirectoryFilters.statusFilter);
-  const [employerFilter, setEmployerFilter] = useState(employeeDirectoryFilters.employerFilter);
-  const [branchFilter, setBranchFilter] = useState(employeeDirectoryFilters.branchFilter);
+  const statusFilter = searchParams.get("status") || "ACTIVE";
+  const employerFilter = searchParams.get("employer") || "";
+  const branchFilter = searchParams.get("branch") || "";
+  const [employeeView, setEmployeeView] = useState<"cards" | "list">("cards");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<Set<number>>(() => new Set());
+  const [employeeSelectionMode, setEmployeeSelectionMode] = useState(false);
+  const [transferBranch, setTransferBranch] = useState("");
+  const [transferEmployerId, setTransferEmployerId] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
   const [message, setMessage] = useState("");
   const [showFirstEmployeePrompt, setShowFirstEmployeePrompt] = useState(false);
   const [employers, setEmployers] = useState<Employer[]>([]);
+  const [configuredBranches, setConfiguredBranches] = useState<string[]>(branches);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -149,7 +180,17 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     employeeDirectoryFilters = { query, statusFilter, employerFilter, branchFilter };
-  }, [query, statusFilter, employerFilter, branchFilter]);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("status", statusFilter);
+    if (branchFilter) params.set("branch", branchFilter);
+    else params.delete("branch");
+    if (employerFilter) params.set("employer", employerFilter);
+    else params.delete("employer");
+    const nextUrl = `/employees?${params.toString()}`;
+    if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [query, statusFilter, employerFilter, branchFilter, router, searchParams]);
 
   useEffect(() => {
     let active = true;
@@ -179,9 +220,26 @@ export default function EmployeesPage() {
     fetch("/api/employers")
       .then(async (response) => {
         const data = await response.json();
-        if (response.ok) setEmployers(data.employers);
+        if (!response.ok) throw new Error(data.error || "Unable to load employers");
+        if (active) setEmployers(data.employers);
       })
-      .catch(() => {});
+      .catch((error: Error) => {
+        if (active) setMessage(error.message);
+      });
+    fetch("/api/management/categories")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load employee categories");
+        const categories = Array.isArray(data.categories) ? data.categories : [];
+        const branchNames = categories
+          .filter((category: { type?: unknown; name?: unknown; active?: unknown }) => category.type === "BRANCH" && category.active === true && typeof category.name === "string")
+          .map((category: { name: string }) => category.name);
+        if (active) setConfiguredBranches(branchNames.length > 0 ? branchNames : branches);
+      })
+      .catch((error: Error) => {
+        console.warn("Unable to load employee branch categories:", error);
+        if (active) setMessage(error.message);
+      });
     fetch("/api/me")
       .then(async (response) => {
         if (!response.ok) return;
@@ -195,6 +253,23 @@ export default function EmployeesPage() {
     };
   }, []);
 
+  const updateNavigationFilters = (next: Partial<Pick<EmployeeDirectoryFilters, "statusFilter" | "employerFilter" | "branchFilter">>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.statusFilter !== undefined) params.set("status", next.statusFilter);
+    if (next.employerFilter !== undefined) {
+      if (next.employerFilter) params.set("employer", next.employerFilter);
+      else params.delete("employer");
+    }
+    if (next.branchFilter !== undefined) {
+      if (next.branchFilter) params.set("branch", next.branchFilter);
+      else params.delete("branch");
+    }
+    const nextUrl = `/employees?${params.toString()}`;
+    if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  };
+
   const filteredEmployees = useMemo(() => {
     const search = query.trim().toLowerCase();
     return employees.filter((employee) => {
@@ -204,29 +279,110 @@ export default function EmployeesPage() {
         : "";
       return (!search || fullName.includes(search) || (employee.biometricNo || "").toLowerCase().includes(search) || employer.includes(search))
         && (statusFilter === "ALL"
-          || (statusFilter === "ACTIVE"
-            ? activeEmployeeStatuses.includes(employee.status || "")
-            : statusFilter === "INACTIVE"
-              ? !activeEmployeeStatuses.includes(employee.status || "")
-              : employee.status === statusFilter))
+          || matchesEmployeeStatus(employee.status, statusFilter))
         && (!employerFilter || employee.employer?.id.toString() === employerFilter)
         && (!branchFilter || employee.branch === branchFilter);
     });
   }, [employees, query, statusFilter, employerFilter, branchFilter]);
+
+  const sortedEmployees = useMemo(() => {
+    return sortNavigableEmployees(filteredEmployees);
+  }, [filteredEmployees]);
+  const allVisibleEmployeesSelected = sortedEmployees.length > 0
+    && sortedEmployees.every((employee) => selectedEmployeeIds.has(employee.id));
 
   const employeeBranches = useMemo(
     () => [...new Set(employees.map((employee) => employee.branch).filter((value): value is string => Boolean(value)))].sort(),
     [employees]
   );
   const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter);
+  const profileHref = (employeeId: number) => employeeProfileHref(employeeId, {
+    status: statusFilter,
+    branch: branchFilter,
+    employer: employerFilter,
+  });
   const clearFilters = () => {
     setQuery("");
-    setStatusFilter("ACTIVE");
-    setEmployerFilter("");
-    setBranchFilter("");
+    updateNavigationFilters({ statusFilter: "ACTIVE", employerFilter: "", branchFilter: "" });
   };
 
-  const exportEmployees = () => {
+  const toggleEmployeeSelection = (employeeId: number) => {
+    setSelectedEmployeeIds((current) => {
+      const next = new Set(current);
+      if (next.has(employeeId)) next.delete(employeeId);
+      else next.add(employeeId);
+      return next;
+    });
+  };
+
+  const toggleVisibleEmployeeSelection = () => {
+    setSelectedEmployeeIds((current) => {
+      const next = new Set(current);
+      const shouldSelect = !sortedEmployees.every((employee) => next.has(employee.id));
+      for (const employee of sortedEmployees) {
+        if (shouldSelect) next.add(employee.id);
+        else next.delete(employee.id);
+      }
+      return next;
+    });
+  };
+
+  const clearEmployeeSelection = () => {
+    setSelectedEmployeeIds(new Set());
+    setTransferBranch("");
+    setTransferEmployerId("");
+  };
+
+  const toggleEmployeeSelectionMode = () => {
+    if (employeeSelectionMode) {
+      setEmployeeSelectionMode(false);
+      clearEmployeeSelection();
+      return;
+    }
+    setEmployeeSelectionMode(true);
+  };
+
+  const transferSelectedEmployees = async () => {
+    if (selectedEmployeeIds.size === 0 || (!transferBranch && !transferEmployerId)) return;
+    setIsTransferring(true);
+    setMessage("");
+    setNotice("");
+    let transferredCount = 0;
+    try {
+      const response = await fetch("/api/employees/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeIds: Array.from(selectedEmployeeIds),
+          branch: transferBranch || null,
+          employerId: transferEmployerId ? Number(transferEmployerId) : null,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to transfer employees");
+      transferredCount = data.updated;
+
+      const refreshed = await fetch("/api/employees");
+      const refreshedData = await refreshed.json();
+      if (!refreshed.ok) throw new Error(refreshedData.error || "Unable to reload employees");
+      employeeDirectoryCache = refreshedData.employees;
+      setEmployees(refreshedData.employees);
+      setSelectedEmployeeIds(new Set());
+      setEmployeeSelectionMode(false);
+      setTransferBranch("");
+      setTransferEmployerId("");
+      setNotice(`Transferred ${transferredCount} employee${transferredCount === 1 ? "" : "s"}.`);
+    } catch (error) {
+      if (transferredCount > 0) employeeDirectoryCache = null;
+      setMessage(transferredCount > 0
+        ? `Transferred ${transferredCount} employees, but the directory could not be refreshed. Reload the page to see the updated assignments.`
+        : error instanceof Error ? error.message : "Unable to transfer employees");
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const exportEmployees = async () => {
     if (filteredEmployees.length === 0) return;
     const rows: (string | number)[][] = [employeeCsvHeaders];
     for (const employee of filteredEmployees) {
@@ -260,16 +416,33 @@ export default function EmployeesPage() {
       ]);
     }
     const blob = new Blob([`\uFEFF${toCsv(rows)}`], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `employees-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    setMessage("");
-    setNotice(`Exported ${filteredEmployees.length} employee(s) to CSV.`);
+    const filename = `employees-${new Date().toISOString().slice(0, 10)}.csv`;
+    const picker = (window as Window & { showSaveFilePicker?: CsvSaveFilePicker }).showSaveFilePicker;
+    try {
+      if (picker) {
+        const file = await picker.call(window, {
+          suggestedName: filename,
+          types: [{ description: "CSV file", accept: { "text/csv": [".csv"] } }],
+        });
+        const writable = await file.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      setMessage("");
+      setNotice(`Exported ${filteredEmployees.length} employee(s) to CSV.`);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setMessage(error instanceof Error ? error.message : "Unable to export employees.");
+    }
   };
 
   const importEmployees = async (file: File) => {
@@ -328,7 +501,7 @@ export default function EmployeesPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
-        <div className="mb-4 grid grid-cols-2 items-center gap-2 lg:grid-cols-[auto_auto_minmax(180px,1fr)_repeat(3,minmax(130px,180px))_auto]">
+        <div className="mb-4 grid grid-cols-2 items-center gap-2 lg:grid-cols-[auto_auto_minmax(180px,1fr)_minmax(130px,180px)_minmax(130px,180px)_minmax(180px,230px)_auto_auto]">
           <Link
             href="/dashboard"
             onClick={(event) => {
@@ -342,7 +515,7 @@ export default function EmployeesPage() {
             <ChevronLeftIcon className="h-4 w-4" /> Back
           </Link>
           <Link href="/employees/new" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
-            <PlusIcon className="h-4 w-4" /> Add employee
+            <PlusIcon className="h-4 w-4" /> Add
           </Link>
           <input
             value={query}
@@ -351,67 +524,234 @@ export default function EmployeesPage() {
             aria-label="Search employees"
             className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block"
           />
-          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
+          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
             <option value="ACTIVE">Active employees</option>
             <option value="INACTIVE">Inactive employees</option>
-            <option value="ALL">All statuses</option>
-            {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
-          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => setEmployerFilter(event.target.value)} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
+          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
             <option value="">All employers</option>
             {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
           </select>
-          <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block">
-            <option value="">All branches</option>
-            {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-          </select>
-          {isAdmin && (
-            <div className="hidden items-center justify-end gap-2 lg:flex">
-              <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleImportFile} className="hidden" />
+            <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => updateNavigationFilters({ branchFilter: event.target.value })} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block">
+              <option value="">All branches</option>
+              {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+            </select>
+          <button
+            type="button"
+            aria-label="View first employee matching filters"
+            title={sortedEmployees.length > 0 ? "View first employee matching filters" : "No employees match the filters"}
+            onClick={() => {
+              const firstEmployee = sortedEmployees[0];
+              if (firstEmployee) router.push(profileHref(firstEmployee.id));
+            }}
+            disabled={sortedEmployees.length === 0}
+            className="hidden h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
+          >
+            <EyeIcon aria-hidden="true" className="h-5 w-5" />
+          </button>
+          <div className="col-span-2 flex w-full flex-wrap items-center justify-end gap-2 lg:col-span-1">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={importing}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50"
+                aria-label={`Current view: ${employeeView}. Switch to ${employeeView === "cards" ? "list" : "card"} view`}
+                title={`Current view: ${employeeView === "cards" ? "Cards" : "List"}. Switch to ${employeeView === "cards" ? "list" : "card"} view`}
+                onClick={() => setEmployeeView((currentView) => currentView === "cards" ? "list" : "cards")}
+                className="hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 md:inline-flex"
               >
-                <ArrowUpTrayIcon className="h-4 w-4" /> {importing ? "Importing..." : "Import"}
+                {employeeView === "cards" ? <Squares2X2Icon aria-hidden="true" className="h-5 w-5" /> : <ListBulletIcon aria-hidden="true" className="h-5 w-5" />}
               </button>
               <button
                 type="button"
-                onClick={exportEmployees}
-                disabled={filteredEmployees.length === 0}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={clearFilters}
+                disabled={!hasFilters}
+                aria-label="Clear all filters"
+                title="Clear all filters"
+                className="hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
               >
-                <ArrowDownTrayIcon className="h-4 w-4" /> Export
+                <ArrowPathIcon aria-hidden="true" className="h-4 w-4" />
               </button>
+              {isAdmin && (
+                <>
+                  <button
+                    type="button"
+                    onClick={toggleEmployeeSelectionMode}
+                    disabled={isTransferring}
+                    aria-pressed={employeeSelectionMode}
+                    aria-expanded={employeeSelectionMode}
+                    aria-controls="employee-transfer-panel"
+                    className={`hidden h-10 items-center justify-center whitespace-nowrap rounded-lg border px-3 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex ${employeeSelectionMode ? "border-blue-300 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+                  >
+                    Transfer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportEmployees}
+                    disabled={filteredEmployees.length === 0}
+                    className="hidden h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4" /> Export
+                  </button>
+                  <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleImportFile} className="hidden" />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={importing}
+                    className="hidden h-10 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50 md:inline-flex"
+                  >
+                    <ArrowUpTrayIcon className="h-4 w-4" /> {importing ? "Importing..." : "Import"}
+                  </button>
+                </>
+              )}
+          </div>
+        </div>
+        <div className={`md:hidden ${mobileFiltersOpen ? "mb-4" : "mb-2"}`}>
+          <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((isOpen) => !isOpen)}
+            aria-label={mobileFiltersOpen ? "Hide search and filters" : "Show search and filters"}
+            aria-expanded={mobileFiltersOpen}
+            aria-controls="mobile-employee-filters"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <MagnifyingGlassIcon aria-hidden="true" className="h-5 w-5" />
+          </button>
+            <span className="whitespace-nowrap text-xs text-gray-600">
+              {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
+            </span>
+          </div>
+          {mobileFiltersOpen && (
+            <div id="mobile-employee-filters" className="mt-3 flex flex-col gap-3">
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search employees..."
+                aria-label="Search employees"
+                className="h-10 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              />
+              <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="ACTIVE">Active employees</option>
+                <option value="INACTIVE">Inactive employees</option>
+              </select>
+              <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="">All employers</option>
+                {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
+              </select>
+              <div className="flex items-center gap-2">
+                <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => updateNavigationFilters({ branchFilter: event.target.value })} className="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <option value="">All branches</option>
+                  {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+                </select>
+                <button
+                  type="button"
+                  aria-label="View first employee matching filters"
+                  title={sortedEmployees.length > 0 ? "View first employee matching filters" : "No employees match the filters"}
+                  onClick={() => {
+                    const firstEmployee = sortedEmployees[0];
+                    if (firstEmployee) router.push(profileHref(firstEmployee.id));
+                  }}
+                  disabled={sortedEmployees.length === 0}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
+                >
+                  <EyeIcon aria-hidden="true" className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           )}
         </div>
-        <div className="mb-4 hidden flex-wrap items-center gap-2 lg:flex">
-          <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
-          {[
-            { value: "ACTIVE", label: "Active employees" },
-            { value: "Trainee", label: "Trainee" },
-            { value: "Contractual", label: "Contractual" },
-            { value: "ALL", label: "All employees" },
-            { value: "INACTIVE", label: "Inactive employees" },
-          ].map((quickFilter) => (
-            <button
-              key={quickFilter.value}
-              type="button"
-              onClick={() => setStatusFilter(quickFilter.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === quickFilter.value ? "border-blue-200 bg-blue-100 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
-            >
-              {quickFilter.label}
-            </button>
-          ))}
-          <span className="ml-auto whitespace-nowrap text-xs text-gray-600">
+        <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
+          <div className="hidden flex-wrap items-center gap-2 lg:flex">
+            <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
+            {[
+              { value: "ACTIVE", label: "Active employees" },
+              { value: "Trainee", label: "Trainee" },
+              { value: "Contractual", label: "Contractual" },
+              { value: "ALL", label: "All employees" },
+              { value: "INACTIVE", label: "Inactive employees" },
+            ].map((quickFilter) => (
+              <button
+                key={quickFilter.value}
+                type="button"
+                onClick={() => updateNavigationFilters({ statusFilter: quickFilter.value })}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === quickFilter.value ? "border-blue-200 bg-blue-100 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
+              >
+                {quickFilter.label}
+              </button>
+            ))}
+          </div>
+          <span className="ml-auto hidden whitespace-nowrap text-xs text-gray-600 md:inline">
             {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
           </span>
-          <button type="button" onClick={clearFilters} disabled={!hasFilters} className="whitespace-nowrap px-1 text-xs font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline sm:text-sm">Clear all</button>
         </div>
-
-        {notice && <p role="status" className="mb-4 mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{notice}</p>}
+        {isAdmin && (
+          <section
+            id="employee-transfer-panel"
+            aria-label="Transfer selected employees"
+            aria-hidden={!employeeSelectionMode}
+            className={`overflow-hidden rounded-xl border border-blue-100 bg-blue-50 transition-all duration-200 ease-out ${employeeSelectionMode ? "visible mb-4 max-h-96 translate-y-0 p-3 opacity-100" : "invisible max-h-0 -translate-y-2 border-transparent p-0 opacity-0"}`}
+          >
+            {employeeSelectionMode && (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="whitespace-nowrap text-sm font-semibold text-blue-950">
+                  {selectedEmployeeIds.size} selected
+                </span>
+                <button
+                  type="button"
+                  onClick={clearEmployeeSelection}
+                  disabled={selectedEmployeeIds.size === 0 || isTransferring}
+                  className="rounded px-2 py-1 text-sm font-semibold text-blue-700 hover:bg-white disabled:cursor-not-allowed disabled:text-gray-400"
+                >
+                  Clear
+                </button>
+                {selectedEmployeeIds.size === 0 ? (
+                  <p className="text-sm text-gray-600">Select employees using the checkboxes to choose transfer destinations.</p>
+                ) : (
+                  <>
+                    <select
+                      aria-label="Destination branch"
+                      value={transferBranch}
+                      onChange={(event) => setTransferBranch(event.target.value)}
+                      className="h-10 w-56 max-w-full flex-none rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900"
+                    >
+                      <option value="">Keep current branch</option>
+                      {[...new Set([...configuredBranches, ...employeeBranches])].sort().map((branch) => <option key={branch} value={branch}>{branch}</option>)}
+                    </select>
+                    <select
+                      aria-label="Destination employer"
+                      value={transferEmployerId}
+                      onChange={(event) => setTransferEmployerId(event.target.value)}
+                      className="h-10 w-56 max-w-full flex-none rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900"
+                    >
+                      <option value="">Keep current employer</option>
+                      {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => void transferSelectedEmployees()}
+                      disabled={isTransferring || (!transferBranch && !transferEmployerId)}
+                      className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isTransferring ? "Transferring..." : "Transfer"}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+        {notice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setNotice("")}>
+            <section role="alertdialog" aria-modal="true" aria-labelledby="employee-notice-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-xl bg-white p-6 text-left shadow-xl">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon aria-hidden="true" className="h-6 w-6 text-emerald-600" />
+                <h2 id="employee-notice-title" className="text-lg font-semibold text-gray-900">Success</h2>
+              </div>
+              <p role="status" className="mt-3 text-sm text-gray-700">{notice}</p>
+              <div className="mt-5 flex justify-end">
+                <button type="button" autoFocus onClick={() => setNotice("")} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">OK</button>
+              </div>
+            </section>
+          </div>
+        )}
         {message && <p role="alert" className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
         {loading ? (
           <div role="status" aria-label="Loading employees" className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -440,52 +780,168 @@ export default function EmployeesPage() {
         ) : filteredEmployees.length === 0 ? (
           <p className="mt-4 rounded-xl border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">No employees found.</p>
         ) : (
-          <div className="mt-4 grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredEmployees.map((employee) => {
-              const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
-              return (
-                <article key={employee.id} className="w-full min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      {employee.photoUrl ? <img src={employee.photoUrl} alt="" className="mb-4 h-24 w-24 rounded-full border-2 border-gray-200 object-cover" /> : <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs text-gray-400">No photo</div>}
-                      <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
+          employeeView === "cards" ? (
+            <div className="mt-4 grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {sortedEmployees.map((employee) => {
+                const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
+                return (
+                  <article key={employee.id} className="w-full min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-3">
+                          {employee.photoUrl
+                            ? <img src={employee.photoUrl} alt="" className="h-24 w-24 rounded-full border-2 border-gray-200 object-cover" />
+                            : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs text-gray-400">No photo</div>}
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-gray-500">Date Joined</div>
+                            <div className="mt-1 text-sm font-bold text-gray-900">{displayJoinedDate(employee.dateStarted)}</div>
+                          </div>
+                        </div>
+                        <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
+                      </div>
+                      <div className="flex shrink-0 items-start gap-1">
+                        {employeeSelectionMode && <input
+                          type="checkbox"
+                          checked={selectedEmployeeIds.has(employee.id)}
+                          onChange={() => toggleEmployeeSelection(employee.id)}
+                          aria-label={`Select ${fullName} for transfer`}
+                          className="mt-2 h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
+                        />}
+                        <Link
+                          href={profileHref(employee.id)}
+                          aria-label={`View ${fullName}`}
+                          title={`View ${fullName}`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <EyeIcon aria-hidden="true" className="h-5 w-5" />
+                        </Link>
+                        <Link
+                          href={`/employees/new/${employee.id}`}
+                          aria-label={`Edit ${fullName}`}
+                          title={`Edit ${fullName}`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
+                        </Link>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Link href={`/employees/${employee.id}`} title={`View ${fullName}`} aria-label={`View ${fullName}`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <EyeIcon className="h-5 w-5" />
-                      </Link>
-                      <Link href={`/employees/new/${employee.id}`} title={`Update ${fullName}`} aria-label={`Update ${fullName}`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <PencilSquareIcon className="h-5 w-5" />
-                      </Link>
+                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+                      <div className="grid content-start gap-1">
+                        {(() => {
+                          const isActive = activeEmployeeStatuses.includes(employee.status || "");
+                          return (
+                            <>
+                              <span className={`font-semibold ${isActive ? "text-green-600" : "text-red-600"}`}>{isActive ? "Active" : "Inactive"}</span>
+                              <span className={`font-medium ${isActive ? "text-gray-700" : "text-red-700"}`}>{employee.status || "Not set"}</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <div className="grid min-w-0 content-start gap-1">
+                        <span className="truncate text-gray-900">{employee.branch || "Branch not set"}</span>
+                        <span className="truncate text-gray-900">{employee.position || "Position not set"}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
-                    <div className="grid content-start gap-1">
-                      {(() => {
-                        const isActive = activeEmployeeStatuses.includes(employee.status || "");
-                        return (
-                          <>
-                            <span className={`font-semibold ${isActive ? "text-green-600" : "text-red-600"}`}>{isActive ? "Active" : "Inactive"}</span>
-                            <span className={`font-medium ${isActive ? "text-gray-700" : "text-red-700"}`}>{employee.status || "Not set"}</span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <div className="grid min-w-0 content-start gap-1">
-                      <span className="truncate text-gray-900">{employee.branch || "Branch not set"}</span>
-                      <span className="truncate text-gray-900">{employee.position || "Position not set"}</span>
-                    </div>
-                  </div>
-                  <dl className="mt-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
-                    <div className="min-w-0"><dt className="text-gray-500">Biometric No.</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
-                    <div className="min-w-0"><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.name || "Unassigned"}</dd></div>
-                    <div className="min-w-0"><dt className="text-gray-500">Phone</dt><dd className="mt-1 break-words text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
-                    <div className="min-w-0"><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
-                  </dl>
-                </article>
-              );
-            })}
-          </div>
+                    <dl className="mt-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
+                      <div className="min-w-0"><dt className="text-gray-500">Biometric No.</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
+                      <div className="min-w-0"><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.name || "Unassigned"}</dd></div>
+                      <div className="min-w-0"><dt className="text-gray-500">Phone</dt><dd className="mt-1 break-words text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
+                      <div className="min-w-0"><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
+                    </dl>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 w-full overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+              <table className="min-w-[1320px] w-full table-auto divide-y divide-gray-200 text-left text-sm">
+                <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  <tr>
+                    {employeeSelectionMode && (
+                      <th scope="col" className="w-10 px-3 py-3">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleEmployeesSelected}
+                          onChange={toggleVisibleEmployeeSelection}
+                          aria-label={allVisibleEmployeesSelected ? "Deselect all visible employees" : "Select all visible employees"}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
+                        />
+                      </th>
+                    )}
+                    <th scope="col" className="w-16 px-4 py-3">Photo</th>
+                    <th scope="col" className="min-w-48 px-4 py-3">Name</th>
+                    <th scope="col" className="px-4 py-3">Position</th>
+                    <th scope="col" className="px-4 py-3">Branch</th>
+                    <th scope="col" className="px-4 py-3">Employer</th>
+                    <th scope="col" className="px-4 py-3">Status</th>
+                    <th scope="col" className="px-4 py-3">Phone</th>
+                    <th scope="col" className="px-4 py-3">Email</th>
+                    <th scope="col" className="px-4 py-3 whitespace-nowrap">Date Joined</th>
+                    <th scope="col" className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {sortedEmployees.map((employee) => {
+                    const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
+                    const isActive = activeEmployeeStatuses.includes(employee.status || "");
+                    return (
+                      <tr key={employee.id} className="text-gray-700 hover:bg-gray-50">
+                        {employeeSelectionMode && (
+                          <td className="px-3 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedEmployeeIds.has(employee.id)}
+                              onChange={() => toggleEmployeeSelection(employee.id)}
+                              aria-label={`Select ${fullName} for transfer`}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
+                            />
+                          </td>
+                        )}
+                        <td className="px-4 py-3">
+                          {employee.photoUrl
+                            ? <img src={employee.photoUrl} alt="" className="h-11 w-11 rounded-full border border-gray-200 object-cover" />
+                            : <span aria-hidden="true" className="block h-11 w-11 rounded-full border border-gray-200 bg-gray-100" />}
+                        </td>
+                        <th scope="row" className="px-4 py-3 font-medium text-gray-900">
+                          <div className="min-w-0">
+                            <div className="whitespace-nowrap text-base font-semibold">{fullName}</div>
+                            <div className="mt-0.5 text-xs font-normal text-gray-500">{employee.biometricNo || "Not set"}</div>
+                          </div>
+                        </th>
+                        <td className="px-4 py-3">{employee.position || "Not set"}</td>
+                        <td className="px-4 py-3">{employee.branch || "Not set"}</td>
+                        <td className="px-4 py-3">{employee.employer?.name || "Unassigned"}</td>
+                        <td className="px-4 py-3 whitespace-nowrap"><span className={`font-semibold ${isActive ? "text-green-700" : "text-red-700"}`}>{isActive ? "Active" : "Inactive"}</span></td>
+                        <td className="px-4 py-3 whitespace-nowrap">{displayMobile(employee.mobileNumber)}</td>
+                        <td className="px-4 py-3">{employee.email || "Not set"}</td>
+                        <td className="px-4 py-3 whitespace-nowrap font-bold">{displayJoinedDate(employee.dateStarted)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-1">
+                            <Link
+                              href={profileHref(employee.id)}
+                              aria-label={`View ${fullName}`}
+                              title={`View ${fullName}`}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <EyeIcon aria-hidden="true" className="h-5 w-5" />
+                            </Link>
+                            <Link
+                              href={`/employees/new/${employee.id}`}
+                              aria-label={`Edit ${fullName}`}
+                              title={`Edit ${fullName}`}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
       {showFirstEmployeePrompt && !loading && !message && employees.length === 0 && (
@@ -514,7 +970,7 @@ export default function EmployeesPage() {
               <button type="button" onClick={() => setSelectedEmployee(null)} className="text-2xl text-gray-400 hover:text-gray-700" aria-label="Close">×</button>
             </div>
             {editing ? (
-              <EmployeeEditForm employee={selectedEmployee} employers={employers} saving={saving} onCancel={() => { setSelectedEmployee(null); setEditing(false); }} onError={setMessage} onSave={async (changes) => {
+              <EmployeeEditForm employee={selectedEmployee} employers={employers} supervisors={employees.filter((candidate) => candidate.id !== selectedEmployee.id && candidate.position === "Store In-charge")} saving={saving} onCancel={() => { setSelectedEmployee(null); setEditing(false); }} onError={setMessage} onSave={async (changes) => {
                 setSaving(true);
                 try {
                   const response = await fetch(`/api/employees/${selectedEmployee.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
@@ -586,7 +1042,15 @@ export default function EmployeesPage() {
   );
 }
 
-function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSave }: { employee: Employee; employers: Employer[]; saving: boolean; onCancel: () => void; onError: (value: string) => void; onSave: (changes: Record<string, string | number | null>) => Promise<void> }) {
+export default function EmployeesPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6" />}>
+      <EmployeesPageContent />
+    </Suspense>
+  );
+}
+
+function EmployeeEditForm({ employee, employers, supervisors, saving, onCancel, onError, onSave }: { employee: Employee; employers: Employer[]; supervisors: Employee[]; saving: boolean; onCancel: () => void; onError: (value: string) => void; onSave: (changes: Record<string, string | number | null>) => Promise<void> }) {
   const [form, setForm] = useState({
     firstName: employee.firstName, middleName: employee.middleName || "", lastName: employee.lastName,
     dateOfBirth: employee.dateOfBirth?.slice(0, 10) || "", age: calculateAge(employee.dateOfBirth)?.toString() || "",
@@ -595,6 +1059,7 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
     emergencyName: employee.emergencyName || "", emergencyNumber: formatMobile(employee.emergencyNumber || ""),
     emergencyRelation: employee.emergencyRelation || "", emergencyAddress: employee.emergencyAddress || "",
     biometricNo: employee.biometricNo || "", branch: employee.branch || "", position: employee.position || "",
+    jobLevel: employee.jobLevel || "", supervisorId: employee.supervisorId == null ? "" : String(employee.supervisorId),
     employerId: employee.employer?.id?.toString() || "", status: employee.status || "Trainee",
     dateStarted: employee.dateStarted?.slice(0, 10) || "", endDate: employee.endDate?.slice(0, 10) || "",
     sssNumber: formatDigits(employee.sssNumber || "", [2, 7, 1]), pagIbigNumber: formatDigits(employee.pagIbigNumber || "", [4, 4, 4]),
@@ -643,6 +1108,8 @@ function EmployeeEditForm({ employee, employers, saving, onCancel, onError, onSa
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Status</span><select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value, endDate: ["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"].includes(event.target.value) ? current.endDate : "" }))} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900">{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Branch</span><select value={form.branch} onChange={(event) => update("branch", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select branch</option>{branches.map((branch) => <option key={branch}>{branch}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Position</span><select value={form.position} onChange={(event) => update("position", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select position</option>{positions.map((position) => <option key={position}>{position}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Job Level</span><select value={form.jobLevel} onChange={(event) => update("jobLevel", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">Select job level</option>{JOB_LEVELS.map((jobLevel) => <option key={jobLevel}>{jobLevel}</option>)}</select></label>
+      <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Supervisor</span><select value={form.supervisorId} onChange={(event) => update("supervisorId", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"><option value="">No supervisor assigned</option>{supervisors.map((supervisor) => <option key={supervisor.id} value={supervisor.id}>{[supervisor.firstName, supervisor.middleName, supervisor.lastName].filter(Boolean).join(" ")}</option>)}</select></label>
       <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Date Started</span><input type="date" value={form.dateStarted} onChange={(event) => update("dateStarted", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>
       {["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"].includes(form.status) && <label className="grid gap-1 text-sm font-medium text-gray-700"><span>Ended</span><input type="date" value={form.endDate} onChange={(event) => update("endDate", event.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" /></label>}
       <h3 className="mt-2 border-b border-gray-100 pb-2 text-base font-semibold text-gray-900 sm:col-span-2">Government Information</h3>

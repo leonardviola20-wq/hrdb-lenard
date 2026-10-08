@@ -27,6 +27,7 @@ const primaryCategories = [
   "Internal Team",
   "Employee Contact",
 ];
+const alphabetLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const emptyContactDraft: ContactDraft = {
   companyName: "",
@@ -45,6 +46,7 @@ export default function ContactsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("ALL");
   const [sortBy, setSortBy] = useState("contact");
+  const [alphabetFilter, setAlphabetFilter] = useState("ALL");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,10 @@ export default function ContactsPage() {
     const search = query.trim().toLowerCase();
     return contacts.filter((contact) => {
       const matchesCategory = category === "ALL" || contact.category === category;
+      const sortName = sortBy === "contact" ? contact.contactName : contact.companyName;
+      const firstCharacter = sortName.trim().charAt(0).toLocaleUpperCase();
+      const matchesAlphabet = alphabetFilter === "ALL"
+        || (alphabetFilter === "#" ? !/^[A-Z]$/.test(firstCharacter) : firstCharacter === alphabetFilter);
       const matchesSearch =
         !search ||
         contact.companyName.toLowerCase().includes(search) ||
@@ -91,15 +97,15 @@ export default function ContactsPage() {
         (contact.address || "").toLowerCase().includes(search) ||
         (contact.branch || "").toLowerCase().includes(search) ||
         `${contact.employee?.firstName || ""} ${contact.employee?.lastName || ""}`.toLowerCase().includes(search);
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesAlphabet && matchesSearch;
     });
-  }, [category, contacts, query]);
+  }, [alphabetFilter, category, contacts, query, sortBy]);
   const sortedContacts = useMemo(() => [...filteredContacts].sort((a, b) => {
     const left = sortBy === "contact" ? a.contactName : a.companyName;
     const right = sortBy === "contact" ? b.contactName : b.companyName;
     return left.localeCompare(right);
   }), [filteredContacts, sortBy]);
-  const hasFilters = Boolean(query || category !== "ALL");
+  const hasFilters = Boolean(query || category !== "ALL" || alphabetFilter !== "ALL");
 
   const saveContact = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -120,6 +126,7 @@ export default function ContactsPage() {
         : [...current, data.contact as Contact]);
       setCategory("ALL");
       setQuery("");
+      setAlphabetFilter("ALL");
       setDraft(emptyContactDraft);
       setAddOpen(false);
       setEditingContactId(null);
@@ -214,9 +221,27 @@ export default function ContactsPage() {
             </button>
           ))}
         </div>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-gray-600">
           <span>Showing <strong className="text-gray-900">{sortedContacts.length}</strong> of <strong className="text-gray-900">{contacts.length}</strong> contacts</span>
-          {hasFilters && <button type="button" onClick={() => { setQuery(""); setCategory("ALL"); }} className="font-semibold text-blue-700 hover:underline">Clear filters</button>}
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1" role="group" aria-label="Filter contacts by first letter">
+            {[
+              { value: "ALL", label: "All" },
+              ...alphabetLetters.map((letter) => ({ value: letter, label: letter })),
+              { value: "#", label: "#" },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                aria-label={value === "ALL" ? "Show all contacts" : value === "#" ? "Show contacts not starting with A to Z" : `Show contacts starting with ${value}`}
+                aria-pressed={alphabetFilter === value}
+                onClick={() => setAlphabetFilter(value)}
+                className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md border px-1.5 text-xs font-semibold transition ${alphabetFilter === value ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {hasFilters && <button type="button" onClick={() => { setQuery(""); setCategory("ALL"); setAlphabetFilter("ALL"); }} className="font-semibold text-blue-700 hover:underline">Clear filters</button>}
         </div>
         {loading ? <p role="status" className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-600 shadow-sm">Loading contacts...</p>
           : sortedContacts.length === 0 ? <p className="rounded-lg border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">{contacts.length === 0 ? "No contacts have been added yet." : "No contacts match these filters."}</p> : (

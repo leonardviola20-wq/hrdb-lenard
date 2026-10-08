@@ -59,15 +59,17 @@ export async function GET(req: NextRequest) {
             dateOfBirth: { not: null },
             status: { in: ["Regular", "Contractual", "Trainee", "Leave"] },
           },
-          select: { firstName: true, lastName: true, branch: true, dateOfBirth: true },
+          select: { firstName: true, lastName: true, branch: true, photoUrl: true, dateOfBirth: true },
         }).then((employees) => employees.flatMap((employee) => {
           if (!employee.dateOfBirth) return [];
           const date = nextBirthday(employee.dateOfBirth, today, endOfMonth);
           return date
             ? [{
-                name: `${employee.firstName} ${employee.lastName}`,
-                branch: employee.branch,
-                day: date.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+                firstName: employee.firstName,
+                lastName: employee.lastName,
+                photoUrl: employee.photoUrl,
+                birthDate: employee.dateOfBirth.toISOString(),
+                daysUntil: Math.round((date.getTime() - today.getTime()) / 86_400_000),
                 date: date.toISOString(),
               }]
             : [];

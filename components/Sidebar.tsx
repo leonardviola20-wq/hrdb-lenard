@@ -14,8 +14,16 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { DEFAULT_PAGE_ACCESS, type PageAccessHref } from "@/lib/pageAccess";
+
+type AppHeaderActions = { actions: ReactNode; backHref?: string } | null;
+
+const AppHeaderActionsContext = createContext<(value: AppHeaderActions) => void>(() => {});
+
+export function useAppHeaderActions() {
+  return useContext(AppHeaderActionsContext);
+}
 
 type CurrentUser = {
   name: string | null;
@@ -58,6 +66,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
     try {
       const response = await fetch("/api/logout", { method: "POST" });
       if (!response.ok) throw new Error("Unable to log out");
+      window.dispatchEvent(new Event("hrdb-clear-employee-profile-cache"));
       router.push("/login");
       router.refresh();
     } catch {
@@ -212,6 +221,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
+  const [headerActions, setHeaderActions] = useState<AppHeaderActions>(null);
   const pageTitle = getPageTitle(pathname);
   const pageSubtitle = getPageSubtitle(pathname);
   const showDashboardBack = pathname !== "/dashboard" && pathname !== "/attendance" && !pathname.startsWith("/tasks") && pathname !== "/employees";
@@ -262,8 +272,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (publicRoute) return children;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc] md:flex-row">
-      <header className="sticky top-0 z-40 flex h-[76px] shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:hidden" style={{ backgroundColor: "#172554" }}>
+    <AppHeaderActionsContext.Provider value={setHeaderActions}>
+      <div className="flex min-h-screen flex-col bg-[#f8fafc] md:flex-row">
+        <header className="sticky top-0 z-50 flex h-[76px] shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:hidden" style={{ backgroundColor: "#172554" }}>
         <div className="flex h-full w-14 shrink-0 items-center justify-center">
           <button
             type="button"
@@ -309,9 +320,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {timeLabel && <span className="mt-1 block text-base font-semibold text-white">{timeLabel}</span>}
           </time>
         </header>
-        {showDashboardBack && <div className="px-4 pt-6 sm:px-6">
+        {showDashboardBack && <div className="flex flex-wrap items-end gap-2 px-4 pt-6 sm:px-6">
           <Link
-            href={profileBackToDirectory ? "/employees" : "/dashboard"}
+            href={headerActions?.backHref ?? (profileBackToDirectory ? "/employees" : "/dashboard")}
             onClick={(event) => {
               if (!profileBackToDirectory && window.matchMedia("(max-width: 767px)").matches) {
                 event.preventDefault();
@@ -323,14 +334,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ChevronLeftIcon className="h-4 w-4" />
             <span>Back</span>
           </Link>
+          {headerActions?.actions && <div className="flex min-w-0 flex-1 flex-wrap items-end gap-2">{headerActions.actions}</div>}
         </div>}
         {children}
         <footer className={`${mobileOpen ? "hidden md:flex" : "flex"} sticky bottom-0 z-20 mt-auto items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-500 shadow-[0_-3px_10px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6`}>
           <span>© {new Date().getFullYear()} HRDB-Lenard</span>
           <span className="hidden sm:inline">Human Resources Management</span>
         </footer>
+        </div>
       </div>
-    </div>
+    </AppHeaderActionsContext.Provider>
   );
 }
 

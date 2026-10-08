@@ -16,6 +16,8 @@ export type EmployeePayloadInput = {
   biometricNo: string | null;
   branch: string | null;
   position: string | null;
+  jobLevel: string | null;
+  supervisorId: number | null;
   photoUrl: string | null;
   employerId: number | null;
   status: string | null;
@@ -34,6 +36,11 @@ export type EmployeePayloadResult =
 
 // Statuses that require an end date before the employee is treated as inactive.
 const ENDED_STATUSES = new Set(["Contractual", "End of contract", "Resigned", "Terminated", "AWOL"]);
+export const JOB_LEVELS = ["Entry-level", "Junior", "Mid-level", "Senior", "Supervisor/Lead", "Manager", "Executive"] as const;
+
+function isJobLevel(value: string): value is (typeof JOB_LEVELS)[number] {
+  return JOB_LEVELS.some((jobLevel) => jobLevel === value);
+}
 
 /**
  * Normalizes and validates an employee create/update payload.
@@ -81,6 +88,14 @@ export function validateEmployeePayload(body: unknown): EmployeePayloadResult {
   if (employerId !== null && !Number.isInteger(employerId)) {
     return { ok: false, error: "Select a valid employer" };
   }
+  const supervisorId = number("supervisorId");
+  if (supervisorId !== null && (!Number.isInteger(supervisorId) || supervisorId < 1)) {
+    return { ok: false, error: "Select a valid supervisor" };
+  }
+  const jobLevel = text("jobLevel");
+  if (jobLevel !== null && !isJobLevel(jobLevel)) {
+    return { ok: false, error: "Select a valid job level" };
+  }
 
   return {
     ok: true,
@@ -102,6 +117,8 @@ export function validateEmployeePayload(body: unknown): EmployeePayloadResult {
       biometricNo: text("biometricNo"),
       branch: text("branch"),
       position: text("position"),
+      jobLevel,
+      supervisorId,
       photoUrl: text("photoUrl"),
       employerId,
       status,

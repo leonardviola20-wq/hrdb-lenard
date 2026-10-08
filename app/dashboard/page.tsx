@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowPathIcon, BuildingOffice2Icon, BuildingStorefrontIcon, CakeIcon, ClipboardDocumentListIcon, FlagIcon, IdentificationIcon, UserGroupIcon, UserMinusIcon, UserPlusIcon, UsersIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowPathIcon, BuildingOffice2Icon, BuildingStorefrontIcon, CakeIcon, ChevronLeftIcon, ChevronRightIcon, ClipboardDocumentListIcon, FlagIcon, IdentificationIcon, UserGroupIcon, UserMinusIcon, UserPlusIcon, UsersIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 type Task = {
   status: "PENDING" | "COMPLETED";
@@ -11,7 +11,7 @@ type Task = {
 
 type DashboardReminders = {
   upcomingTasks: { id: number; title: string; dueDate: string; status: string; isFlagged: boolean }[];
-  birthdayReminders: { name: string; branch: string | null; day: string; date: string }[];
+  birthdayReminders: { firstName: string; lastName: string; photoUrl: string | null; birthDate: string; daysUntil: number; date: string }[];
   canViewBirthdays: boolean;
 };
 
@@ -22,6 +22,7 @@ type DashboardStats = {
   newlyHired: number | null;
   branches: number | null;
   employers: number | null;
+  employeesMissingRequirements: number | null;
   recentEmployees: { id: number; firstName: string; lastName: string; branch: string | null }[] | null;
   canViewEmployees: boolean;
   canCreateTasks: boolean;
@@ -37,7 +38,8 @@ export default function DashboardPage() {
   });
   const [error, setError] = useState("");
   const [refreshingReminders, setRefreshingReminders] = useState(false);
-  const [stats, setStats] = useState<DashboardStats>({ totalEmployees: null, activeEmployees: null, inactiveEmployees: null, newlyHired: null, branches: null, employers: null, recentEmployees: null, canViewEmployees: false, canCreateTasks: false, canAddContact: false });
+  const birthdayListRef = useRef<HTMLDivElement>(null);
+  const [stats, setStats] = useState<DashboardStats>({ totalEmployees: null, activeEmployees: null, inactiveEmployees: null, newlyHired: null, branches: null, employers: null, employeesMissingRequirements: null, recentEmployees: null, canViewEmployees: false, canCreateTasks: false, canAddContact: false });
   const [reminders, setReminders] = useState<DashboardReminders>({ upcomingTasks: [], birthdayReminders: [], canViewBirthdays: false });
 
   useEffect(() => {
@@ -72,22 +74,30 @@ export default function DashboardPage() {
       .catch((err: Error) => setError(err.message));
   }, []);
 
-  const refreshReminders = useCallback(async () => {
-    setRefreshingReminders(true);
-    try {
-      const response = await fetch("/api/dashboard/reminders", { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to load reminders");
-      setReminders(data);
-    } catch (reminderError) {
-      setError(reminderError instanceof Error ? reminderError.message : "Unable to load reminders");
-    } finally {
-      setRefreshingReminders(false);
-    }
+  const fetchReminders = useCallback(async () => {
+    const response = await fetch("/api/dashboard/reminders", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to load reminders");
+    return data as DashboardReminders;
   }, []);
 
+  const refreshReminders = useCallback(async () => {
+    try {
+      setReminders(await fetchReminders());
+    } catch (reminderError) {
+      setError(reminderError instanceof Error ? reminderError.message : "Unable to load reminders");
+    }
+  }, [fetchReminders]);
+
   useEffect(() => {
-    void refreshReminders();
+    const loadReminders = async () => {
+      try {
+        setReminders(await fetchReminders());
+      } catch (reminderError) {
+        setError(reminderError instanceof Error ? reminderError.message : "Unable to load reminders");
+      }
+    };
+    void loadReminders();
     const refreshWhenVisible = () => {
       if (document.visibilityState === "visible") void refreshReminders();
     };
@@ -97,7 +107,7 @@ export default function DashboardPage() {
       window.removeEventListener("focus", refreshWhenVisible);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [refreshReminders]);
+  }, [fetchReminders, refreshReminders]);
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
@@ -133,6 +143,7 @@ export default function DashboardPage() {
             { label: "Newly Hired (30d)", value: stats.newlyHired, icon: UserPlusIcon, color: "text-violet-700", bg: "bg-violet-50" },
             { label: "Branch", value: stats.branches, icon: BuildingOffice2Icon, color: "text-amber-700", bg: "bg-amber-50" },
             { label: "Employers", value: stats.employers, icon: BuildingStorefrontIcon, color: "text-cyan-700", bg: "bg-cyan-50" },
+            { label: "Employees Missing Requirements", value: stats.employeesMissingRequirements, icon: ClipboardDocumentListIcon, color: "text-rose-700", bg: "bg-rose-50" },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <section key={label} className="flex flex-col items-start rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
               <div className="flex items-center gap-2 sm:gap-3 xl:gap-4">
@@ -217,7 +228,10 @@ export default function DashboardPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => void refreshReminders()}
+                  onClick={() => {
+                    setRefreshingReminders(true);
+                    void refreshReminders().finally(() => setRefreshingReminders(false));
+                  }}
                   disabled={refreshingReminders}
                   aria-label="Refresh upcoming events"
                   title="Refresh upcoming events"
@@ -247,39 +261,113 @@ export default function DashboardPage() {
             </div>
         </section>
 
-        <section className="order-1 flex h-full flex-col rounded-lg border border-amber-200 bg-amber-50/60 p-5">
-          <div className="flex items-center justify-between gap-3 border-b border-amber-200/70 pb-3">
-            <div>
-              <h2 className="font-semibold text-gray-900">Birthday Notifications</h2>
-              <p className="mt-1 text-xs text-gray-600">Employee birthdays this month</p>
-            </div>
-            <CakeIcon className="h-5 w-5 text-amber-700" />
-          </div>
-          <div className="flex-1">
-            {!reminders.canViewBirthdays ? (
-              <p className="py-4 text-sm text-gray-600">Employees access is required to view birthday reminders.</p>
-            ) : reminders.birthdayReminders.length === 0 ? (
-              <p className="py-4 text-sm text-gray-600">No upcoming birthdays this month.</p>
-            ) : (
-              <div className="mt-3 max-h-[190px] overflow-y-auto pr-4">
-                <div className="grid grid-cols-[minmax(0,1fr)_max-content] gap-x-3 text-xs md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_42px_76px]">
-                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600">Name</div>
-                  <div className="sticky top-0 z-10 hidden border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 font-semibold text-gray-600 md:block">Branch</div>
-                  <div className="sticky top-0 z-10 hidden border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600 md:block">Day</div>
-                  <div className="sticky top-0 z-10 border-b border-amber-200 bg-[#fffbeb] pb-2 pt-1 text-center font-semibold text-gray-600">Date</div>
-                  {reminders.birthdayReminders.map((birthday) => (
-                    <div key={`${birthday.name}-${birthday.date}`} className="contents">
-                      <span className="truncate border-b border-amber-200/70 py-2 font-medium text-gray-900">{birthday.name}</span>
-                      <span className="hidden truncate border-b border-amber-200/70 py-2 text-gray-700 md:block">{birthday.branch || "Not set"}</span>
-                      <span className="hidden border-b border-amber-200/70 py-2 text-center text-gray-700 md:block">{birthday.day}</span>
-                      <time dateTime={birthday.date} className="whitespace-nowrap border-b border-amber-200/70 py-2 text-center text-amber-900">{new Date(birthday.date).toLocaleDateString("en-US", { month: "short", day: "2-digit", timeZone: "UTC" })}</time>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <section className="order-1 flex h-full min-h-[320px] min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:min-h-[360px] sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <CakeIcon aria-hidden="true" className="h-4 w-4 text-blue-600" />
+              Birthdays
+            </h2>
+            {reminders.canViewBirthdays && (
+              <Link href="/employees" className="text-xs font-medium text-teal-700 hover:text-teal-800 hover:underline">
+                See all
+              </Link>
             )}
           </div>
-          {reminders.canViewBirthdays && <Link href="/employees" className="mt-auto pt-3 text-sm font-semibold text-amber-900 hover:underline">Open employees</Link>}
+          {!reminders.canViewBirthdays ? (
+            <p className="py-6 text-sm text-gray-500">Employees access is required to view birthday reminders.</p>
+          ) : reminders.birthdayReminders.length === 0 ? (
+            <p className="py-6 text-sm text-gray-500">No upcoming birthdays this month.</p>
+          ) : (
+            <>
+              <div
+                ref={birthdayListRef}
+                role="region"
+                aria-label="Upcoming birthdays"
+                tabIndex={0}
+                className="mt-4 grid flex-1 grid-flow-col snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
+                style={{ gridAutoColumns: "calc((100% - 1.5rem) / 3)", scrollbarWidth: "none" }}
+              >
+                {reminders.birthdayReminders.map((birthday) => {
+                  const firstName = birthday.firstName.trim().split(/\s+/)[0] || birthday.firstName;
+                  const isBirthdayToday = birthday.daysUntil === 0;
+                  const countdown = birthday.daysUntil === 0
+                    ? "Today"
+                    : birthday.daysUntil >= 7
+                      ? `In ${Math.ceil(birthday.daysUntil / 7)}w`
+                      : `In ${birthday.daysUntil}d`;
+
+                  return (
+                    <article
+                      key={`${birthday.firstName}-${birthday.lastName}-${birthday.date}`}
+                      className={`flex min-w-0 snap-start flex-col items-center rounded-lg border px-2 py-3 text-center ${
+                        isBirthdayToday
+                          ? "border-amber-300 bg-amber-50 ring-1 ring-amber-200"
+                          : "border-gray-100 bg-gray-50/70"
+                      }`}
+                    >
+                      {birthday.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={birthday.photoUrl} alt="" className="h-20 w-20 rounded-full border border-gray-200 object-cover sm:h-[84px] sm:w-[84px]" />
+                      ) : (
+                        <div aria-hidden="true" className="flex h-20 w-20 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-lg font-semibold text-blue-700 sm:h-[84px] sm:w-[84px]">
+                          {`${firstName[0] || ""}${birthday.lastName.trim()[0] || ""}`.toUpperCase()}
+                        </div>
+                      )}
+                      <div className="mt-3 flex min-h-10 w-full flex-col items-center justify-center text-xs leading-5 text-gray-800 sm:text-sm">
+                        <p className="w-full truncate font-semibold">{firstName}</p>
+                        <p className="w-full truncate font-medium">{birthday.lastName}</p>
+                      </div>
+                      <time dateTime={birthday.date} className="mt-2 text-xs text-gray-500">
+                        {countdown}
+                      </time>
+                      <time dateTime={birthday.birthDate} className="mt-1 text-[11px] text-gray-500">
+                        {new Date(birthday.birthDate).toLocaleDateString("en-US", { month: "short", day: "2-digit", timeZone: "UTC" })}
+                      </time>
+                    </article>
+                  );
+                })}
+              </div>
+              <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
+                <p className="text-xs font-medium text-gray-600">
+                  {reminders.birthdayReminders.length} upcoming {reminders.birthdayReminders.length === 1 ? "birthday" : "birthdays"}
+                </p>
+                <div className="flex shrink-0 items-center">
+                  <div className="flex -space-x-2" aria-hidden="true">
+                    {reminders.birthdayReminders.slice(0, 3).map((birthday) => (
+                      birthday.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={`${birthday.firstName}-${birthday.lastName}-${birthday.date}`} src={birthday.photoUrl} alt="" className="h-8 w-8 rounded-full border-2 border-white object-cover" />
+                      ) : (
+                        <span key={`${birthday.firstName}-${birthday.lastName}-${birthday.date}`} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-[10px] font-semibold text-blue-700">
+                          {`${birthday.firstName.trim()[0] || ""}${birthday.lastName.trim()[0] || ""}`.toUpperCase()}
+                        </span>
+                      )
+                    ))}
+                  </div>
+                  {reminders.birthdayReminders.length > 3 && (
+                    <div className="ml-1 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => birthdayListRef.current?.scrollBy({ left: -birthdayListRef.current.clientWidth * 0.8, behavior: "smooth" })}
+                        aria-label="Show previous birthdays"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+                      >
+                        <ChevronLeftIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => birthdayListRef.current?.scrollBy({ left: birthdayListRef.current.clientWidth * 0.8, behavior: "smooth" })}
+                        aria-label="Show more upcoming birthdays"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+                      >
+                        <ChevronRightIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
         </div>
