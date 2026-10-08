@@ -56,20 +56,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "No contact changes provided" }, { status: 400 });
   }
-  const contactForEmployeeValidation = await prisma.officeContact.findUnique({
-    where: { id },
-    select: { category: true, employeeId: true },
-  });
-  if (!contactForEmployeeValidation) {
-    return NextResponse.json({ error: "Contact not found" }, { status: 404 });
-  }
-  const nextCategory = typeof data.category === "string" ? data.category : contactForEmployeeValidation.category;
-  const nextEmployeeId = typeof data.employeeId === "number" || data.employeeId === null
-    ? data.employeeId
-    : contactForEmployeeValidation.employeeId;
   if (nextCategory === "Employee Contact") {
-    const linkedEmployee = nextEmployeeId !== null
-      ? await prisma.employee.findUnique({ where: { id: nextEmployeeId }, select: { status: true } })
+    const linkedEmployeeId = typeof nextEmployeeId === "number" ? nextEmployeeId : null;
+    const linkedEmployee = linkedEmployeeId !== null
+      ? await prisma.employee.findUnique({ where: { id: linkedEmployeeId }, select: { status: true } })
       : null;
     if (!linkedEmployee || !activeEmployeeStatuses.includes(linkedEmployee.status || "")) {
       return NextResponse.json({ error: "Only active employees can be added as employee contacts" }, { status: 400 });

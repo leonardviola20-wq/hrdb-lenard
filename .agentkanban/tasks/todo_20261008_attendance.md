@@ -348,3 +348,9 @@
 - [x] Add a dashboard statistic for employees missing one or more requirements.
 - [x] Apply the employee requirements migration and regenerate Prisma Client after releasing the development server's file lock.
 - [x] Verify the database migration state, restart and check the development server, and rerun tests, targeted lint, TypeScript, and whitespace validation. TypeScript still reports five existing contacts-route errors.
+
+# Iteration 59
+
+- [x] Remove duplicate contact lookups and duplicate local declarations in the admin contact PATCH route.
+- [x] Narrow the linked employee ID before querying, preserving validation that Employee Contacts must be linked to active employees.
+- [x] Run type-check, route lint, full tests, and whitespace validation; update technical notes/project memory.

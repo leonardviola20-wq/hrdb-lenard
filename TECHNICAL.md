@@ -18,7 +18,7 @@ Employee `assignedBy` audit values remain stored as account IDs for historical c
 
 ## Contact directory
 
-The Contacts page keeps its “Showing NN of NN contacts” count aligned in a row with an alphabet filter. Selecting A–Z filters by the first character of the current sort field (contact name or company name); `#` shows entries whose selected name starts with a non-ASCII-letter character or has no initial. “All” clears only the alphabet filter, while Clear filters resets search, category, and alphabet filters together.
+The Contacts page keeps its “Showing NN of NN contacts” count aligned in a row with an alphabet filter. Selecting A–Z filters by the first character of the current sort field (contact name or company name); `#` shows entries whose selected name starts with a non-ASCII-letter character or has no initial. “All” clears only the alphabet filter, while Clear filters resets search, category, and alphabet filters together. The admin contact PATCH handler loads the current contact once, applies partial fields, and validates that any linked Employee Contact points to an active employee before updating.
 
 ## Dashboard birthday card
 
