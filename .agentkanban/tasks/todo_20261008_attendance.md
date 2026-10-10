@@ -2278,9 +2278,9 @@ Implementing Iteration 153 with the clarified list rule: historical/status flags
 
 # Iteration 161
 
-- [ ] Commit all current worktree changes on `feature/10-07-2026` with the required co-author trailer.
-- [ ] Push the feature branch to origin.
-- [ ] Merge the feature branch into `main` in its separate clean worktree and push `main`.
-- [ ] Verify remote branch heads and final worktree state; record that repository-wide ESLint has 6 unrelated UI errors.
+- [x] Commit all current worktree changes on `feature/10-07-2026` with the required co-author trailer.
+- [x] Push the feature branch to origin.
+- [x] Merge the feature branch into `main` in its separate clean worktree and push `main`.
+- [x] Verify remote branch heads and final worktree state; record that repository-wide ESLint has 6 unrelated UI errors.
 
 ### user
