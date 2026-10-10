@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
-  id                       Int       @id @default(autoincrement())
-  email                    String    @unique
+  id                       Int              @id @default(autoincrement())
+  email                    String           @unique
   username                 String?
   name                     String?
   password                 String
-  role                     String    @default("USER")
-  canAccessEmployees       Boolean   @default(false)
-  accessiblePages          String[]  @default(["/dashboard", "/tasks", "/settings"])
-  emailVerified            Boolean   @default(true)
-  verificationTokenHash    String?   @unique
+  role                     String           @default("USER")
+  canAccessEmployees       Boolean          @default(false)
+  accessiblePages          String[]         @default(["/dashboard", "/tasks", "/settings"])
+  emailVerified            Boolean          @default(true)
+  verificationTokenHash    String?          @unique
   verificationTokenExpires DateTime?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
   posts                    Post[]
   tasks                    Task[]
+  sssReportDrafts          SssReportDraft[]
 }
 
 model Post {
@@ -95,63 +96,97 @@ model TaskPrerequisiteItem {
 }
 
 model employee {
-  id                Int               @id @default(autoincrement())
-  status            String?
-  dateStarted       DateTime?
-  employerId        Int?
-  address           String?
-  age               Int?
-  biometricNo       String?           @unique
-  branch            String?
-  position          String?
-  createdAt         DateTime          @default(now())
-  dateOfBirth       DateTime?
-  email             String?
-  emergencyAddress  String?
-  emergencyName     String?
-  emergencyNumber   String?
-  emergencyRelation String?
-  employeeCode      String            @unique
-  endDate           DateTime?
-  firstName         String
-  gender            String?
-  jobLevel          String?
-  lastName          String
-  maritalStatus     String?
-  middleName        String?
-  mobileNumber      String?
-  pagIbigNumber     String?
-  philHealth        String?
-  photoUrl          String?
-  remarks           String?
-  sssNumber         String?
-  tinNumber         String?
-  updatedAt         DateTime          @updatedAt
-  supervisorId      Int?
-  assignedBy        String?
-  assignedAt        DateTime?
-  employer          employer?         @relation(fields: [employerId], references: [id])
-  supervisor        employee?         @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
-  directReports     employee[]        @relation("EmployeeSupervisor")
-  attendanceRecords Attendance[]
-  attendancePunches AttendancePunch[]
-  officeContacts    OfficeContact[]
-  requirements      EmployeeRequirement[]
+  id                     Int                             @id @default(autoincrement())
+  status                 String?
+  dateStarted            DateTime?
+  employerId             Int?
+  address                String?
+  age                    Int?
+  biometricNo            String?                         @unique
+  branch                 String?
+  position               String?
+  createdAt              DateTime                        @default(now())
+  dateOfBirth            DateTime?
+  email                  String?
+  emergencyAddress       String?
+  emergencyName          String?
+  emergencyNumber        String?
+  emergencyRelation      String?
+  employeeCode           String                          @unique
+  endDate                DateTime?
+  firstName              String
+  gender                 String?
+  jobLevel               String?
+  lastName               String
+  maritalStatus          String?
+  middleName             String?
+  mobileNumber           String?
+  pagIbigNumber          String?
+  philHealth             String?
+  photoUrl               String?
+  remarks                String?
+  sssNumber              String?
+  tinNumber              String?
+  updatedAt              DateTime                        @updatedAt
+  supervisorId           Int?
+  assignedBy             String?
+  assignedAt             DateTime?
+  employer               employer?                       @relation(fields: [employerId], references: [id])
+  supervisor             employee?                       @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  directReports          employee[]                      @relation("EmployeeSupervisor")
+  attendanceRecords      Attendance[]
+  attendancePunches      AttendancePunch[]
+  officeContacts         OfficeContact[]
+  requirements           EmployeeRequirement[]
+  requirementAttachments EmployeeRequirementAttachment[]
+  bdoAccountNumbers      EmployeeBdoAccountNumber[]
+  sssReportEntries       SssReportEntry[]
+  sssLoans               SssLoan[]
+  requirementsBypassed   Boolean                         @default(false)
 
   @@index([employerId])
   @@index([supervisorId])
 }
 
 model EmployeeRequirement {
-  id              Int      @id @default(autoincrement())
-  employeeId      Int
-  requirementKey  String
-  isComplete      Boolean  @default(false)
-  updatedAt       DateTime @updatedAt
-  employee        employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id             Int                             @id @default(autoincrement())
+  employeeId     Int
+  requirementKey String
+  isComplete     Boolean                         @default(false)
+  updatedAt      DateTime                        @updatedAt
+  employee       employee                        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attachments    EmployeeRequirementAttachment[]
 
   @@unique([employeeId, requirementKey])
   @@index([employeeId, isComplete])
+}
+
+model EmployeeRequirementAttachment {
+  id                    Int                 @id @default(autoincrement())
+  employeeId            Int
+  requirementKey        String
+  employeeRequirementId Int
+  fileName              String
+  mimeType              String
+  size                  Int
+  content               Bytes
+  createdAt             DateTime            @default(now())
+  employee              employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeRequirement   EmployeeRequirement @relation(fields: [employeeRequirementId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, requirementKey])
+  @@index([employeeRequirementId])
+}
+
+model EmployeeBdoAccountNumber {
+  id            Int      @id @default(autoincrement())
+  employeeId    Int
+  accountNumber String
+  createdAt     DateTime @default(now())
+  employee      employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, accountNumber])
+  @@index([employeeId])
 }
 
 model EmployeeCategory {
@@ -219,19 +254,19 @@ model AttendancePunch {
 }
 
 model employer {
-  id                     Int        @id @default(autoincrement())
+  id                     Int         @id @default(autoincrement())
   name                   String
   company                String?
   branches               String?
-  status                 String     @default("Active")
+  status                 String      @default("Active")
   email                  String?
   contactNumber          String?
-  branchStatus           String     @default("Open")
+  branchStatus           String      @default("Open")
   president              String?
   longAddress            String?
   shortAddress           String?
   logo                   String?
-  secDti                 String?    @unique
+  secDti                 String?     @unique
   secDtiRegistrationDate DateTime?
   tin                    String?
   tinRegistrationDate    DateTime?
@@ -242,6 +277,106 @@ model employer {
   phic                   String?
   phicRegistrationDate   DateTime?
   employees              employee[]
+  sssReports             SssReport[]
+  sssLoans               SssLoan[]
+}
+
+model SssLoan {
+  id                  Int              @id @default(autoincrement())
+  employerId          Int
+  employeeId          Int?
+  employeeName        String
+  employeeCode        String
+  biometricNo         String
+  loanAccountNumber   String
+  transactionNumber   String?
+  loanType            String           @default("S")
+  loanDate            DateTime         @db.Date
+  loanAmount          Decimal?         @db.Decimal(12, 2)
+  monthlyAmortization Decimal          @db.Decimal(12, 2)
+  status              String           @default("ACTIVE")
+  statusReason        String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  employer            employer         @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  employee            employee?        @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  reportEntries       SssReportEntry[]
+
+  @@index([employerId, loanDate])
+  @@index([employeeId, loanDate])
+}
+
+model SssReport {
+  id                   Int              @id @default(autoincrement())
+  kind                 String
+  employerId           Int
+  employerName         String
+  employerAddress      String?
+  employerSssNumber    String?
+  prn                  String
+  applicableMonth      Int
+  applicableYear       Int
+  amountDue            Decimal          @db.Decimal(12, 2)
+  amountPaid           Decimal?         @db.Decimal(12, 2)
+  paymentType          String?
+  payDate              DateTime?        @db.Date
+  sssBranch            String?
+  transactionReference String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  employer             employer         @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  entries              SssReportEntry[]
+
+  @@index([employerId, applicableYear, applicableMonth])
+  @@index([kind, createdAt])
+}
+
+model SssReportEntry {
+  id                   Int       @id @default(autoincrement())
+  reportId             Int
+  employeeId           Int?
+  employeeName         String
+  employeeCode         String
+  employeeSssNumber    String?
+  sssLoanId            Int?
+  loanAccountNumber    String?
+  employeeEmployerId   Int?
+  employeeEmployerName String?
+  salaryRange          String?
+  monthlySalaryCredit  Decimal?  @db.Decimal(12, 2)
+  employeeSs           Decimal   @default(0) @db.Decimal(12, 2)
+  employerSs           Decimal   @default(0) @db.Decimal(12, 2)
+  employeeMpf          Decimal   @default(0) @db.Decimal(12, 2)
+  employerMpf          Decimal   @default(0) @db.Decimal(12, 2)
+  ec                   Decimal   @default(0) @db.Decimal(12, 2)
+  loanAmount           Decimal   @default(0) @db.Decimal(12, 2)
+  totalAmount          Decimal   @db.Decimal(12, 2)
+  report               SssReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  employee             employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  sssLoan              SssLoan?  @relation(fields: [sssLoanId], references: [id], onDelete: SetNull)
+
+  @@index([employeeId, reportId])
+  @@index([sssLoanId])
+}
+
+model SssReportDraft {
+  id              Int       @id @default(autoincrement())
+  createdBy       Int
+  kind            String
+  employerId      Int?
+  prn             String    @default("")
+  applicableMonth Int       @default(1)
+  applicableYear  Int
+  amountDue       String    @default("")
+  entries         Json
+  continuedBy     Int?
+  continuedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  creator         User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([createdBy, updatedAt])
+  @@index([continuedBy, updatedAt])
 }
 
 model OfficeContact {

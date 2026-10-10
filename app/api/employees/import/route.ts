@@ -102,6 +102,11 @@ export async function POST(req: NextRequest) {
 
     const status = readString(row, "status");
     const endDate = endedStatuses.has(status || "") ? endDateInput.value : null;
+    const biometricNo = readString(row, "biometricNo");
+    if (!biometricNo) {
+      rowErrors.push(`Row ${line}: biometric number is required.`);
+      return;
+    }
 
     const ageText = readString(row, "age");
     let age: number | null = null;
@@ -130,7 +135,7 @@ export async function POST(req: NextRequest) {
       emergencyNumber: readString(row, "emergencyNumber"),
       emergencyRelation: readString(row, "emergencyRelation"),
       emergencyAddress: readString(row, "emergencyAddress"),
-      biometricNo: readString(row, "biometricNo"),
+      biometricNo,
       employerName: readString(row, "employer"),
       status,
       dateStarted: dateStarted.value,
@@ -226,4 +231,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unable to import employees" }, { status: 500 });
   }
 }
-

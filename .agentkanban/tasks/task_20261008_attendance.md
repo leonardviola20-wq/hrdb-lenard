@@ -18,6 +18,8 @@ Recommended fix: keep a client-side cache of employee detail responses keyed by 
 
 ### user
 
+How can we prevent the employee profile navigation buttons from reloading all the employee data on every record change? Navigation feels slow.
+
 Proceed with the Git operations now that the concurrent edits are complete.
 
 ### agent
@@ -1119,5 +1121,509 @@ Proceed with fixing the five pre-existing TypeScript errors in the Contacts API 
 Removed the duplicate contact lookup and duplicate local declarations from the contact PATCH handler. The route now reuses the initially loaded contact for partial category/employee resolution and narrows the linked employee ID before lookup. Existing validation that Employee Contacts must be linked to active employees remains intact. Updated documentation and recorded Iteration 59.
 
 Validation: `npx tsc --noEmit --pretty false` passes; targeted ESLint, all 44 tests, and `git diff --check` pass.
+
+### user
+
+Organize the 17 Employee Profile Requirements into categories, give the documents their own cards, and combine documents with expiration into one group. Plan first; group likely renewable documents only, without adding expiry-date tracking.
+
+### agent
+
+Plan: preserve all 17 existing requirement keys, independent completion checks, persistence, and the dashboard's incomplete-requirements count. Redesign only the Requirements tab presentation. Keep individual documents independently checkable in compact tiles and use category cards:
+
+- Personal & Family: updated resume, birth certificate, marriage contract, children's birth certificates, permanent-residence sketch, and 2×2 photos.
+- Government & Membership: TIN/1902, SSS forms, PhilHealth MDR, and Pag-IBIG MDF.
+- Expiring & Renewable Documents: Barangay Clearance, Mayor's Permit, Health Certificate, NBI/Police Clearance, and Drug Test, grouped together without storing expiry dates.
+- Employment: latest COE.
+- Banking: BDO savings account number.
+
+Update the related technical documentation and validate the profile page with the focused lint/checks. No application code or TODO checklist has been changed in this planning phase.
+
+### user
+
+todo
+
+### agent
+
+Added Iteration 60 to the attendance task TODO with the approved Requirements-tab categories, combined renewable-documents group, behavior-preservation constraints, documentation, and validation steps. No application code changes made.
+
+### user
+
+implement
+
+### agent
+
+Implemented Iteration 60. The Employee Profile Requirements tab now shows independent document tiles inside Personal & Family, Government & Membership, Expiring & Renewable Documents, Employment, and Banking cards. All 17 requirement keys and per-item updates are preserved; no expiry dates are stored. Added a unit test that verifies every requirement belongs to exactly one category and checks the renewable-document group. Updated `TECHNICAL.md` and project memory.
+
+Validation: all 45 tests pass; TypeScript passes; targeted ESLint reports no errors and one existing employee-profile `<img>` warning; `git diff --check` passes.
+
+### user
+
+Extend Employee Requirements: add an optional upload button on each requirement so attachments are not required to check the box; rename Updated Resume with Recent Photo to Updated Resume; cross out Marriage Contract when marital status is Single and exclude it from completion; move the 2×2 picture requirement to the first item; change the BDO label to Savings Account Number (BDO savings only) and add an Add Account Number button.
+
+Clarifications: allow multiple attachments per requirement, stored in PostgreSQL and accessed through authenticated routes. Attachments remain optional and independent of checklist status. Accept PDF, JPEG, or PNG files up to 10 MB each. For employees with marital status Single, Marriage Contract is visibly struck through, not applicable, and excluded from both profile and dashboard completion counts. BDO account numbers are separate persisted entries, masked by default with a reveal control; at least one number is required before this checklist item can be checked, and removing the last number clears its completion state.
+
+### agent
+
+Plan: preserve the existing checklist categories and keys except for the requested label and item ordering. Move 2×2 Pictures to the first item in Personal & Family and rename the resume label to Updated Resume. For Single employees, render Marriage Contract as crossed out and non-editable, and exclude it consistently from the profile completion fraction and dashboard incomplete-employee statistic.
+
+Add optional multi-file attachments for every checklist item, including authenticated upload, download, and removal operations backed by a PostgreSQL attachment model. Enforce the agreed PDF/JPEG/PNG and 10 MB per-file limits. Keep attachments independent from checkbox state and show each saved attachment in its requirement tile.
+
+Change the BDO requirement label to Savings Account Number (BDO savings only). Add persisted account-number entries with an Add Account Number control; display values masked by default with an explicit reveal control. Require at least one account number to mark the BDO requirement complete, enforce this in the update API as well as the UI, and clear completion if the final number is removed.
+
+Add the required Prisma migration, preserve employee authorization checks for all new routes, update tests and technical/project documentation, and validate with Prisma/client generation as needed, targeted lint, type-check, repository tests, and `git diff --check`. No implementation has started in this planning phase.
+
+### user
+
+todo
+
+### agent
+
+Added Iteration 61 with separate implementation and validation tasks for the revised requirement labels/order, marital-status-aware completion, private optional multi-attachments, persisted masked BDO account numbers, migration, tests, and documentation. No application code changes made.
+
+### user
+
+[Task resumption] Continue where you left off (mode switched from plan to act).
+
+### agent
+
+Completed Iteration 61.
+
+Label/order and marital-status changes: the checklist now starts Personal & Family with 2×2 Pictures, the resume label is "Updated Resume", the BDO label is "Savings Account Number (BDO savings only)", and TIN/Pag-IBIG labels use the requested wording. For Single employees, Marriage Contract renders struck through with a "Not applicable" badge, its checkbox is disabled, and `getApplicableEmployeeRequirements` excludes it from the profile completion fraction and the dashboard incomplete-employee count; the requirements PATCH route rejects checking it server-side.
+
+Attachments: every requirement tile has an Upload attachment control accepting multiple files. Files are stored in PostgreSQL (`EmployeeRequirementAttachment`) and served only through authenticated routes at `/api/employees/[id]/requirements/[requirementKey]/attachments` (list/upload) and `.../attachments/[attachmentId]` (download/delete), all gated by the shared `authorizeEmployeeRequirementAccess` helper (ADMIN or `/employees` page access plus employee existence). Uploads enforce a 10 MB per-file cap with a bounded body reader, PDF/JPEG/PNG MIME allowlist, and magic-byte signature verification; attachments stay independent of checkbox state.
+
+BDO account numbers: `/api/employees/[id]/bdo-account-numbers` (POST) and `.../[accountId]` (DELETE) persist multiple entries in `EmployeeBdoAccountNumber` with uniqueness per employee. The profile shows an Add Account Number control, masks values by default with a reveal toggle, requires at least one number before the BDO item can be checked (UI disable plus API 400), and deleting the final number clears the requirement's completion in the same serializable transaction.
+
+Schema and docs: added the `20261008190000_extend_employee_requirements` migration (attachment and BDO tables with FKs/indexes), updated `TECHNICAL.md` and project memory.
+
+Fixed two TypeScript issues found during validation: hoisted narrowed `requirementKey`/`isComplete` values above the transaction callback in the requirements PATCH route, and wrapped the attachment download body in `Uint8Array` for `BodyInit` compatibility.
+
+Validation: `npx prisma validate` passes; Prisma Client regenerated after stopping the dev server (Windows DLL lock) and the migration applied successfully via `npx prisma migrate deploy`. `npx tsc --noEmit` exits 0. All 49 repository tests pass. Targeted ESLint exits 0 with only the existing profile `<img>` warning. `git diff --check` passes. Dev server restarted and `http://localhost:3000/login` responds.
+
+### user
+
+Move the Birthdays card beside Quick Access, move all the other stat cards into the middle, and keep the tasks section at the bottom.
+
+### agent
+
+Reorganized the dashboard into three rows. The first row pairs Quick Access (two-thirds width on large screens) with the Birthdays card in the remaining column. All seven stat cards — Total Employees, Active, Inactive, Newly Hired, Branch, Employers, and Employees Missing Requirements — now render in their own middle grid (two columns on mobile, scaling up to seven on very wide screens). Tasks and Upcoming Events remain together in the bottom row at full width. Removed the obsolete order/row-span classes from the moved sections.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors. `npx tsc --noEmit` exits 0. `git diff --check` passes. `http://localhost:3000/dashboard` compiles and returns the expected unauthenticated 307 redirect. Authenticated visual verification was not possible without login credentials.
+
+### user
+
+On the Employee Profile Requirements tab: update the requirements list — rename "2×2 Pictures (2 pcs.)" to "2x2 Pictures (2 pcs)"; replace the labeled Upload attachment button with an icon-only button moved beside each requirement row; add another icon-only button beside it for viewing the uploaded document.
+
+### agent
+
+Updated the Requirements tab per item. The 2×2 requirement label is now "2x2 Pictures (2 pcs)". Each requirement row's inline controls (after the label and status badges) are now an icon-only upload button (ArrowUpTray icon with accessible label and tooltip, still wired to the same hidden multi-file input with the PDF/JPEG/PNG and 10 MB constraints) and, when at least one attachment exists, an icon-only view button (eye icon) that opens the most recent uploaded document in a new tab via the authenticated download route. The old labeled "Upload attachment" button block below the row was removed; the saved-attachments list with download links, sizes, and delete controls remains underneath.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx' lib/employeeRequirements.ts` reports zero errors with only the existing profile `<img>` warning; all 49 repository tests pass; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md` and project memory.
+
+### user
+
+Add a "Mark all as complete" bypass button on the Requirements tab to declare all of an employee's requirements complete at once. Also, the view button beside the upload button is missing — add it. Then on the Dashboard Quick Access card, stack the buttons on the left, and move Recent Employees into its own dedicated card.
+
+### agent
+
+Implemented all three changes.
+
+Requirements tab bypass: added a "Mark all as complete" button (check-circle icon) beside the "X of Y complete" count. It marks every remaining applicable requirement complete sequentially through the existing authorized PATCH endpoint and updates the cached profile per item; it skips Marriage Contract for Single employees and the BDO item when no account number is saved (the API would reject both), and is disabled while running or when all applicable items are already complete.
+
+View button fix: the eye view button now always renders beside the icon-only upload button. When the requirement has attachments it opens the most recent document in a new tab; when none exist it shows a disabled gray placeholder with a "No uploaded document yet" tooltip.
+
+Dashboard: the Quick Access card now contains only Add Employee, New Contact, and New Task, stacked vertically and full-width on the left. Recent Employees is now its own dedicated card (visible only with employee-page access) between Quick Access and Birthdays in the top row.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx' app/dashboard/page.tsx` reports zero errors with only the existing profile `<img>` warning; all 49 repository tests pass; `npx tsc --noEmit` exits 0; `git diff --check` passes; `/dashboard` compiles and returns the expected unauthenticated 307 redirect. Updated `TECHNICAL.md`, project memory, and Iteration 64.
+
+### user
+
+Move the "Mark all as complete" control beside the "Check each item after it has been submitted and verified." text and make it a toggle switch.
+
+### agent
+
+Moved and converted the control. The Requirements tab intro row now shows the "Check each item…" text on the left and a "Mark all as complete" labeled toggle switch on the right (blue when on, gray when off). Switching it on completes every remaining applicable requirement through the existing authorized PATCH endpoint; switching it off clears all applicable completions. The switch position reflects whether all applicable items are complete, it is disabled while updates are in flight, and it still skips Marriage Contract for Single employees and the BDO item when no account number is saved. Removed the previous button from the completion-count row, which is back to a plain "X of Y complete" line, and dropped the now-unused icon import.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx'` reports zero errors with only the existing profile `<img>` warning; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 65.
+
+### user
+
+Make the toggle button's background interactive — gray when off, blue when on. Check the requirements first: if some are already checked, save that state before checking the others. Then if the user accidentally presses the toggle and returns it to its original state, the previously marked requirements stay checked and don't have to be pressed again.
+
+### agent
+
+Implemented interactive colors and snapshot/restore behavior for the toggle.
+
+Colors: the switch track is `bg-gray-300` with `hover:bg-gray-400` when off and `bg-blue-600` with `hover:bg-blue-500` when on, keeping the existing color transition and focus ring.
+
+Snapshot on: switching on now first saves the current set of checked applicable requirement keys (per employee) into component state, then completes only the remaining items through the existing authorized PATCH endpoint.
+
+Restore on off: switching off compares the current checked set against the saved snapshot and clears only the items the bulk action added — items that were checked before the toggle was pressed stay complete, so an accidental toggle-and-revert never loses prior work. The snapshot is cleared after the revert and is scoped to the employee it was taken for, so navigating to another profile cannot apply the wrong baseline. The usual rules still apply: Marriage Contract for Single employees and BDO without an account number are skipped, and the toggle is disabled while updates are in flight.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx'` reports zero errors with only the existing profile `<img>` warning; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 66.
+
+### user
+
+The toggle button is not interacting. Animate it like off = (O ) and on = ( O); if that's impossible, replace it with a checkbox. The routine stays: mark all checked when on, unmark when unchecked.
+
+### agent
+
+Fixed the responsiveness and added the animation (kept the switch rather than falling back to a checkbox, since the animation works).
+
+Root cause: the knob position was derived only from persisted completion state, which changes item-by-item as each of the ~16 sequential PATCH saves lands — so nothing appeared to happen for a noticeable period and the control felt dead.
+
+Fix: added an optimistic `bulkRequirementsToggle` override that is set to the clicked value immediately on click. The switch now renders from that override while saves are in flight and falls back to the real completion state when they finish (or resets on error). The knob uses a dedicated 200ms `transition-transform` with `ease-in-out` and slides between `translate-x-0` (off, left) and `translate-x-5` (on, right), with a `cursor-pointer` affordance added.
+
+Routine unchanged: switching on snapshots the already-checked items and marks the rest complete; switching off restores the snapshot, so pre-toggle checks are never lost. Marriage Contract (Single) and BDO-without-account still skipped; still disabled while saves run.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx'` reports zero errors with only the existing profile `<img>` warning; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 67.
+
+### user
+
+The toggle works, but it returns to its previous (off) state — probably because we cannot mark the bank details requirement.
+
+### agent
+
+Confirmed the cause and fixed it. The switch's resting state required all 17 items complete, but the bulk toggle intentionally skips the BDO Savings Account item when no account number is saved — so once the optimistic override cleared, the unmet BDO item dragged the knob back to off.
+
+Fix: the switch's persisted resting state now checks only markable items. When no BDO account number exists, the BDO item is treated as satisfied for the switch's on/off state (mirroring the bulk action's own skip rule), so the knob stays on after a bulk completion. The "X of Y complete" count and the dashboard incomplete-requirements statistic are unchanged and still count BDO as incomplete until an account number is added and the item is checked — only the switch's visual resting state is lenient. Once an account number is saved, the BDO item counts toward the switch again.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx'` reports zero errors with only the existing profile `<img>` warning; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 68.
+
+### user
+
+On adding the account details, change the font color — cannot read it. Rename "Mark all as complete" to "Check all", more like a helper now. Then add a button that marks the requirements as complete even though they are not — a bypass switch so the employee won't be included in the dashboard's missing requirements.
+
+### agent
+
+Implemented all three changes.
+
+Font fix: the BDO account-number input and the saved (masked/revealed) account rows now render in dark gray (`text-gray-900`, placeholder `text-gray-400`) so they are readable against the white/gray backgrounds.
+
+Rename: the blue helper toggle is now labeled "Check all" (accessible name updated); its behavior is unchanged — snapshot on, restore on off, skips BDO-without-account and Single-employee Marriage Contract.
+
+Bypass switch: added a second animated toggle labeled "Bypass" with a rose track when on, beside "Check all". Turning it on calls a new authenticated endpoint `PATCH /api/employees/[id]/requirements/bypass`, which (in a serializable transaction) persists `requirementsBypassed = true` on the employee and force-marks every applicable requirement complete — including the BDO item regardless of account numbers. Turning it off clears the flag and leaves the checklist as-is. Added the `requirementsBypassed` column via migration `20261009120000_add_employee_requirements_bypass` and regenerated Prisma Client. The dashboard's Employees Missing Requirements statistic now excludes bypassed employees (`countEmployeesMissingRequirements` skips them), so a bypassed employee no longer inflates the dashboard count; a focused unit test covers this. The profile detail API returns the flag automatically via the existing scalar spread.
+
+Validation: migration applied and all migrations up to date; all 50 repository tests pass; `npx tsc --noEmit` exits 0; targeted ESLint reports zero errors with only the existing profile `<img>` warning; `git diff --check` passes. Dev server restarted. Updated `TECHNICAL.md`, project memory, and Iteration 69.
+
+### user
+
+Rename the bypass switch to "Mark as Complete".
+
+### agent
+
+Renamed the rose bypass switch label from "Bypass" to "Mark as Complete" on the Requirements tab; its accessible name is now "Mark requirements as complete". Behavior is unchanged — it still force-completes all applicable requirements and persists `requirementsBypassed` so the employee is excluded from the dashboard's missing-requirements statistic. Updated `TECHNICAL.md` and project memory to record the new UI label alongside the internal bypass semantics.
+
+Validation: `npx eslint 'app/employees/[id]/page.tsx'` reports zero errors with only the existing profile `<img>` warning; `npx tsc --noEmit` exits 0; `git diff --check` passes.
+
+### user
+
+Dashboard: make the Quick Access buttons square. On Recent Employees, add a view button to view newly added data, and make the list a maximum of 5.
+
+### agent
+
+Implemented all three dashboard changes.
+
+Quick Access: the Add Employee, New Contact, and New Task actions are now square icon-only buttons (56×56px, larger icons, per-action hover tint matching each icon color) with accessible `aria-label` and `title` tooltips replacing the visible text.
+
+Recent Employees: added a refresh icon button in the card header (spins while loading, disabled during the request) that re-fetches `/api/dashboard/stats`, so newly added employees appear without a full page reload. The stats fetch was extracted into a `loadStats` callback shared by the initial load and the refresh.
+
+List limit: raised the Recent Employees query from 3 to 5 in the dashboard stats API.
+
+Validation: `npx eslint app/dashboard/page.tsx app/api/dashboard/stats/route.ts` exits 0 with no warnings or errors; `npx tsc --noEmit` exits 0; all 50 repository tests pass; `git diff --check` passes; `/dashboard` compiles and returns the expected unauthenticated 307 redirect. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Add the view button in the Recent Employees card on the Dashboard so the user can open the employee directly without going to the Employees page.
+
+### agent
+
+Added a View action to each Recent Employees row. Every row now shows the employee name and branch on the left with a blue circular eye-icon link on the right (matching the Employee Directory's blue eye style) that opens `/employees/{id}` directly. The link exposes an accessible name ("View {firstName} {lastName}") and a "View employee" tooltip; name/branch text truncates properly beside it.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+On the Dashboard Quick Access card, resize the buttons slightly bigger.
+
+### agent
+
+Enlarged the three Quick Access square buttons from 56×56px with 24px icons to 64×64px with 28px icons. Layout, hover tints, accessible labels, and targets are otherwise unchanged.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Add a label to the Quick Access buttons and align them vertically.
+
+### agent
+
+Restyled the three Quick Access buttons with a vertical layout: each is now an 80×80px square showing its icon centered above a small (11px, medium weight, tight leading) text label — "Add Employee", "New Contact", and "New Task". Labels wrap to two lines within the square when needed. Per-action colors and hover tints, accessible names, and targets are unchanged.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Sorry — put the label outside the button.
+
+### agent
+
+Moved the Quick Access labels outside the buttons. Each action is now a 64×64px square icon button with its text label ("Add Employee", "New Contact", "New Task") centered directly below it. The label sits outside the button surface but stays inside the link, so clicking either the square or the label navigates; the per-action hover tint applies to the square via the group-hover style. Accessible names and tooltips are unchanged.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Quick Access Card: align the buttons vertically.
+
+### agent
+
+Changed the Quick Access button container from a wrapping horizontal row to a vertical column (`flex-col` with 12px gaps), so the three square-button-plus-label groups stack one under another, left-aligned in the card. Each group is unchanged: 64×64px square icon button with its label centered below, full link target, and hover tint.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Check the user's access (user or admin), then add the other sidebar buttons to the Quick Access card.
+
+### agent
+
+Extended the Quick Access card with access-gated shortcuts to the remaining sidebar pages. The dashboard stats API now computes and returns `canViewAttendance`, `canViewContacts`, and `canViewEmployers` alongside the existing employee/tasks flags, using the shared `canViewPage` helper — admins pass every check, while regular users depend on their `accessiblePages` grants. The Quick Access column still shows Add Employee, New Contact, and New Task, and now appends square icon shortcuts for Tasks, Employees, Attendance, Contacts, and Employers (each 64×64px with its label centered below, matching the existing style and using a distinct icon color with matching hover tint). Each shortcut renders only when its flag is true, so a user without Attendance or Contacts access simply sees fewer buttons; the sidebar remains the canonical nav.
+
+Validation: `npx eslint app/dashboard/page.tsx app/api/dashboard/stats/route.ts` exits 0 with no warnings or errors; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Fix the Quick Access card — with all the buttons in one column the card is far too tall.
+
+### agent
+
+Changed the Quick Access button container from a single vertical column to a wrapping grid: 3 columns by default (mobile) and 4 columns at the `sm` breakpoint and above, with `justify-items-start` so each square-button-plus-label group stays left-aligned within its cell. An admin's 8 buttons now render in two rows instead of one very tall stack, and users with fewer grants simply fill fewer cells. Buttons, labels, colors, and access gating are unchanged.
+
+Validation: `npx eslint app/dashboard/page.tsx` exits 0 with no warnings or errors; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 70.
+
+### user
+
+Remove the New Contact button from the Quick Access. Then on Contacts: remove the Branch field, move the Phone box to the bottom using the 2 columns, and add a button to add an additional Phone Number. Suggest a refinement too.
+
+### agent
+
+Done.
+
+Dashboard: removed the New Contact button from Quick Access (and the now-unused `canAddContact` type/state field). The Contacts page shortcut remains, so users still reach contacts via the sidebar-style shortcut.
+
+Contacts Add/Edit form: removed the Branch input, and removed the single mid-form Phone input. Phone collection now lives in a Phone numbers section at the bottom of the form, rendered as a two-column grid of `tel` inputs. An "Add phone number" button appends another input, and once more than one exists each row shows a remove (×) control. On save the numbers are trimmed, blanks dropped, and joined into the existing single `phone` column (comma-separated); on edit the stored string is split back into separate inputs. No schema change was needed, and existing single-number contacts display/edit normally.
+
+Validation: `npx eslint app/contacts/page.tsx app/dashboard/page.tsx` exits 0 with only the pre-existing `<img>` warning; `npx tsc --noEmit` exits 0; `git diff --check` passes. Updated `TECHNICAL.md`, project memory, and Iteration 71.
+
+Refinement suggestion: the phone numbers are currently joined into one comma-separated string, which is quick but limits per-number metadata and querying. A cleaner long-term model would be a `ContactPhone` table (`id`, `contactId`, `number`, optional `label`, `isPrimary`) with a small migration, so each number can carry a label (Mobile/Landline/Office), a primary flag, and be validated/searched individually. Related polish for the current form, if useful: light phone-format validation/normalization, a "primary" picker, and showing the saved numbers as chips in the contact cards and view modal instead of one raw comma-joined string.
+
+### user
+
+On attendance (toolbar area): move the Clear Reports, replace it with a button — a Refresh button will do — and place it after the Go button on the toolbar.
+
+### agent
+
+Updated the attendance toolbar. Removed the "Clear report" text button from the range-report summary header. Added a Refresh button (arrow-path icon plus label, spinning while active, disabled during refresh or report generation) immediately after the Go button in the Date Range toolbar group. The refresh handler re-fetches whichever report is on screen: if a date-range report is open it reloads that range's records with the current From/To dates, otherwise it reloads the daily report. The `ArrowPathIcon` import was added.
+
+Validation: `npx tsc --noEmit` exits 0; `git diff --check` passes; all 50 repository tests pass. `npx eslint app/attendance/page.tsx` reports the same 3 pre-existing problems (2 `react-hooks/set-state-in-effect` errors in untouched effects and the `formatTime` unused warning) — confirmed identical on the committed HEAD version, so no new lint issues. Updated `TECHNICAL.md`, project memory, and Iteration 72.
+
+### user
+Show all loans with an outstanding balance in the list even if marked Paid/Not connected. Implement the planned account-level loan entries and paid/not-connected status flow.
+
+### agent
+
+Implemented Iteration 153. Added persisted Active/Paid/Not connected loan statuses and validated reasons, an authenticated status-update API, and status controls. Outstanding loans are balance-based regardless of status; report pickers only include Active accounts with a payment due in the selected month. Loan report rows now track one saved account each, allow multiple accounts for one employee, show SS/account identifiers, and permit manually adjusted payments up to the remaining balance. Draft saving, report creation/editing, saved views, and migration indexes preserve account identity. Legacy employee-only loan rows can be removed individually and must be replaced with account-linked entries before report generation. Documentation and project memory were updated.
+
+Validation passed: Prisma Client was regenerated and the schema validated; migration `20261010170000_support_sss_loan_status_and_account_entries` was applied and `prisma migrate status` reports up to date; `npx tsc --noEmit`, targeted ESLint, `git diff --check`, and all 8 focused SSS loan balance tests pass. The dev server responds on `/reports/sss` with the expected unauthenticated redirect (HTTP 307); authenticated browser testing was unavailable.
+
+### user
+Disregard the automatic outstanding-balance rule. Reference outstanding balances to actual payments made by employees, using the loan-payments report that will be developed and monitored.
+
+### agent
+
+Clarifying the balance source before changing calculations: should the original loan amount be reduced only by actual payments recorded in the future employee loan-payments report, while scheduled amortization continues to populate the monthly SSS remittance report?
+
+### user
+SSS disclosure shows the approved loan amount separately from service-fee/interest deductions and net proceeds, plus a month-by-month payment schedule. If the employee does not provide the disclosure, the employer may not know the approved total and must rely on the monthly due shown on the SSS website.
+
+### agent
+
+Confirming the missing-disclosure workflow before changing the loan form: should it allow a saved loan account with both approved total and saved monthly amortization blank, keep its balance unknown, and let the employer enter the website's monthly due for each monthly report? Or is the monthly amortization still known and should remain required?
+
+### user
+Approved amount may be blank, but monthly amortization is known and remains required.
+
+### agent
+
+Implementing the confirmed Iteration 154 workflow: the approved principal will be optional, monthly amortization will remain required, the displayed balance will no longer fall merely with elapsed schedule months, and loan report amounts can follow the SSS website's monthly due. Actual-payment reductions will be wired when the monitored employee loan-payments report is implemented. I also verified official SSS Salary Loan terms: a 1% service fee and prorated interest are deducted from proceeds, the interest rate is generally 8% per annum (10% for renewals with prior penalty-condonation use), amortization is 24 equal installments, and starts on the second month following approval.
+
+### user
+The employer can also see approved loan amounts, approval dates, and transaction numbers in the SSS website even when the employee does not provide the disclosure.
+
+### agent
+
+The SSS website can supply the approved amount/date and a transaction number, so the employer can enter those values when available while retaining the confirmed option to leave the approved amount blank. Is the transaction number the same value to store in the existing Loan Account Number field, or should the loan record keep both identifiers separately?
+
+### user
+
+Each loan has its own unique Loan Account Number; it is separate from the transaction number shown in the SSS website.
+
+### agent
+
+Implemented Iteration 154. Approved principal is optional; monthly amortization remains required. Loan records now store the unique Loan Account Number separately from an optional transaction number, and the list shows unknown approved amounts/balances clearly. Outstanding balances no longer fall with elapsed schedule months; the shared balance helper reduces balances only by actual employee payments when provided, clamping at zero. Monthly loan report amounts remain editable to match the SSS website and are no longer capped by an estimated principal balance. Salary-loan dues start in the second calendar month after Loan Date.
+
+Added and applied migration `20261010180000_allow_unknown_sss_loan_principal`. Updated SSS loan UI, APIs, documentation, project memory, and focused tests.
+
+Validation: Prisma schema validation and migration status passed; Prisma Client generation succeeded; `npx tsc --noEmit`, targeted ESLint, `npx tsx --test lib/sssLoanBalance.test.ts` (7 passing), and `git diff --check` passed. Restarted the development server; the unauthenticated `/reports/sss` request redirects to sign-in as expected.
+
+### user
+
+Let's refine the loan list. Show only Employee, SS Number, Loan Account Number, Monthly Amortization, Status, and an Action column with View, Update, and Delete icon buttons. Remove Biometric Number from this list.
+
+### agent
+
+Plan: simplify the outstanding-loans table to the requested six columns and replace the current status-only action with accessible icon buttons. View will show the complete saved loan details, Update will allow editing the loan record while retaining status/reason validation, and Delete will ask for confirmation and remove the saved loan while preserving report-entry snapshots. Before implementation, clarify whether Delete should be restricted to admins/super users or available to all SSS Reports users.
+
+### user
+
+Admins and super users only (Recommended)
+
+### agent
+
+Confirmed the loan-list refinement plan: show only Employee, SS Number, Loan Account Number, Monthly Amortization, Status, and Actions; remove Biometric Number and the other current columns. Provide accessible icon-only View, Update, and Delete actions. View will expose the remaining saved details without adding columns; Update will edit the loan details and status/reason while keeping the selected employer and employee fixed; Delete will require confirmation and be restricted to ADMIN and SUPER_USER in both UI and API. Deleting an account will retain existing report-row snapshots by detaching the loan relation. No code changes yet.
+
+### user
+
+On load show all active loans, then add a filter so the inactive loans can also be viewed. Remove the explanatory text shown in the attached image and replace it with filters and a search box. Toolbar order: Add, Search, then filters (Employer, LAN, Active/Inactive).
+
+### agent
+
+Updated plan for the loan-list refinement:
+
+- Load all Active SSS loans across employers by default, including accounts with unknown or zero balance; treat Paid and Not connected as Inactive and include them when that filter is selected.
+- Replace the explanatory banner with a toolbar ordered Add, Search, Employer, LAN (Loan Account Number), and Active/Inactive filters. Search matches employee name and SS Number; LAN matches the account number.
+- Show only Employee, SS Number, Loan Account Number, Monthly Amortization, Status, and Actions in the table; remove Biometric Number and other detail columns.
+- Provide accessible icon-only View, Update, and Delete actions. View shows saved details; Update edits loan details/status without changing employer or employee; Delete requires confirmation and is restricted to admins and super users in both UI and API. Preserve account-number snapshots on report entries after deletion.
+
+### user
+
+Implement
+
+### agent
+
+Implemented Iteration 155. The Loans dialog loads SSS loan accounts across employers and defaults to Active, with Employer, LAN, and Active/Inactive filters plus employee-name/SS-number search. Removed the explanatory banner and Biometric Number column. The table now shows only Employee, SS Number, Loan Account Number, Monthly Amortization, Status, and icon-only View/Update/Delete actions. View shows saved details; Update edits identifiers, date, approved amount, monthly amortization, and status/reason while retaining employer and employee; Delete requires confirmation and is restricted in the UI and API to ADMIN/SUPER_USER. Deletion detaches report rows while preserving account-number snapshots.
+
+Updated `TECHNICAL.md` and project memory. Validation passed: `npx tsc --noEmit`, targeted ESLint for the loan UI/APIs, all 7 focused SSS loan tests, and `git diff --check`. Authenticated browser verification was unavailable.
+
+### user
+
+Add the loan type column.
+
+### agent
+
+There is currently no stored SSS loan-type field, so the column needs a defined type value and a source (such as selection when adding/updating a loan). What loan types should it support?
+
+### user
+
+Loan types: Salary Loan (S), Calamity Loan (C), Emergency Loan (R).
+
+### agent
+
+Confirmed the selectable loan types and codes: Salary Loan (S), Calamity Loan (C), and Emergency Loan (R). Existing SSS loan records do not have a type, so I need to avoid silently assigning a potentially incorrect type during migration.
+
+### user
+
+Default existing records to Salary Loan (S).
+
+### agent
+
+Iteration 156 plan: add a persisted SSS loan type with the required choices Salary Loan (S), Calamity Loan (C), and Emergency Loan (R). Existing rows will migrate to Salary Loan (S). Add a required type selector to Add and Update, show the loan type in the details view and loan table, validate codes in the API, and update migration, documentation, project memory, and focused checks.
+
+The checklist is recorded in Iteration 156. No code changes yet; proceed with the Kanban `implement` command.
+
+### user
+
+Add the Loan Date to the loan list as well.
+
+### agent
+
+Implemented Iteration 156. Added persisted SSS loan types (`S`, `C`, and `R`) with Salary Loan (`S`) as the default for existing and new records, required Add/Update selectors, create/update API validation, and Loan Type plus Loan Date in the loan list and details. Added focused type tests, updated technical notes and project memory, regenerated Prisma Client, and verified Prisma schema/migration plus TypeScript, targeted ESLint, focused SSS-loan tests, and `git diff --check`. The migration is added to the repository but was not deployed to a database.
+
+### user
+
+deploy it
+
+### agent
+
+Checked migration status; only `20261010190000_add_sss_loan_type` was pending on the configured local PostgreSQL database `hrdb_restore`. Ran `npx prisma migrate deploy`; Prisma confirmed the migration applied successfully. Verified afterward with `npx prisma migrate status`, which reports the database schema is up to date.
+
+### user
+
+Update SSS Loan updating Loan Type then saving results in "Unable to Update SSS Loan".
+
+### agent
+
+Diagnosed the server log: the running Next.js process had a stale Prisma Client that rejected `loanType` as an unknown update argument. Regenerated the standard Prisma Client and restarted the dev server so it loads the migrated schema. Verified localhost responds with HTTP 200, the database is up to date, and TypeScript plus targeted ESLint pass. Refresh the SSS Reports page and retry the update; the failed request had not saved the type.
+
+### user
+
+Use only the initial in the list result, so we can maximize the space: S-Salary, C-Calamity, R-Emergency.
+
+### agent
+
+Plan: shorten only the Loan Type value in the SSS loan list to `S-Salary`, `C-Calamity`, and `R-Emergency`. Keep the full loan names in Add/Update selectors and loan details. No code changes yet; reply `implement` to apply this UI-only change.
+
+### user
+
+Rename the Loans button to View Loans.
+
+### agent
+
+Added this to the pending loan-list UI refinement: change the button label from `Loans` to `View Loans`, and use compact loan-type labels (`S-Salary`, `C-Calamity`, `R-Emergency`) in the list only. Selectors and details keep full type names. No code changes yet; reply `implement` to apply both changes.
+
+### user
+
+implement
+
+### agent
+
+Implemented Iteration 159. The toolbar button now reads `View Loans`. Loan types in the list use `S-Salary`, `C-Calamity`, and `R-Emergency`; Add/Update selectors and the detail view retain full names. Updated technical notes and memory, added focused label assertions, and verified TypeScript, targeted ESLint, all focused SSS loan tests, and `git diff --check`.
+
+### user
+
+allow also to cross employer in loans, where i want to add an employee from other employer since the business has only one owner
+
+### user
+
+just allow the user to select all the employee in the employees database
+
+### agent
+
+Plan: make the Add SSS Loan employee selector show employees across the full employee database, including employees assigned to other employers. Keep the selected Employer as the loan account/report employer, and continue validating that both selected records exist and that the employee has a Biometric Number; remove only the same-employer restriction. No changes made yet; reply `implement` to proceed.
+
+### user
+
+implement
+
+### agent
+
+Implemented Iteration 160. The Add SSS Loan form now loads the full employee roster, including employees without an employer assignment or with an employer different from the selected loan Employer. Each option identifies the employee's current employer; the loan remains under the explicitly selected employer. The API no longer requires the employee's employer to match, while still validating employer/employee existence and requiring a Biometric Number. Updated technical notes and project memory; TypeScript, targeted ESLint, focused SSS loan tests, and `git diff --check` passed.
+
+### user
+
+git commit, push, merge, branch
+
+### agent
+
+The worktree contains SSS reports/loans plus uncommitted Employee Requirements, dashboard, contacts, and attendance changes. The `main` branch is checked out in a separate worktree. Before staging, committing, pushing, or merging, clarify the intended commit scope and whether to merge into `main`.
+
+### user
+
+Commit, push, and merge all current worktree changes into main (Recommended)
+
+### agent
+
+Confirmed release scope: publish every current change on `feature/10-07-2026`, then merge it into `main`. Full unit tests (59), TypeScript, Prisma validation, and whitespace checks pass. Repository-wide ESLint reports 6 errors in attendance and employee UI files (plus warnings); these unrelated lint findings will remain unchanged.
 
 ### user

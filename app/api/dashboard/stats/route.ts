@@ -22,11 +22,15 @@ export async function GET(req: NextRequest) {
   const canViewEmployees = canViewPage(user, "/employees");
   const canViewEmployers = canViewPage(user, "/employers");
   const canCreateTasks = canViewPage(user, "/tasks");
+  const canViewAttendance = canViewPage(user, "/attendance");
+  const canViewContacts = canViewPage(user, "/contacts");
+  const canViewReports = canViewPage(user, "/reports/sss");
 
   try {
-    const [totalEmployees, activeEmployees, newlyHired, branches, employers, recentEmployees, requirementEmployees] = await Promise.all([
+    const [totalEmployees, activeEmployees, traineeEmployees, newlyHired, branches, employers, recentEmployees, requirementEmployees] = await Promise.all([
       canViewEmployees ? prisma.employee.count() : Promise.resolve(null),
       canViewEmployees ? prisma.employee.count({ where: { status: { in: activeStatuses } } }) : Promise.resolve(null),
+      canViewEmployees ? prisma.employee.count({ where: { status: "Trainee" } }) : Promise.resolve(null),
       canViewEmployees
         ? prisma.employee.count({ where: { dateStarted: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } })
         : Promise.resolve(null),
@@ -34,11 +38,14 @@ export async function GET(req: NextRequest) {
       canViewEmployers ? prisma.employer.count() : Promise.resolve(null),
       canViewEmployees ? prisma.employee.findMany({
         orderBy: { createdAt: "desc" },
-        take: 3,
+        take: 5,
         select: { id: true, firstName: true, lastName: true, branch: true },
       }) : Promise.resolve(null),
       canViewEmployees ? prisma.employee.findMany({
         select: {
+          maritalStatus: true,
+          requirementsBypassed: true,
+          bdoAccountNumbers: { select: { id: true } },
           requirements: {
             where: { isComplete: true },
             select: { requirementKey: true },
@@ -51,6 +58,7 @@ export async function GET(req: NextRequest) {
       totalEmployees,
       activeEmployees,
       inactiveEmployees: totalEmployees === null || activeEmployees === null ? null : totalEmployees - activeEmployees,
+      traineeEmployees,
       newlyHired,
       branches: branches === null ? null : branches.filter((item) => item.branch?.trim()).length,
       employers,
@@ -60,6 +68,10 @@ export async function GET(req: NextRequest) {
         : countEmployeesMissingRequirements(requirementEmployees),
       canViewEmployees,
       canCreateTasks,
+      canViewAttendance,
+      canViewContacts,
+      canViewEmployers,
+      canViewReports,
       canAddContact: user.role === "ADMIN",
     });
   } catch (error) {

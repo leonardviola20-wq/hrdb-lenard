@@ -5,8 +5,10 @@ import {
   BriefcaseIcon,
   CalendarDaysIcon,
   ChartBarIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  DocumentChartBarIcon,
   IdentificationIcon,
   Cog6ToothIcon,
   Squares2X2Icon,
@@ -38,6 +40,7 @@ const navigation = [
   { label: "Tasks", href: "/tasks", icon: ChartBarIcon },
   { label: "Employees", href: "/employees", icon: UserGroupIcon },
   { label: "Attendance", href: "/attendance", icon: CalendarDaysIcon },
+  { label: "Reports", href: "/reports/sss", accessHref: "/reports/sss", icon: DocumentChartBarIcon },
   { label: "Contacts", href: "/contacts", icon: IdentificationIcon },
   { label: "Employers", href: "/employers", icon: BriefcaseIcon },
 ];
@@ -54,6 +57,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(pathname.startsWith("/reports"));
   const isCollapsed = collapsed && !mobileOpen;
   const collapsedText = isCollapsed
     ? "md:hidden"
@@ -108,7 +112,45 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
           Workspace
         </p>
         <div className="space-y-2">
-          {navigation.filter((item) => isAdmin || accessiblePages.includes(item.href as PageAccessHref)).map(({ label, href, icon: Icon }) => {
+          {navigation.filter((item) => isAdmin || accessiblePages.includes(("accessHref" in item ? item.accessHref : item.href) as PageAccessHref)).map(({ label, href, icon: Icon }) => {
+            if (label === "Reports") {
+              const reportsActive = pathname.startsWith("/reports");
+              return (
+                <div key={label}>
+                  <button
+                    type="button"
+                    onClick={() => setReportsOpen((open) => !open)}
+                    aria-expanded={reportsOpen}
+                    aria-controls="reports-submenu"
+                    title={isCollapsed ? label : undefined}
+                    className={`group/item flex w-full items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
+                      reportsActive
+                        ? isCollapsed
+                          ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
+                          : "px-3 bg-white text-[#172554] shadow-sm"
+                        : isCollapsed
+                          ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                          : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 shrink-0 ${reportsActive ? "text-blue-700" : "text-blue-300 group-hover:text-blue-100"}`} />
+                    <span className={`flex-1 text-left ${collapsedText}`}>{label}</span>
+                    <ChevronDownIcon className={`h-4 w-4 shrink-0 transition-transform ${reportsOpen ? "rotate-180" : ""} ${collapsedText}`} />
+                  </button>
+                  {reportsOpen && <div id="reports-submenu" className="mt-1 space-y-1">
+                    <Link href="/reports/sss" onClick={onMobileToggle} title={isCollapsed ? "SSS" : undefined} className={`flex items-center rounded-lg py-2 text-sm transition ${pathname === "/reports/sss" ? "bg-white/15 text-white" : "text-blue-100 hover:bg-white/10 hover:text-white"} ${isCollapsed ? "mx-auto h-9 w-9 justify-center" : "ml-5 pl-4 pr-3"}`}>
+                      <span className={collapsedText}>SSS</span><span aria-hidden="true" className={isCollapsed ? "hidden md:inline" : "hidden"}>S</span><span className="sr-only">Social Security System</span>
+                    </Link>
+                    <div aria-disabled="true" title={isCollapsed ? "Pag-IBIG (coming soon)" : undefined} className={`flex items-center rounded-lg py-2 text-sm text-blue-300/70 ${isCollapsed ? "mx-auto h-9 w-9 justify-center" : "ml-5 pl-4 pr-3"}`}>
+                      <span className={collapsedText}>Pag-IBIG</span><span aria-hidden="true" className={isCollapsed ? "hidden md:inline" : "hidden"}>P</span><span className="sr-only">Pag-IBIG, coming soon</span>
+                    </div>
+                    <div aria-disabled="true" title={isCollapsed ? "PhilHealth (coming soon)" : undefined} className={`flex items-center rounded-lg py-2 text-sm text-blue-300/70 ${isCollapsed ? "mx-auto h-9 w-9 justify-center" : "ml-5 pl-4 pr-3"}`}>
+                      <span className={collapsedText}>PhilHealth</span><span aria-hidden="true" className={isCollapsed ? "hidden md:inline" : "hidden"}>P</span><span className="sr-only">PhilHealth, coming soon</span>
+                    </div>
+                  </div>}
+                </div>
+              );
+            }
             const active =
               pathname === href || (href === "/tasks" && pathname.startsWith("/tasks/"));
             return (
@@ -134,11 +176,11 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
           })}
         </div>
 
-        {isAdmin && <>
+        {(isAdmin || accessiblePages.includes("/settings")) && <>
           <p className={`mb-3 mt-8 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
-            Management
+            Settings &amp; Configuration
           </p>
-          <Link
+          {isAdmin && <Link
             href="/management/system-configuration"
             onClick={onMobileToggle}
             title={isCollapsed ? "System Configuration" : undefined}
@@ -155,13 +197,8 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
           >
             <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
             <span className={collapsedText}>System Configuration</span>
-          </Link>
-        </>}
-
-        <p className={`mb-3 mt-8 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
-          Account
-        </p>
-        {(isAdmin || accessiblePages.includes("/settings")) && <Link
+          </Link>}
+          {(isAdmin || accessiblePages.includes("/settings")) && <Link
             href="/settings"
             onClick={onMobileToggle}
             title={isCollapsed ? "Account Settings" : undefined}
@@ -178,6 +215,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
             <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
             <span className={collapsedText}>Account Settings</span>
           </Link>}
+        </>}
       </nav>
 
       <div className={`${mobileOpen ? "block" : "hidden"} px-4 py-3 md:block ${isCollapsed ? "md:px-2" : ""}`}>
@@ -224,7 +262,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [headerActions, setHeaderActions] = useState<AppHeaderActions>(null);
   const pageTitle = getPageTitle(pathname);
   const pageSubtitle = getPageSubtitle(pathname);
-  const showDashboardBack = pathname !== "/dashboard" && pathname !== "/attendance" && !pathname.startsWith("/tasks") && pathname !== "/employees";
+  const showDashboardBack = pathname !== "/dashboard" && pathname !== "/attendance" && !pathname.startsWith("/tasks") && pathname !== "/employees" && !pathname.startsWith("/reports");
   const dateTimeValue = currentDateTime?.toISOString();
   const dateLabel = currentDateTime?.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   const timeLabel = currentDateTime?.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -348,6 +386,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 function getPageTitle(pathname: string) {
+  if (pathname === "/reports/sss") return "SSS Reports";
   if (pathname.startsWith("/tasks")) return "Tasks";
   if (pathname === "/dashboard") return "Dashboard";
   if (pathname.startsWith("/employees/new/")) return "Update Employee";
@@ -365,6 +404,7 @@ function getPageTitle(pathname: string) {
 }
 
 function getPageSubtitle(pathname: string) {
+  if (pathname === "/reports/sss") return "Monitor SSS employer contributions and loan payments.";
   if (pathname.startsWith("/tasks")) return "Plan, prioritize, and keep your work moving.";
   if (pathname === "/dashboard") return "Your personal workspace and task overview.";
   if (pathname === "/employees/new") return "Create an employee profile and record their work information.";

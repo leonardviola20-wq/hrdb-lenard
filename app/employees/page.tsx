@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronLeftIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronLeftIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, Squares2X2Icon, TrashIcon } from "@heroicons/react/24/outline";
 import { parseCsv, toCsv } from "@/lib/csv";
 import { JOB_LEVELS } from "@/lib/employeePayload";
 import { employeeProfileHref, matchesEmployeeStatus, sortNavigableEmployees } from "@/lib/employeeNavigation";
+import { countEmployeesMissingRequirements } from "@/lib/employeeRequirements";
 
 type Employee = {
   id: number;
@@ -38,6 +39,9 @@ type Employee = {
   jobLevel: string | null;
   supervisorId: number | null;
   photoUrl: string | null;
+  requirementsBypassed: boolean;
+  requirements: { requirementKey: string }[];
+  bdoAccountNumbers: { id: number }[];
   assignedBy: string | null;
   assignedAt: string | null;
   employer: { id: number; name: string; company: string | null } | null;
@@ -153,13 +157,18 @@ function csvDate(value: string | null) {
 function EmployeesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const clearSearchOnLoad = searchParams.get("clearSearch") === "1";
   const [employees, setEmployees] = useState<Employee[]>(() => employeeDirectoryCache ?? []);
   const [loading, setLoading] = useState(() => employeeDirectoryCache === null);
-  const [query, setQuery] = useState(employeeDirectoryFilters.query);
+  const [query, setQuery] = useState(clearSearchOnLoad ? "" : employeeDirectoryFilters.query);
+  const clearAdvancedFiltersRef = useRef(false);
   const statusFilter = searchParams.get("status") || "ACTIVE";
   const employerFilter = searchParams.get("employer") || "";
   const branchFilter = searchParams.get("branch") || "";
+  const hiredWithinDays = Number(searchParams.get("hiredWithin")) || 0;
+  const requirementsFilter = searchParams.get("requirements") || "";
   const [employeeView, setEmployeeView] = useState<"cards" | "list">("cards");
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<Set<number>>(() => new Set());
   const [employeeSelectionMode, setEmployeeSelectionMode] = useState(false);
@@ -173,14 +182,23 @@ function EmployeesPageContent() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingEmployeeId, setDeletingEmployeeId] = useState<number | null>(null);
   const [notice, setNotice] = useState("");
   const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [canDeleteEmployees, setCanDeleteEmployees] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     employeeDirectoryFilters = { query, statusFilter, employerFilter, branchFilter };
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("clearSearch");
+    if (clearAdvancedFiltersRef.current) {
+      params.delete("hiredWithin");
+      params.delete("requirements");
+      clearAdvancedFiltersRef.current = false;
+    }
     params.set("status", statusFilter);
     if (branchFilter) params.set("branch", branchFilter);
     else params.delete("branch");
@@ -245,6 +263,7 @@ function EmployeesPageContent() {
         if (!response.ok) return;
         const data = await response.json();
         setIsAdmin(data.user?.role === "ADMIN");
+        setCanDeleteEmployees(data.user?.role === "ADMIN" || data.user?.role === "SUPER_USER");
       })
       .catch(() => {});
 
@@ -281,9 +300,12 @@ function EmployeesPageContent() {
         && (statusFilter === "ALL"
           || matchesEmployeeStatus(employee.status, statusFilter))
         && (!employerFilter || employee.employer?.id.toString() === employerFilter)
-        && (!branchFilter || employee.branch === branchFilter);
+        && (!branchFilter || employee.branch === branchFilter)
+        && (!hiredWithinDays || (employee.dateStarted
+          && new Date(employee.dateStarted).getTime() >= Date.now() - hiredWithinDays * 24 * 60 * 60 * 1000))
+        && (requirementsFilter !== "missing" || countEmployeesMissingRequirements([employee]) > 0);
     });
-  }, [employees, query, statusFilter, employerFilter, branchFilter]);
+  }, [employees, query, statusFilter, employerFilter, branchFilter, hiredWithinDays, requirementsFilter]);
 
   const sortedEmployees = useMemo(() => {
     return sortNavigableEmployees(filteredEmployees);
@@ -295,13 +317,14 @@ function EmployeesPageContent() {
     () => [...new Set(employees.map((employee) => employee.branch).filter((value): value is string => Boolean(value)))].sort(),
     [employees]
   );
-  const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter);
+  const hasFilters = Boolean(query || statusFilter !== "ACTIVE" || employerFilter || branchFilter || hiredWithinDays || requirementsFilter);
   const profileHref = (employeeId: number) => employeeProfileHref(employeeId, {
     status: statusFilter,
     branch: branchFilter,
     employer: employerFilter,
   });
   const clearFilters = () => {
+    clearAdvancedFiltersRef.current = true;
     setQuery("");
     updateNavigationFilters({ statusFilter: "ACTIVE", employerFilter: "", branchFilter: "" });
   };
@@ -340,6 +363,32 @@ function EmployeesPageContent() {
       return;
     }
     setEmployeeSelectionMode(true);
+  };
+
+  const deleteEmployee = async (employee: Employee) => {
+    const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
+    if (!window.confirm(`Permanently delete ${fullName}? This also deletes their attendance records, punches, requirements, and attached documents. Saved SSS reports and loan history retain their employee snapshots. This cannot be undone.`)) return;
+
+    setDeletingEmployeeId(employee.id);
+    setMessage("");
+    setNotice("");
+    try {
+      const response = await fetch(`/api/employees/${employee.id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to delete employee");
+      setEmployees((current) => {
+        const remaining = current.filter((item) => item.id !== employee.id);
+        employeeDirectoryCache = remaining;
+        return remaining;
+      });
+      setSelectedCardId(null);
+      if (selectedEmployee?.id === employee.id) setSelectedEmployee(null);
+      setNotice(`${fullName} was deleted.`);
+    } catch (deleteError) {
+      setMessage(deleteError instanceof Error ? deleteError.message : "Unable to delete employee");
+    } finally {
+      setDeletingEmployeeId(null);
+    }
   };
 
   const transferSelectedEmployees = async () => {
@@ -383,7 +432,8 @@ function EmployeesPageContent() {
   };
 
   const exportEmployees = async () => {
-    if (filteredEmployees.length === 0) return;
+    if (filteredEmployees.length === 0 || exporting) return;
+    setExporting(true);
     const rows: (string | number)[][] = [employeeCsvHeaders];
     for (const employee of filteredEmployees) {
       rows.push([
@@ -418,16 +468,7 @@ function EmployeesPageContent() {
     const blob = new Blob([`\uFEFF${toCsv(rows)}`], { type: "text/csv;charset=utf-8" });
     const filename = `employees-${new Date().toISOString().slice(0, 10)}.csv`;
     const picker = (window as Window & { showSaveFilePicker?: CsvSaveFilePicker }).showSaveFilePicker;
-    try {
-      if (picker) {
-        const file = await picker.call(window, {
-          suggestedName: filename,
-          types: [{ description: "CSV file", accept: { "text/csv": [".csv"] } }],
-        });
-        const writable = await file.createWritable();
-        await writable.write(blob);
-        await writable.close();
-      } else {
+    const downloadCsv = () => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -436,12 +477,32 @@ function EmployeesPageContent() {
         link.click();
         link.remove();
         window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    try {
+      if (picker) {
+        try {
+          const file = await picker.call(window, {
+            suggestedName: filename,
+            types: [{ description: "CSV file", accept: { "text/csv": [".csv"] } }],
+          });
+          const writable = await file.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          // Some browsers close the picker stream unexpectedly. Preserve the export
+          // by falling back to a normal download instead of reusing that stream.
+          downloadCsv();
+        }
+      } else {
+        downloadCsv();
       }
       setMessage("");
       setNotice(`Exported ${filteredEmployees.length} employee(s) to CSV.`);
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
       setMessage(error instanceof Error ? error.message : "Unable to export employees.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -501,7 +562,7 @@ function EmployeesPageContent() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
-        <div className="mb-4 grid grid-cols-2 items-center gap-2 lg:grid-cols-[auto_auto_minmax(180px,1fr)_minmax(130px,180px)_minmax(130px,180px)_minmax(180px,230px)_auto_auto]">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           <Link
             href="/dashboard"
             onClick={(event) => {
@@ -510,11 +571,11 @@ function EmployeesPageContent() {
                 window.dispatchEvent(new Event("hrdb-open-sidebar"));
               }
             }}
-            className="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
           >
             <ChevronLeftIcon className="h-4 w-4" /> Back
           </Link>
-          <Link href="/employees/new" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
+          <Link href="/employees/new" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
             <PlusIcon className="h-4 w-4" /> Add
           </Link>
           <input
@@ -522,17 +583,19 @@ function EmployeesPageContent() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search employees..."
             aria-label="Search employees"
-            className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block"
+            className="hidden h-10 min-w-[140px] flex-[1_1_178px] rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block"
           />
-          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
+          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="hidden h-10 w-[180px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
+            <option value="ALL">All employees</option>
             <option value="ACTIVE">Active employees</option>
             <option value="INACTIVE">Inactive employees</option>
+            <option value="Trainee">Trainee</option>
           </select>
-          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
+          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="hidden h-10 w-[180px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
             <option value="">All employers</option>
             {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
           </select>
-            <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => updateNavigationFilters({ branchFilter: event.target.value })} className="hidden h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:col-span-1 lg:block">
+            <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => updateNavigationFilters({ branchFilter: event.target.value })} className="hidden h-10 w-[230px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
               <option value="">All branches</option>
               {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
             </select>
@@ -545,17 +608,17 @@ function EmployeesPageContent() {
               if (firstEmployee) router.push(profileHref(firstEmployee.id));
             }}
             disabled={sortedEmployees.length === 0}
-            className="hidden h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex"
           >
             <EyeIcon aria-hidden="true" className="h-5 w-5" />
           </button>
-          <div className="col-span-2 flex w-full flex-wrap items-center justify-end gap-2 lg:col-span-1">
+          <div className="contents">
               <button
                 type="button"
                 aria-label={`Current view: ${employeeView}. Switch to ${employeeView === "cards" ? "list" : "card"} view`}
                 title={`Current view: ${employeeView === "cards" ? "Cards" : "List"}. Switch to ${employeeView === "cards" ? "list" : "card"} view`}
                 onClick={() => setEmployeeView((currentView) => currentView === "cards" ? "list" : "cards")}
-                className="hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 md:inline-flex"
+                className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 md:inline-flex"
               >
                 {employeeView === "cards" ? <Squares2X2Icon aria-hidden="true" className="h-5 w-5" /> : <ListBulletIcon aria-hidden="true" className="h-5 w-5" />}
               </button>
@@ -565,37 +628,37 @@ function EmployeesPageContent() {
                 disabled={!hasFilters}
                 aria-label="Clear all filters"
                 title="Clear all filters"
-                className="hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
+                className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
               >
                 <ArrowPathIcon aria-hidden="true" className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={toggleEmployeeSelectionMode}
+                disabled={isTransferring}
+                aria-pressed={employeeSelectionMode}
+                aria-expanded={employeeSelectionMode}
+                aria-controls="employee-transfer-panel"
+                className={`hidden h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border px-3 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex ${employeeSelectionMode ? "border-blue-300 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+              >
+                Transfer
               </button>
               {isAdmin && (
                 <>
                   <button
                     type="button"
-                    onClick={toggleEmployeeSelectionMode}
-                    disabled={isTransferring}
-                    aria-pressed={employeeSelectionMode}
-                    aria-expanded={employeeSelectionMode}
-                    aria-controls="employee-transfer-panel"
-                    className={`hidden h-10 items-center justify-center whitespace-nowrap rounded-lg border px-3 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex ${employeeSelectionMode ? "border-blue-300 bg-blue-50 text-blue-900" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
-                  >
-                    Transfer
-                  </button>
-                  <button
-                    type="button"
                     onClick={exportEmployees}
-                    disabled={filteredEmployees.length === 0}
-                    className="hidden h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
+                    disabled={filteredEmployees.length === 0 || exporting}
+                    className="hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
                   >
-                    <ArrowDownTrayIcon className="h-4 w-4" /> Export
+                    <ArrowDownTrayIcon className="h-4 w-4" /> {exporting ? "Exporting..." : "Export"}
                   </button>
                   <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleImportFile} className="hidden" />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={importing}
-                    className="hidden h-10 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50 md:inline-flex"
+                    className="hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50 md:inline-flex"
                   >
                     <ArrowUpTrayIcon className="h-4 w-4" /> {importing ? "Importing..." : "Import"}
                   </button>
@@ -629,8 +692,10 @@ function EmployeesPageContent() {
                 className="h-10 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
               <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="ALL">All employees</option>
                 <option value="ACTIVE">Active employees</option>
                 <option value="INACTIVE">Inactive employees</option>
+                <option value="Trainee">Trainee</option>
               </select>
               <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 <option value="">All employers</option>
@@ -682,8 +747,7 @@ function EmployeesPageContent() {
             {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
           </span>
         </div>
-        {isAdmin && (
-          <section
+        <section
             id="employee-transfer-panel"
             aria-label="Transfer selected employees"
             aria-hidden={!employeeSelectionMode}
@@ -737,7 +801,6 @@ function EmployeesPageContent() {
               </div>
             )}
           </section>
-        )}
         {notice && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setNotice("")}>
             <section role="alertdialog" aria-modal="true" aria-labelledby="employee-notice-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-xl bg-white p-6 text-left shadow-xl">
@@ -784,8 +847,17 @@ function EmployeesPageContent() {
             <div className="mt-4 grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {sortedEmployees.map((employee) => {
                 const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
+                const isCardSelected = selectedCardId === employee.id;
                 return (
-                  <article key={employee.id} className="w-full min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
+                  <article key={employee.id} className={`relative isolate w-full min-w-0 rounded-xl border p-4 shadow-sm transition sm:p-5 ${isCardSelected ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100 shadow-md" : "border-gray-200 bg-white hover:shadow-md"}`}>
+                    <button
+                      type="button"
+                      aria-label={`${isCardSelected ? "Unselect" : "Select"} ${fullName}`}
+                      aria-pressed={isCardSelected}
+                      onClick={() => setSelectedCardId(isCardSelected ? null : employee.id)}
+                      className="absolute inset-0 z-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    />
+                    <div className="pointer-events-none relative z-10">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-3">
@@ -799,7 +871,7 @@ function EmployeesPageContent() {
                         </div>
                         <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
                       </div>
-                      <div className="flex shrink-0 items-start gap-1">
+                      <div className="pointer-events-auto flex shrink-0 items-start gap-1">
                         {employeeSelectionMode && <input
                           type="checkbox"
                           checked={selectedEmployeeIds.has(employee.id)}
@@ -807,22 +879,32 @@ function EmployeesPageContent() {
                           aria-label={`Select ${fullName} for transfer`}
                           className="mt-2 h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
                         />}
-                        <Link
+                        {isCardSelected && <Link
                           href={profileHref(employee.id)}
                           aria-label={`View ${fullName}`}
                           title={`View ${fullName}`}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <EyeIcon aria-hidden="true" className="h-5 w-5" />
-                        </Link>
-                        <Link
+                        </Link>}
+                        {isCardSelected && <Link
                           href={`/employees/new/${employee.id}`}
                           aria-label={`Edit ${fullName}`}
                           title={`Edit ${fullName}`}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
-                        </Link>
+                        </Link>}
+                        {isCardSelected && canDeleteEmployees && <button
+                          type="button"
+                          onClick={() => void deleteEmployee(employee)}
+                          disabled={deletingEmployeeId === employee.id}
+                          aria-label={`Delete ${fullName}`}
+                          title={`Delete ${fullName}`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:cursor-wait disabled:opacity-50"
+                        >
+                          <TrashIcon aria-hidden="true" className="h-5 w-5" />
+                        </button>}
                       </div>
                     </div>
                     <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
@@ -848,6 +930,7 @@ function EmployeesPageContent() {
                       <div className="min-w-0"><dt className="text-gray-500">Phone</dt><dd className="mt-1 break-words text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
                       <div className="min-w-0"><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
                     </dl>
+                    </div>
                   </article>
                 );
               })}
