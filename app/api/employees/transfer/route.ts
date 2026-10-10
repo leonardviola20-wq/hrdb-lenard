@@ -9,7 +9,12 @@ export async function POST(request: NextRequest) {
   const session = getAuthenticatedSession(request);
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   if (session.role !== "ADMIN") {
-    return NextResponse.json({ error: "Administrator access required" }, { status: 403 });
+    const user = typeof session.id === "number"
+      ? await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } })
+      : null;
+    if (!user?.accessiblePages.includes("/employees")) {
+      return NextResponse.json({ error: "Employees access required" }, { status: 403 });
+    }
   }
 
   const body: unknown = await request.json().catch(() => null);

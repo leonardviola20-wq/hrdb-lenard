@@ -3,9 +3,16 @@
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { BriefcaseIcon, BuildingOffice2Icon, CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon, ClipboardDocumentListIcon, IdentificationIcon, UserCircleIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, BriefcaseIcon, BuildingOffice2Icon, CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon, ClipboardDocumentListIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, PlusIcon, TrashIcon, UserCircleIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { getEmployeeServiceSummary } from "@/lib/employeeServiceDuration";
-import { employeeRequirements, type EmployeeRequirementKey } from "@/lib/employeeRequirements";
+import {
+  employeeRequirementGroups,
+  employeeRequirements,
+  getApplicableEmployeeRequirements,
+  getEmployeeRequirementCompletion,
+  isSingleEmployee,
+  type EmployeeRequirementKey,
+} from "@/lib/employeeRequirements";
 import { useAppHeaderActions } from "@/components/Sidebar";
 import {
   employeeDirectoryHref,
@@ -62,8 +69,23 @@ type Employee = {
     services: string | null;
     branch: string | null;
   }[];
-  requirements: { requirementKey: EmployeeRequirementKey; isComplete: boolean }[];
+  requirements: {
+    requirementKey: EmployeeRequirementKey;
+    isComplete: boolean;
+    attachments: RequirementAttachment[];
+  }[];
+  bdoAccountNumbers: BdoAccountNumber[];
+  requirementsBypassed: boolean;
 };
+type RequirementAttachment = {
+  id: number;
+  requirementKey: EmployeeRequirementKey;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+};
+type BdoAccountNumber = { id: number; accountNumber: string; createdAt: string };
 type EmployeeProfileResponse = {
   employee: Employee;
   navigationEmployees?: NavigableEmployee[];
@@ -95,6 +117,12 @@ function cacheEmployeeProfile(id: string, employee: Employee) {
     if (oldestId === undefined) break;
     employeeProfileCache.delete(oldestId);
   }
+}
+
+function updateEmployeeProfileCache(employeeId: number, update: (employee: Employee) => Employee) {
+  const id = String(employeeId);
+  const cached = employeeProfileCache.get(id);
+  if (cached) cacheEmployeeProfile(id, update(cached.employee));
 }
 
 function fetchEmployeeProfile(id: string, includeNavigation: boolean) {
@@ -159,8 +187,8 @@ function dateText(value: string | null) {
 function Value({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs tracking-wide text-gray-500">{label}</dt>
-      <dd className="mt-1 break-words font-semibold text-gray-900">{value || "Not set"}</dd>
+      <span className="text-xs tracking-wide text-gray-500">{label}</span>
+      <p className="mt-1 break-words font-semibold text-gray-900">{value || "Not set"}</p>
     </div>
   );
 }
@@ -169,7 +197,7 @@ function ProfileSection({ title, icon: Icon, children }: { title: string; icon: 
   return (
     <section className="h-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="flex items-center gap-2 border-b border-gray-100 pb-3 text-base font-semibold text-gray-900"><Icon aria-hidden="true" className="h-5 w-5 text-blue-700" />{title}</h2>
-      <dl className="mt-4 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2">{children}</dl>
+      <div className="mt-4 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -196,7 +224,22 @@ function EmployeeProfileContent() {
   const [error, setError] = useState("");
   const [requirementsError, setRequirementsError] = useState("");
   const [savingRequirementKeys, setSavingRequirementKeys] = useState<Set<EmployeeRequirementKey>>(() => new Set());
-  const [activeTab, setActiveTab] = useState<(typeof profileTabs)[number]["label"]>(profileTabs[0].label);
+  const [markingAllRequirements, setMarkingAllRequirements] = useState(false);
+  const [bulkRequirementsToggle, setBulkRequirementsToggle] = useState<boolean | null>(null);
+  const [togglingRequirementsBypass, setTogglingRequirementsBypass] = useState(false);
+  const [requirementsBaseline, setRequirementsBaseline] = useState<{ employeeId: number; keys: Set<EmployeeRequirementKey> } | null>(null);
+  const [uploadingRequirementKeys, setUploadingRequirementKeys] = useState<Set<EmployeeRequirementKey>>(() => new Set());
+  const [revealedAccountNumbers, setRevealedAccountNumbers] = useState<Set<number>>(() => new Set());
+  const [accountNumberDraft, setAccountNumberDraft] = useState("");
+  const [savingAccountNumber, setSavingAccountNumber] = useState(false);
+  const [activeTab, setActiveTab] = useState<(typeof profileTabs)[number]["label"]>(
+    () => profileTabs.find((tab) => tab.label === searchParams.get("tab"))?.label ?? profileTabs[0].label,
+  );
+
+  useEffect(() => {
+    const requestedTab = profileTabs.find((tab) => tab.label === searchParams.get("tab"))?.label;
+    if (requestedTab) setActiveTab(requestedTab);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!id) return;
@@ -281,6 +324,26 @@ function EmployeeProfileContent() {
   const selectedEmployerName = employerOptions.find((option) => String(option.id) === filters.employer)?.name ?? null;
   const previousEmployeeId = navigation.previous?.id ?? null;
   const nextEmployeeId = navigation.next?.id ?? null;
+  const requirementCompletion = displayedEmployee
+    ? getEmployeeRequirementCompletion(
+      displayedEmployee.requirements,
+      displayedEmployee.maritalStatus,
+      displayedEmployee.bdoAccountNumbers.length,
+    )
+    : { completed: 0, total: employeeRequirements.length };
+  const requirementsAllMarkableComplete = displayedEmployee
+    ? getApplicableEmployeeRequirements(displayedEmployee.maritalStatus).every((requirement) => {
+      // The BDO item cannot be marked without an account number and the bulk
+      // toggle skips it, so it must not pull the switch back to off.
+      if (requirement.key === "bdoSavingsAccount" && displayedEmployee.bdoAccountNumbers.length === 0) return true;
+      return displayedEmployee.requirements.some((item) => item.requirementKey === requirement.key && item.isComplete);
+    })
+    : false;
+  const requirementsToggleOn = bulkRequirementsToggle ?? requirementsAllMarkableComplete;
+  const updateDisplayedEmployee = useCallback((employeeId: number, update: (current: Employee) => Employee) => {
+    updateEmployeeProfileCache(employeeId, update);
+    setEmployee((current) => current?.id === employeeId ? update(current) : current);
+  }, []);
 
   const applyNavigationFilters = useCallback(async (nextFilters: EmployeeNavigationFilters) => {
     setRefreshingFilters(true);
@@ -295,7 +358,7 @@ function EmployeeProfileContent() {
       const refreshedNavigationEmployees = data.navigationEmployees ?? navigationEmployees;
       const firstMatchingEmployee = getFirstMatchingEmployee(refreshedNavigationEmployees, nextFilters);
       router.replace(
-        employeeProfileHref(firstMatchingEmployee?.id ?? Number(id), nextFilters),
+        employeeProfileHref(firstMatchingEmployee?.id ?? Number(id), nextFilters, activeTab),
         { scroll: false },
       );
     } catch (refreshError) {
@@ -303,7 +366,7 @@ function EmployeeProfileContent() {
     } finally {
       setRefreshingFilters(false);
     }
-  }, [id, navigationEmployees, router]);
+  }, [activeTab, id, navigationEmployees, router]);
 
   const updateRequirement = useCallback(async (requirementKey: EmployeeRequirementKey, isComplete: boolean) => {
     if (!displayedEmployee) return;
@@ -324,17 +387,9 @@ function EmployeeProfileContent() {
       if (!data.requirement) throw new Error("The requirement update response was incomplete");
       const savedRequirement = data.requirement;
 
-      const cachedEmployee = employeeProfileCache.get(String(employeeId))?.employee;
-      const currentEmployee = cachedEmployee ?? (displayedEmployee.id === employeeId ? displayedEmployee : null);
-      if (currentEmployee) {
-        const requirements = currentEmployee.requirements.filter((item) => item.requirementKey !== requirementKey);
-        requirements.push(savedRequirement);
-        cacheEmployeeProfile(String(employeeId), { ...currentEmployee, requirements });
-      }
-      setEmployee((current) => {
-        if (!current || current.id !== employeeId) return current;
+      updateDisplayedEmployee(employeeId, (current) => {
         const requirements = current.requirements.filter((item) => item.requirementKey !== requirementKey);
-        requirements.push(savedRequirement);
+        requirements.push({ ...savedRequirement, attachments: current.requirements.find((item) => item.requirementKey === requirementKey)?.attachments ?? [] });
         return { ...current, requirements };
       });
     } catch (saveError) {
@@ -346,7 +401,233 @@ function EmployeeProfileContent() {
         return next;
       });
     }
-  }, [displayedEmployee]);
+  }, [displayedEmployee, updateDisplayedEmployee]);
+
+  const toggleAllRequirementsComplete = useCallback(async (isComplete: boolean) => {
+    if (!displayedEmployee || markingAllRequirements) return;
+    const employeeId = displayedEmployee.id;
+    setRequirementsError("");
+    setMarkingAllRequirements(true);
+    setBulkRequirementsToggle(isComplete);
+    try {
+      const applicable = getApplicableEmployeeRequirements(displayedEmployee.maritalStatus);
+      const completedKeys = new Set(
+        displayedEmployee.requirements
+          .filter((item) => item.isComplete)
+          .map((item) => item.requirementKey),
+      );
+      const hasBdoAccount = displayedEmployee.bdoAccountNumbers.length > 0;
+
+      let pending: typeof applicable;
+      if (isComplete) {
+        // Save the already-checked items first so restoring later keeps them checked.
+        setRequirementsBaseline({ employeeId, keys: new Set(completedKeys) });
+        pending = applicable.filter((requirement) => (
+          !completedKeys.has(requirement.key)
+          && (requirement.key !== "bdoSavingsAccount" || hasBdoAccount)
+        ));
+      } else {
+        // Restore the saved state: only clear items the bulk action checked.
+        const baseline = requirementsBaseline?.employeeId === employeeId ? requirementsBaseline.keys : null;
+        pending = applicable.filter((requirement) => (
+          completedKeys.has(requirement.key) && !baseline?.has(requirement.key)
+        ));
+        setRequirementsBaseline(null);
+      }
+
+      for (const requirement of pending) {
+        const response = await fetch(`/api/employees/${employeeId}/requirements`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requirementKey: requirement.key, isComplete }),
+        });
+        const data: {
+          requirement?: { requirementKey: EmployeeRequirementKey; isComplete: boolean };
+          error?: string;
+        } = await response.json();
+        if (!response.ok) throw new Error(data.error || `Unable to update ${requirement.label}`);
+        if (!data.requirement) throw new Error("The requirement update response was incomplete");
+        const savedRequirement = data.requirement;
+        updateDisplayedEmployee(employeeId, (current) => {
+          const requirements = current.requirements.filter((item) => item.requirementKey !== requirement.key);
+          requirements.push({ ...savedRequirement, attachments: current.requirements.find((item) => item.requirementKey === requirement.key)?.attachments ?? [] });
+          return { ...current, requirements };
+        });
+      }
+    } catch (saveError) {
+      setRequirementsError(saveError instanceof Error ? saveError.message : "Unable to update requirements");
+    } finally {
+      setBulkRequirementsToggle(null);
+      setMarkingAllRequirements(false);
+    }
+  }, [displayedEmployee, markingAllRequirements, requirementsBaseline, updateDisplayedEmployee]);
+
+  const toggleRequirementsBypass = useCallback(async (bypassed: boolean) => {
+    if (!displayedEmployee || togglingRequirementsBypass) return;
+    const employeeId = displayedEmployee.id;
+    setRequirementsError("");
+    setTogglingRequirementsBypass(true);
+    try {
+      const response = await fetch(`/api/employees/${employeeId}/requirements/bypass`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bypassed }),
+      });
+      const data: {
+        bypassed?: boolean;
+        requirements?: { requirementKey: EmployeeRequirementKey; isComplete: boolean }[];
+        error?: string;
+      } = await response.json();
+      if (!response.ok || typeof data.bypassed !== "boolean") {
+        throw new Error(data.error || "Unable to update requirement bypass");
+      }
+      updateDisplayedEmployee(employeeId, (current) => ({
+        ...current,
+        requirementsBypassed: data.bypassed!,
+        requirements: bypassed && data.requirements
+          ? data.requirements.map((saved) => ({
+            ...saved,
+            attachments: current.requirements.find((item) => item.requirementKey === saved.requirementKey)?.attachments ?? [],
+          }))
+          : current.requirements,
+      }));
+    } catch (bypassError) {
+      setRequirementsError(bypassError instanceof Error ? bypassError.message : "Unable to update requirement bypass");
+    } finally {
+      setTogglingRequirementsBypass(false);
+    }
+  }, [displayedEmployee, togglingRequirementsBypass, updateDisplayedEmployee]);
+
+  const uploadRequirementAttachments = useCallback(async (requirementKey: EmployeeRequirementKey, files: File[]) => {
+    if (!displayedEmployee || files.length === 0) return;
+    const employeeId = displayedEmployee.id;
+    setRequirementsError("");
+    setUploadingRequirementKeys((current) => new Set(current).add(requirementKey));
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.set("file", file);
+        const response = await fetch(`/api/employees/${employeeId}/requirements/${requirementKey}/attachments`, {
+          method: "POST",
+          body: formData,
+        });
+        const data: { attachment?: RequirementAttachment; error?: string } = await response.json();
+        if (!response.ok) throw new Error(data.error || `Unable to upload ${file.name}`);
+        if (!data.attachment) throw new Error("The attachment upload response was incomplete");
+        updateDisplayedEmployee(employeeId, (current) => {
+          const requirement = current.requirements.find((item) => item.requirementKey === requirementKey);
+          const nextRequirement = {
+            requirementKey,
+            isComplete: requirement?.isComplete ?? false,
+            attachments: [...(requirement?.attachments ?? []), data.attachment!],
+          };
+          return {
+            ...current,
+            requirements: [
+              ...current.requirements.filter((item) => item.requirementKey !== requirementKey),
+              nextRequirement,
+            ],
+          };
+        });
+      }
+    } catch (uploadError) {
+      setRequirementsError(uploadError instanceof Error ? uploadError.message : "Unable to upload requirement attachment");
+    } finally {
+      setUploadingRequirementKeys((current) => {
+        const next = new Set(current);
+        next.delete(requirementKey);
+        return next;
+      });
+    }
+  }, [displayedEmployee, updateDisplayedEmployee]);
+
+  const deleteRequirementAttachment = useCallback(async (attachment: RequirementAttachment) => {
+    if (!displayedEmployee) return;
+    const employeeId = displayedEmployee.id;
+    setRequirementsError("");
+    setUploadingRequirementKeys((current) => new Set(current).add(attachment.requirementKey));
+    try {
+      const response = await fetch(
+        `/api/employees/${employeeId}/requirements/${attachment.requirementKey}/attachments/${attachment.id}`,
+        { method: "DELETE" },
+      );
+      const data: { error?: string } = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to remove attachment");
+      updateDisplayedEmployee(employeeId, (current) => ({
+        ...current,
+        requirements: current.requirements.map((item) => item.requirementKey === attachment.requirementKey
+          ? { ...item, attachments: item.attachments.filter((saved) => saved.id !== attachment.id) }
+          : item),
+      }));
+    } catch (deleteError) {
+      setRequirementsError(deleteError instanceof Error ? deleteError.message : "Unable to remove attachment");
+    } finally {
+      setUploadingRequirementKeys((current) => {
+        const next = new Set(current);
+        next.delete(attachment.requirementKey);
+        return next;
+      });
+    }
+  }, [displayedEmployee, updateDisplayedEmployee]);
+
+  const addBdoAccountNumber = useCallback(async () => {
+    if (!displayedEmployee || savingAccountNumber) return;
+    const employeeId = displayedEmployee.id;
+    setRequirementsError("");
+    setSavingAccountNumber(true);
+    try {
+      const response = await fetch(`/api/employees/${employeeId}/bdo-account-numbers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountNumber: accountNumberDraft }),
+      });
+      const data: { account?: BdoAccountNumber; error?: string } = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to add BDO account number");
+      if (!data.account) throw new Error("The account number response was incomplete");
+      updateDisplayedEmployee(employeeId, (current) => ({
+        ...current,
+        bdoAccountNumbers: [...current.bdoAccountNumbers, data.account!],
+      }));
+      setAccountNumberDraft("");
+    } catch (saveError) {
+      setRequirementsError(saveError instanceof Error ? saveError.message : "Unable to add BDO account number");
+    } finally {
+      setSavingAccountNumber(false);
+    }
+  }, [accountNumberDraft, displayedEmployee, savingAccountNumber, updateDisplayedEmployee]);
+
+  const removeBdoAccountNumber = useCallback(async (account: BdoAccountNumber) => {
+    if (!displayedEmployee) return;
+    const employeeId = displayedEmployee.id;
+    setRequirementsError("");
+    setSavingAccountNumber(true);
+    try {
+      const response = await fetch(`/api/employees/${employeeId}/bdo-account-numbers/${account.id}`, { method: "DELETE" });
+      const data: {
+        requirement?: { requirementKey: EmployeeRequirementKey; isComplete: boolean } | null;
+        error?: string;
+      } = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to remove BDO account number");
+      updateDisplayedEmployee(employeeId, (current) => ({
+        ...current,
+        bdoAccountNumbers: current.bdoAccountNumbers.filter((saved) => saved.id !== account.id),
+        requirements: data.requirement
+          ? current.requirements.map((item) => item.requirementKey === "bdoSavingsAccount"
+            ? { ...item, isComplete: false }
+            : item)
+          : current.requirements,
+      }));
+      setRevealedAccountNumbers((current) => {
+        const next = new Set(current);
+        next.delete(account.id);
+        return next;
+      });
+    } catch (deleteError) {
+      setRequirementsError(deleteError instanceof Error ? deleteError.message : "Unable to remove BDO account number");
+    } finally {
+      setSavingAccountNumber(false);
+    }
+  }, [displayedEmployee, updateDisplayedEmployee]);
 
   useEffect(() => {
     if (previousEmployeeId !== null) prefetchEmployeeProfile(previousEmployeeId);
@@ -364,7 +645,7 @@ function EmployeeProfileContent() {
         actions: <>
         {navigation.previous ? (
           <Link
-            href={employeeProfileHref(navigation.previous.id, filters)}
+            href={employeeProfileHref(navigation.previous.id, filters, activeTab)}
             aria-label="Previous employee record"
             title="Previous employee record"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -384,7 +665,7 @@ function EmployeeProfileContent() {
         )}
         {navigation.next ? (
           <Link
-            href={employeeProfileHref(navigation.next.id, filters)}
+            href={employeeProfileHref(navigation.next.id, filters, activeTab)}
             aria-label="Next employee record"
             title="Next employee record"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -432,7 +713,7 @@ function EmployeeProfileContent() {
       },
     );
     return () => setAppHeaderActions(null);
-  }, [applyNavigationFilters, branchOptions, displayedEmployee, employerOptions, error, filters, id, navigation.matching.length, navigation.next, navigation.position, navigation.previous, refreshingFilters, router, selectedEmployerName, setAppHeaderActions]);
+  }, [activeTab, applyNavigationFilters, branchOptions, displayedEmployee, employerOptions, error, filters, id, navigation.matching.length, navigation.next, navigation.position, navigation.previous, refreshingFilters, router, selectedEmployerName, setAppHeaderActions]);
 
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
@@ -570,41 +851,208 @@ function EmployeeProfileContent() {
                 </ProfileSection>
               </div>}
 
-              {activeTab === "Requirements" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
-                <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="flex items-center gap-2 border-b border-gray-100 pb-3 text-base font-semibold text-gray-900">
-                    <ClipboardDocumentListIcon aria-hidden="true" className="h-5 w-5 text-blue-700" />
-                    Employee Requirements
-                  </h2>
-                  <div className="mt-4">
-                    <p className="mb-4 text-sm text-gray-600">Check each item after it has been submitted and verified.</p>
-                    {requirementsError && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{requirementsError}</p>}
-                    <ul className="space-y-2">
-                      {employeeRequirements.map((requirement) => {
-                        const isComplete = displayedEmployee.requirements.some((item) => item.requirementKey === requirement.key && item.isComplete);
+              {activeTab === "Requirements" && <div className="grid flex-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-2 xl:col-span-3">
+                  <p className="text-sm text-gray-600">Check each item after it has been submitted and verified.</p>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className={`inline-flex items-center gap-2 text-sm font-medium text-gray-700 ${markingAllRequirements ? "opacity-60" : ""}`}>
+                      Check all
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={requirementsToggleOn}
+                        aria-label="Check all requirements"
+                        disabled={markingAllRequirements}
+                        onClick={() => void toggleAllRequirementsComplete(!requirementsToggleOn)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed ${requirementsToggleOn ? "bg-blue-600 hover:bg-blue-500" : "bg-gray-300 hover:bg-gray-400"}`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`inline-block h-5 w-5 transform-gpu rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${requirementsToggleOn ? "translate-x-5" : "translate-x-0"}`}
+                        />
+                      </button>
+                    </label>
+                    <label className={`inline-flex items-center gap-2 text-sm font-medium text-gray-700 ${togglingRequirementsBypass ? "opacity-60" : ""}`}>
+                      Mark as Complete
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={displayedEmployee.requirementsBypassed}
+                        aria-label="Mark requirements as complete"
+                        disabled={togglingRequirementsBypass}
+                        onClick={() => void toggleRequirementsBypass(!displayedEmployee.requirementsBypassed)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:cursor-not-allowed ${displayedEmployee.requirementsBypassed ? "bg-rose-600 hover:bg-rose-500" : "bg-gray-300 hover:bg-gray-400"}`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`inline-block h-5 w-5 transform-gpu rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${displayedEmployee.requirementsBypassed ? "translate-x-5" : "translate-x-0"}`}
+                        />
+                      </button>
+                    </label>
+                  </div>
+                </div>
+                {requirementsError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 md:col-span-2 xl:col-span-3">{requirementsError}</p>}
+                {employeeRequirementGroups.map((group) => (
+                  <ProfileSection key={group.label} title={group.label} icon={ClipboardDocumentListIcon}>
+                    <ul className="mt-4 w-full min-w-0 space-y-2 sm:col-span-2">
+                      {employeeRequirements.filter((requirement) => group.keys.includes(requirement.key)).map((requirement) => {
+                        const savedRequirement = displayedEmployee.requirements.find((item) => item.requirementKey === requirement.key);
+                        const attachments = savedRequirement?.attachments ?? [];
+                        const isNotApplicable = requirement.key === "marriageContract" && isSingleEmployee(displayedEmployee.maritalStatus);
+                        const isComplete = savedRequirement?.isComplete ?? false;
                         const isSaving = savingRequirementKeys.has(requirement.key);
+                        const isUploading = uploadingRequirementKeys.has(requirement.key);
+                        const accountNumbers = requirement.key === "bdoSavingsAccount" ? displayedEmployee.bdoAccountNumbers : [];
+                        const canComplete = !isNotApplicable && (requirement.key !== "bdoSavingsAccount" || accountNumbers.length > 0);
                         return (
-                          <li key={requirement.key}>
-                            <label className={`flex min-h-11 items-start gap-3 rounded-lg border border-gray-100 px-3 py-2.5 text-sm text-gray-800 transition hover:bg-gray-50 ${isSaving ? "opacity-60" : ""}`}>
+                          <li key={requirement.key} className="rounded-lg border border-gray-100 p-3">
+                            <div className={`flex items-start gap-3 text-sm text-gray-800 ${isSaving ? "opacity-60" : ""}`}>
                               <input
                                 type="checkbox"
-                                checked={isComplete}
-                                disabled={isSaving}
+                                aria-label={`Mark ${requirement.label} complete`}
+                                checked={!isNotApplicable && isComplete && canComplete}
+                                disabled={isSaving || !canComplete}
                                 onChange={(event) => void updateRequirement(requirement.key, event.target.checked)}
                                 className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
                               />
-                              <span className="min-w-0 flex-1">{requirement.label}</span>
+                              <span className={`min-w-0 flex-1 ${isNotApplicable ? "text-gray-400 line-through" : ""}`}>{requirement.label}</span>
+                              {isNotApplicable && <span className="shrink-0 text-xs text-gray-500">Not applicable</span>}
                               {isSaving && <span className="shrink-0 text-xs text-gray-500">Saving…</span>}
-                            </label>
+                              <span className="inline-flex shrink-0 items-center gap-0.5">
+                                <label
+                                  htmlFor={`requirement-upload-${displayedEmployee.id}-${requirement.key}`}
+                                  aria-label={`Upload attachment for ${requirement.label}`}
+                                  title="Upload attachment"
+                                  className={`inline-flex cursor-pointer rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 ${isUploading ? "pointer-events-none opacity-50" : ""}`}
+                                >
+                                  <ArrowUpTrayIcon aria-hidden="true" className="h-4 w-4" />
+                                </label>
+                                <input
+                                  id={`requirement-upload-${displayedEmployee.id}-${requirement.key}`}
+                                  type="file"
+                                  multiple
+                                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                  disabled={isUploading}
+                                  onChange={(event) => {
+                                    const files = Array.from(event.currentTarget.files ?? []);
+                                    event.currentTarget.value = "";
+                                    void uploadRequirementAttachments(requirement.key, files);
+                                  }}
+                                  className="sr-only"
+                                />
+                                {attachments.length > 0 ? (
+                                  <a
+                                    href={`/api/employees/${displayedEmployee.id}/requirements/${requirement.key}/attachments/${attachments[attachments.length - 1].id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`View uploaded document for ${requirement.label}`}
+                                    title="View uploaded document"
+                                    className="inline-flex rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                  >
+                                    <EyeIcon aria-hidden="true" className="h-4 w-4" />
+                                  </a>
+                                ) : (
+                                  <span
+                                    aria-hidden="true"
+                                    title="No uploaded document yet"
+                                    className="inline-flex cursor-not-allowed rounded p-1 text-gray-300"
+                                  >
+                                    <EyeIcon aria-hidden="true" className="h-4 w-4" />
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+
+                            {requirement.key === "bdoSavingsAccount" && <div className="mt-3 space-y-2">
+                              {accountNumbers.length === 0 && <p className="text-xs text-gray-500">Add an account number before marking this requirement complete.</p>}
+                              {accountNumbers.map((account) => {
+                                const isRevealed = revealedAccountNumbers.has(account.id);
+                                const shownNumber = isRevealed ? account.accountNumber : `••••••••${account.accountNumber.slice(-4)}`;
+                                return (
+                                  <div key={account.id} className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm">
+                                    <span className="min-w-0 flex-1 font-mono text-gray-900">{shownNumber}</span>
+                                    <button
+                                      type="button"
+                                      aria-label={`${isRevealed ? "Hide" : "Reveal"} BDO account number`}
+                                      onClick={() => setRevealedAccountNumbers((current) => {
+                                        const next = new Set(current);
+                                        if (isRevealed) next.delete(account.id);
+                                        else next.add(account.id);
+                                        return next;
+                                      })}
+                                      className="rounded p-1 text-gray-600 hover:bg-gray-200"
+                                    >
+                                      {isRevealed
+                                        ? <EyeSlashIcon aria-hidden="true" className="h-4 w-4" />
+                                        : <EyeIcon aria-hidden="true" className="h-4 w-4" />}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      aria-label="Remove BDO account number"
+                                      disabled={savingAccountNumber}
+                                      onClick={() => void removeBdoAccountNumber(account)}
+                                      className="rounded p-1 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                    >
+                                      <TrashIcon aria-hidden="true" className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                              <div className="flex flex-wrap gap-2">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  maxLength={64}
+                                  value={accountNumberDraft}
+                                  onChange={(event) => setAccountNumberDraft(event.target.value)}
+                                  aria-label="BDO savings account number"
+                                  placeholder="Enter account number"
+                                  className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                />
+                                <button
+                                  type="button"
+                                  disabled={savingAccountNumber || !accountNumberDraft}
+                                  onClick={() => void addBdoAccountNumber()}
+                                  className="inline-flex items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100 disabled:opacity-50"
+                                >
+                                  <PlusIcon aria-hidden="true" className="h-4 w-4" />
+                                  Add Account Number
+                                </button>
+                              </div>
+                            </div>}
+
+                            {attachments.length > 0 && <ul className="mt-2 space-y-1.5">
+                              {attachments.map((attachment) => (
+                                <li key={attachment.id} className="flex min-w-0 items-center gap-2 text-xs">
+                                  <a
+                                    href={`/api/employees/${displayedEmployee.id}/requirements/${requirement.key}/attachments/${attachment.id}`}
+                                    className="inline-flex min-w-0 flex-1 items-center gap-1 truncate text-blue-700 hover:underline"
+                                  >
+                                    <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{attachment.fileName}</span>
+                                  </a>
+                                  <span className="shrink-0 text-gray-500">{(attachment.size / (1024 * 1024)).toFixed(1)} MB</span>
+                                  <button
+                                    type="button"
+                                    aria-label={`Remove ${attachment.fileName}`}
+                                    disabled={isUploading}
+                                    onClick={() => void deleteRequirementAttachment(attachment)}
+                                    className="shrink-0 rounded p-1 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                  >
+                                    <TrashIcon aria-hidden="true" className="h-4 w-4" />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>}
                           </li>
                         );
                       })}
                     </ul>
-                    <p className="mt-4 text-sm font-medium text-gray-700">
-                      {displayedEmployee.requirements.filter((item) => item.isComplete && employeeRequirements.some((requirement) => requirement.key === item.requirementKey)).length} of {employeeRequirements.length} complete
-                    </p>
-                  </div>
-                </section>
+                  </ProfileSection>
+                ))}
+                <p className="text-sm font-medium text-gray-700 md:col-span-2 xl:col-span-3">
+                  {requirementCompletion.completed} of {requirementCompletion.total} complete
+                </p>
               </div>}
               </div>
             </div>

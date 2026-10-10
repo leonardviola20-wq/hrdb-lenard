@@ -23,7 +23,20 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       include: {
         employer: { select: { id: true, name: true, company: true } },
         supervisor: { select: { id: true, firstName: true, middleName: true, lastName: true } },
-        requirements: { select: { requirementKey: true, isComplete: true } },
+        requirements: {
+          select: {
+            requirementKey: true,
+            isComplete: true,
+            attachments: {
+              select: { id: true, requirementKey: true, fileName: true, mimeType: true, size: true, createdAt: true },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+        bdoAccountNumbers: {
+          select: { id: true, accountNumber: true, createdAt: true },
+          orderBy: { createdAt: "asc" },
+        },
         officeContacts: {
           where: { active: true },
           orderBy: [{ companyName: "asc" }, { contactName: "asc" }],
@@ -134,6 +147,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
         return NextResponse.json({ error: "Select an employee with the Store In-charge position as supervisor" }, { status: 400 });
       }
     }
+
     const employee = await prisma.employee.update({
       where: { id },
       data: {
@@ -150,5 +164,26 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   } catch (error) {
     console.error("Update employee error:", error);
     return NextResponse.json({ error: "Unable to update employee" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
+  const session = getAuthenticatedSession(req);
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (session.role !== "ADMIN" && session.role !== "SUPER_USER") {
+    return NextResponse.json({ error: "Admin or super-user access required" }, { status: 403 });
+  }
+  const id = Number((await params).id);
+  if (!Number.isSafeInteger(id) || id <= 0) return NextResponse.json({ error: "Invalid employee id" }, { status: 400 });
+
+  try {
+    await prisma.employee.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+    console.error("Delete employee error:", error);
+    return NextResponse.json({ error: "Unable to delete employee" }, { status: 500 });
   }
 }

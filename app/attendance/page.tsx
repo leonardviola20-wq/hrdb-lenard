@@ -2,7 +2,7 @@
 
 import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronUpDownIcon, ChevronUpIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronUpDownIcon, ChevronUpIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AttendancePrintReport, { AttendancePrintAllReport, attendanceMinutes } from "@/components/AttendancePrintReport";
 
 type Punch = { time: string; deviceNumber: string; branch: string };
@@ -120,6 +120,7 @@ export default function AttendancePage() {
   const [rangeRecords, setRangeRecords] = useState<AttendanceEmployee[] | null>(null);
   const [rangeLabel, setRangeLabel] = useState("");
   const [rangeLoading, setRangeLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [branchFilter, setBranchFilter] = useState("");
   const [dailyPage, setDailyPage] = useState(1);
   const [rangePage, setRangePage] = useState(1);
@@ -262,6 +263,22 @@ export default function AttendancePage() {
       setMessage(error instanceof Error ? error.message : "Unable to generate attendance report");
     } finally {
       setRangeLoading(false);
+    }
+  };
+
+  const refreshReport = async () => {
+    setRefreshing(true);
+    setMessage("");
+    try {
+      if (rangeRecords) {
+        setRangeRecords(await fetchRangeRecords(reportFrom, reportTo));
+      } else {
+        await loadReport();
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to refresh the attendance report");
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -418,7 +435,7 @@ export default function AttendancePage() {
   return (
     <main className="flex min-h-[calc(100dvh-8rem)] w-full min-w-0 flex-col overflow-x-hidden bg-slate-50 p-4 sm:p-6">
       <div className="flex w-full min-w-0 flex-1 flex-col space-y-4">
-        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+        <div id="reports" className="flex w-full scroll-mt-24 flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
           <Link href="/dashboard" onClick={(event) => { if (window.matchMedia("(max-width: 767px)").matches) { event.preventDefault(); window.dispatchEvent(new Event("hrdb-open-sidebar")); } }} className="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
             <ChevronLeftIcon className="h-4 w-4" /> Back
@@ -457,6 +474,9 @@ export default function AttendancePage() {
             </label>
             <button type="button" onClick={() => void generateRangeReport()} disabled={rangeLoading} className="inline-flex h-10 items-center justify-center rounded-lg bg-[#172554] px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-900 disabled:opacity-50">
               {rangeLoading ? "Loading..." : "Go"}
+            </button>
+            <button type="button" onClick={() => void refreshReport()} disabled={refreshing || rangeLoading} aria-label="Refresh report" title="Refresh report" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+              <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             </button>
             <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="h-10 min-w-[200px] rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
               <option value="">All branches</option>{branches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
@@ -505,7 +525,6 @@ export default function AttendancePage() {
               <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Total Records:</span><span>{filteredRangeRecords?.length ?? 0} employees</span></span>
               <span className="inline-flex items-center gap-2"><span className="font-semibold text-slate-700">Period Covered:</span><span>{rangeLabel}</span></span>
             </div>
-            <button type="button" onClick={() => { setRangeRecords(null); setDate(localDateValue()); saveSavedRange(reportFrom, reportTo, false); }} className="text-sm font-medium text-slate-500 transition hover:text-slate-700">Clear report</button>
           </div>
           {renderEmployeeList(visibleRangeRows ?? [], "range", "No attendance records match this date range and filter.")}
         </section>}

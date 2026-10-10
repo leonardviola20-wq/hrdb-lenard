@@ -50,6 +50,9 @@ export async function GET(req: NextRequest) {
       photoUrl: true,
       assignedBy: true,
       assignedAt: true,
+      requirementsBypassed: true,
+      requirements: { where: { isComplete: true }, select: { requirementKey: true } },
+      bdoAccountNumbers: { select: { id: true } },
       employer: { select: { id: true, name: true, company: true } },
       },
     });
@@ -94,6 +97,9 @@ export async function POST(req: NextRequest) {
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
+  if (!parsed.data.biometricNo) {
+    return NextResponse.json({ error: "Biometric Number is required" }, { status: 400 });
+  }
   const { employerId, ...fields } = parsed.data;
 
   try {
@@ -125,6 +131,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ employee }, { status: 201 });
   } catch (error) {
     console.error("Create employee error:", error);
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: "This Biometric Number is already assigned to an employee" }, { status: 409 });
+    }
     return NextResponse.json({ error: "Unable to create employee" }, { status: 500 });
   }
 }

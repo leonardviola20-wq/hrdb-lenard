@@ -84,12 +84,13 @@ export function getEmployeeNavigation(
   };
 }
 
-export function employeeProfileHref(employeeId: number, filters: EmployeeNavigationFilters) {
+export function employeeProfileHref(employeeId: number, filters: EmployeeNavigationFilters, tab?: string) {
   const search = new URLSearchParams({
     status: filters.status,
     branch: filters.branch,
     employer: filters.employer,
   });
+  if (tab) search.set("tab", tab);
   return `/employees/${employeeId}?${search.toString()}`;
 }
 

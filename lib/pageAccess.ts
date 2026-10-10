@@ -3,6 +3,7 @@ export const PAGE_ACCESS_OPTIONS = [
   { href: "/tasks", label: "Tasks" },
   { href: "/employees", label: "Employees" },
   { href: "/attendance", label: "Attendance" },
+  { href: "/reports/sss", label: "Reports" },
   { href: "/contacts", label: "Contacts" },
   { href: "/employers", label: "Employers" },
   { href: "/settings", label: "Account Settings" },
