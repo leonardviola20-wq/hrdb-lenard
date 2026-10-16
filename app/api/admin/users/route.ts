@@ -36,5 +36,7 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ users });
+  return NextResponse.json({
+    users: users.map((user) => ({ ...user, isCurrentUser: user.id === adminId })),
+  });
 }

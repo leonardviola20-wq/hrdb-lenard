@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
         select: { id: true, firstName: true, lastName: true, branch: true },
       }) : Promise.resolve(null),
       canViewEmployees ? prisma.employee.findMany({
+        where: { status: { in: activeStatuses } },
         select: {
           maritalStatus: true,
           requirementsBypassed: true,

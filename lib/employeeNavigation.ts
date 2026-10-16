@@ -1,3 +1,5 @@
+import { isActiveEmployeeStatus } from "@/lib/employeeStatus";
+
 export type EmployeeNavigationFilters = {
   status: string;
   branch: string;
@@ -15,12 +17,10 @@ export type NavigableEmployee = {
   employerName: string | null;
 };
 
-const activeStatuses = new Set(["Regular", "Contractual", "Trainee", "Leave"]);
-
 export function matchesEmployeeStatus(status: string | null, filter: string) {
   if (filter === "ALL") return true;
-  if (filter === "ACTIVE") return activeStatuses.has(status || "");
-  if (filter === "INACTIVE") return !activeStatuses.has(status || "");
+  if (filter === "ACTIVE") return isActiveEmployeeStatus(status);
+  if (filter === "INACTIVE") return !isActiveEmployeeStatus(status);
   return status === filter;
 }
 
@@ -101,6 +101,14 @@ export function employeeDirectoryHref(filters: EmployeeNavigationFilters) {
     employer: filters.employer,
   });
   return `/employees?${search.toString()}`;
+}
+
+// Keeps whatever the profile URL already carries (directory filters, other query
+// values) and only swaps the active tab, so browser Back/Forward restores tabs.
+export function employeeProfileTabHref(employeeId: number | string, currentSearch: string, tab: string) {
+  const search = new URLSearchParams(currentSearch);
+  search.set("tab", tab);
+  return `/employees/${employeeId}?${search.toString()}`;
 }
 
 export function navigationFilterLabel(

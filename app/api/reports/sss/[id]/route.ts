@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracket, toSssMoney } from "@/lib/sssContributionTable";
-import { calculateSssLoanPaymentAmountCents } from "@/lib/sssLoanBalance";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -79,8 +78,8 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       }),
       kind === "LOAN"
         ? prisma.sssLoan.findMany({
-          where: { id: { in: loanIds }, employerId },
-          select: { id: true, employeeId: true, loanDate: true, loanAmount: true, monthlyAmortization: true, loanAccountNumber: true, status: true },
+          where: { id: { in: loanIds } },
+          select: { id: true, employeeId: true, loanAccountNumber: true, status: true },
         })
         : Promise.resolve([]),
     ]);
@@ -89,12 +88,11 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Each selected employee must still exist" }, { status: 400 });
     }
     if (kind === "LOAN" && loans.length !== loanIds.length) {
-      return NextResponse.json({ error: "Each loan report row must reference a saved loan account for the selected employer" }, { status: 400 });
+      return NextResponse.json({ error: "Each loan report row must reference a saved loan account" }, { status: 400 });
     }
 
     const employeeById = new Map(employees.map((employee) => [employee.id, employee]));
     const loanById = new Map(loans.map((loan) => [loan.id, loan]));
-    const periodStart = new Date(Date.UTC(applicableYear, applicableMonth - 1, 1));
     let totalCents = 0;
     const entryData = reportEntries.map((entry) => {
       const employee = employeeById.get(entry.employeeId)!;
@@ -126,11 +124,6 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       const loan = loanById.get(entry.sssLoanId!);
       if (!loan || loan.employeeId !== employee.id || loan.status !== "ACTIVE") {
         throw new Error("Each loan entry must reference an active loan account for that employee");
-      }
-      const amortizationCents = Math.round(Number(loan.monthlyAmortization.toString()) * 100);
-      const scheduledPaymentCents = calculateSssLoanPaymentAmountCents(amortizationCents, loan.loanDate, periodStart);
-      if (scheduledPaymentCents <= 0) {
-        throw new Error("The selected loan account has no scheduled payment for the applicable month");
       }
       totalCents += loanCents;
       return {
@@ -244,5 +237,30 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
     console.error("Update SSS payment error:", error);
     return NextResponse.json({ error: "Unable to record SSS payment" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const access = await authorizeSssReports(request);
+  if (access.error) return access.error;
+  if (access.session?.role !== "ADMIN") {
+    return NextResponse.json({ error: "Admin access is required to delete SSS reports" }, { status: 403 });
+  }
+
+  const id = Number((await params).id);
+  if (!Number.isSafeInteger(id) || id <= 0) return NextResponse.json({ error: "Invalid SSS report id" }, { status: 400 });
+
+  try {
+    await prisma.$transaction([
+      prisma.sssReportEntry.deleteMany({ where: { reportId: id } }),
+      prisma.sssReport.delete({ where: { id } }),
+    ]);
+    return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+      return NextResponse.json({ error: "SSS report not found" }, { status: 404 });
+    }
+    console.error("Delete SSS report error:", error);
+    return NextResponse.json({ error: "Unable to delete SSS report" }, { status: 500 });
   }
 }

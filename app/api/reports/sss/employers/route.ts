@@ -8,6 +8,14 @@ export async function GET(request: NextRequest) {
   if (access.error) return access.error;
 
   try {
+    if (request.nextUrl.searchParams.get("summary") === "1") {
+      const employers = await prisma.employer.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      });
+      return NextResponse.json({ employers }, { headers: { "Cache-Control": "private, no-store" } });
+    }
+
     const employers = await prisma.employer.findMany({
       orderBy: { name: "asc" },
       select: {

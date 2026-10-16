@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracket, toSssMoney } from "@/lib/sssContributionTable";
-import { calculateSssLoanPaymentAmountCents } from "@/lib/sssLoanBalance";
+import { getSssLoanReportTiming } from "@/lib/sssLoanBalance";
+import { isSssLoanType } from "@/lib/sssLoanTypes";
 import { prisma } from "@/lib/prisma";
 
 type ReportEntryInput = { employeeId: number; sssLoanId?: number | null; monthlySalaryCredit?: number; loanAmount?: number };
@@ -46,15 +47,41 @@ function contributionData(entry: ReportEntryInput) {
 export async function GET(request: NextRequest) {
   const access = await authorizeSssReports(request);
   if (access.error) return access.error;
+  const employerId = Number(request.nextUrl.searchParams.get("employerId"));
+  if (!Number.isSafeInteger(employerId) || employerId <= 0) {
+    return NextResponse.json({ error: "Select an employer to load SSS reports" }, { status: 400 });
+  }
   try {
+    if (request.nextUrl.searchParams.get("view") === "payments") {
+      const kind = request.nextUrl.searchParams.get("kind");
+      if (kind !== "CONTRIBUTION" && kind !== "LOAN") {
+        return NextResponse.json({ error: "Select a valid SSS report type" }, { status: 400 });
+      }
+      const payments = await prisma.sssReport.findMany({
+        where: { employerId, kind, payDate: { not: null }, amountPaid: { not: null } },
+        select: {
+          id: true,
+          applicableMonth: true,
+          applicableYear: true,
+          amountDue: true,
+        },
+        orderBy: [{ payDate: "desc" }, { id: "desc" }],
+        take: 8,
+      });
+      return NextResponse.json({ payments }, { headers: { "Cache-Control": "private, no-store" } });
+    }
     const reports = await prisma.sssReport.findMany({
+      where: { employerId },
       orderBy: [
         { employerName: "asc" },
         { applicableYear: "desc" },
         { applicableMonth: "desc" },
         { createdAt: "desc" },
       ],
-      include: { entries: { orderBy: { employeeName: "asc" } } },
+      include: {
+        entries: { orderBy: { employeeName: "asc" } },
+        creator: { select: { name: true, email: true } },
+      },
     });
     return NextResponse.json({ reports, canEditPayments: access.session?.role === "ADMIN" }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
@@ -114,14 +141,15 @@ export async function POST(request: NextRequest) {
           middleName: true,
           lastName: true,
           sssNumber: true,
+          status: true,
           employerId: true,
           employer: { select: { name: true } },
         },
       }),
       kind === "LOAN"
         ? prisma.sssLoan.findMany({
-          where: { id: { in: loanIds }, employerId },
-          select: { id: true, employeeId: true, loanDate: true, loanAmount: true, monthlyAmortization: true, loanAccountNumber: true, status: true },
+          where: { id: { in: loanIds } },
+          select: { id: true, employeeId: true, loanAccountNumber: true, status: true, loanDate: true, loanType: true },
         })
         : Promise.resolve([]),
     ]);
@@ -130,12 +158,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Each selected employee must still exist" }, { status: 400 });
     }
     if (kind === "LOAN" && loans.length !== loanIds.length) {
-      return NextResponse.json({ error: "Each loan report row must reference a saved loan account for the selected employer" }, { status: 400 });
+      return NextResponse.json({ error: "Each loan report row must reference a saved loan account" }, { status: 400 });
     }
 
     const employeeById = new Map(employees.map((employee) => [employee.id, employee]));
     const loanById = new Map(loans.map((loan) => [loan.id, loan]));
-    const periodStart = new Date(Date.UTC(year, month - 1, 1));
     let totalCents = 0;
     const entryData = body.entries.map((entry) => {
       const employee = employeeById.get(entry.employeeId)!;
@@ -150,16 +177,16 @@ export async function POST(request: NextRequest) {
       const loanCents = parseMoney(entry.loanAmount);
       if (loanCents === null || loanCents <= 0) throw new Error("Each loan entry must have an amount greater than zero");
       const loan = loanById.get(entry.sssLoanId!);
-      if (!loan || loan.employeeId !== employee.id || loan.status !== "ACTIVE") {
-        throw new Error("Each loan entry must reference an active loan account for that employee");
-      }
-      const scheduledPaymentCents = calculateSssLoanPaymentAmountCents(
-        Math.round(Number(loan.monthlyAmortization.toString()) * 100),
-        loan.loanDate,
-        periodStart,
-      );
-      if (scheduledPaymentCents <= 0) {
-        throw new Error("The selected loan account has no scheduled payment for the applicable month");
+      const reportTiming = loan && isSssLoanType(loan.loanType)
+        ? getSssLoanReportTiming({
+          status: loan.status,
+          employeeStatus: employee.status,
+          loanDate: loan.loanDate,
+          loanType: loan.loanType,
+        }, new Date(Date.UTC(year, month - 1, 1)))
+        : null;
+      if (!loan || loan.employeeId !== employee.id || reportTiming === null) {
+        throw new Error("Each loan entry must reference an active loan account for an active employee that is due or past due for this report period");
       }
       totalCents += loanCents;
       return {
@@ -198,9 +225,13 @@ export async function POST(request: NextRequest) {
           applicableMonth: month,
           applicableYear: year,
           amountDue: new Prisma.Decimal((amountDueCents / 100).toFixed(2)),
+          createdBy: creatorId ?? null,
           entries: { create: entryData },
         },
-        include: { entries: { orderBy: { employeeName: "asc" } } },
+        include: {
+          entries: { orderBy: { employeeName: "asc" } },
+          creator: { select: { name: true, email: true } },
+        },
       });
       if (draftId !== null) {
         const deletedDraft = await transaction.sssReportDraft.deleteMany({ where: { id: draftId, continuedBy: creatorId } });

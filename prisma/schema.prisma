@@ -24,6 +24,7 @@ model User {
   posts                    Post[]
   tasks                    Task[]
   sssReportDrafts          SssReportDraft[]
+  sssReports               SssReport[]
 }
 
 model Post {
@@ -322,9 +323,11 @@ model SssReport {
   payDate              DateTime?        @db.Date
   sssBranch            String?
   transactionReference String?
+  createdBy            Int?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   employer             employer         @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  creator              User?            @relation(fields: [createdBy], references: [id], onDelete: SetNull)
   entries              SssReportEntry[]
 
   @@index([employerId, applicableYear, applicableMonth])
@@ -391,6 +394,7 @@ model OfficeContact {
   services    String?
   branch      String?
   notes       String?
+  photoUrl    String?
   active      Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

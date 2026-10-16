@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { EyeIcon, PencilSquareIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 type Contact = {
   id: number;
@@ -27,8 +27,6 @@ const primaryCategories = [
   "Internal Team",
   "Employee Contact",
 ];
-const alphabetLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
 const emptyContactDraft: ContactDraft = {
   companyName: "",
   contactName: "",
@@ -38,15 +36,13 @@ const emptyContactDraft: ContactDraft = {
   address: "",
   services: "",
   branch: "",
+  photoUrl: null,
   employeeId: null,
 };
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("ALL");
-  const [sortBy, setSortBy] = useState("contact");
-  const [alphabetFilter, setAlphabetFilter] = useState("ALL");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -58,6 +54,34 @@ export default function ContactsPage() {
   const [employeePhoneDraft, setEmployeePhoneDraft] = useState("");
   const [phones, setPhones] = useState<string[]>([""]);
   const [draft, setDraft] = useState<ContactDraft>(emptyContactDraft);
+
+  const uploadContactImage = (file: File | undefined) => {
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
+      setMessage("Choose a PNG, JPEG, WebP, or GIF image.");
+      return;
+    }
+    if (file.size === 0) {
+      setMessage("The selected image file is empty.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage("Contact image must be 2 MB or smaller.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageUrl = reader.result;
+      if (typeof imageUrl !== "string") {
+        setMessage("Unable to read the contact image.");
+        return;
+      }
+      setDraft((current) => ({ ...current, photoUrl: imageUrl }));
+      setMessage("");
+    };
+    reader.onerror = () => setMessage("Unable to read the contact image.");
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     fetch("/api/contacts")
@@ -83,11 +107,6 @@ export default function ContactsPage() {
   const filteredContacts = useMemo(() => {
     const search = query.trim().toLowerCase();
     return contacts.filter((contact) => {
-      const matchesCategory = category === "ALL" || contact.category === category;
-      const sortName = sortBy === "contact" ? contact.contactName : contact.companyName;
-      const firstCharacter = sortName.trim().charAt(0).toLocaleUpperCase();
-      const matchesAlphabet = alphabetFilter === "ALL"
-        || (alphabetFilter === "#" ? !/^[A-Z]$/.test(firstCharacter) : firstCharacter === alphabetFilter);
       const matchesSearch =
         !search ||
         contact.companyName.toLowerCase().includes(search) ||
@@ -98,15 +117,12 @@ export default function ContactsPage() {
         (contact.address || "").toLowerCase().includes(search) ||
         (contact.branch || "").toLowerCase().includes(search) ||
         `${contact.employee?.firstName || ""} ${contact.employee?.lastName || ""}`.toLowerCase().includes(search);
-      return matchesCategory && matchesAlphabet && matchesSearch;
+      return matchesSearch;
     });
-  }, [alphabetFilter, category, contacts, query, sortBy]);
+  }, [contacts, query]);
   const sortedContacts = useMemo(() => [...filteredContacts].sort((a, b) => {
-    const left = sortBy === "contact" ? a.contactName : a.companyName;
-    const right = sortBy === "contact" ? b.contactName : b.companyName;
-    return left.localeCompare(right);
-  }), [filteredContacts, sortBy]);
-  const hasFilters = Boolean(query || category !== "ALL" || alphabetFilter !== "ALL");
+    return a.contactName.localeCompare(b.contactName);
+  }), [filteredContacts]);
 
   const saveContact = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -125,9 +141,7 @@ export default function ContactsPage() {
       setContacts((current) => isUpdating
         ? current.map((contact) => contact.id === editingContactId ? data.contact as Contact : contact)
         : [...current, data.contact as Contact]);
-      setCategory("ALL");
       setQuery("");
-      setAlphabetFilter("ALL");
       setDraft(emptyContactDraft);
       setPhones([""]);
       setAddOpen(false);
@@ -154,6 +168,7 @@ export default function ContactsPage() {
       address: contact.address,
       services: contact.services,
       branch: contact.branch,
+      photoUrl: contact.photoUrl || null,
       employeeId: contact.employeeId,
     });
     setAddOpen(true);
@@ -194,60 +209,20 @@ export default function ContactsPage() {
   return (
     <main className="min-h-screen w-full bg-gray-50 p-4 sm:p-6 [&>div]:!max-w-none">
       <div className="w-full max-w-6xl">
-        <section aria-label="Contact directory tools" className="relative top-0 mb-4 grid grid-cols-1 items-center gap-2 sm:relative sm:-top-16 sm:-mb-12 sm:grid-cols-2 lg:grid-cols-[77px_auto_minmax(180px,1fr)_minmax(150px,180px)_minmax(150px,180px)]">
-          <span aria-hidden="true" className="hidden lg:block" />
-          <button type="button" onClick={() => { setMessage(""); setNotice(""); setEditingContactId(null); setDraft(emptyContactDraft); setPhones([""]); setAddOpen(true); }} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
+        <section aria-label="Contact directory tools" className="mb-4 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => { setMessage(""); setNotice(""); setEditingContactId(null); setDraft(emptyContactDraft); setPhones([""]); setAddOpen(true); }} className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
             <PlusIcon className="h-4 w-4" /> Add contact
           </button>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search contacts..." aria-label="Search contacts" className="col-span-1 h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:col-span-2 lg:col-span-1" />
-          <select aria-label="Filter by category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            <option value="ALL">All categories</option>
-            {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-          <select aria-label="Sort contacts" value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="h-10 min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            <option value="company">Company A–Z</option>
-            <option value="contact">Contact name A–Z</option>
-          </select>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search contacts..." aria-label="Search contacts" className="h-10 min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+          <button type="button" onClick={() => setQuery("")} disabled={!query} aria-label="Clear contact search" title="Clear search" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
+            <ArrowPathIcon className="h-4 w-4" />
+          </button>
+          <span className="ml-auto whitespace-nowrap text-sm text-gray-600">Showing <strong className="text-gray-900">{sortedContacts.length}</strong> of <strong className="text-gray-900">{contacts.length}</strong> contacts</span>
         </section>
         {message && !addOpen && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{message}</p>}
-        {notice && <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
-        <div className="mb-4 hidden flex-wrap items-center gap-2 lg:flex">
-          <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
-          {[{ value: "ALL", label: "All categories" }, ...categories.map((item) => ({ value: item, label: item }))].map((quickFilter) => (
-            <button
-              key={quickFilter.value}
-              type="button"
-              onClick={() => setCategory(quickFilter.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${category === quickFilter.value ? "border-blue-200 bg-blue-100 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
-            >
-              {quickFilter.label}
-            </button>
-          ))}
-        </div>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-gray-600">
-          <span>Showing <strong className="text-gray-900">{sortedContacts.length}</strong> of <strong className="text-gray-900">{contacts.length}</strong> contacts</span>
-          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1" role="group" aria-label="Filter contacts by first letter">
-            {[
-              { value: "ALL", label: "All" },
-              ...alphabetLetters.map((letter) => ({ value: letter, label: letter })),
-              { value: "#", label: "#" },
-            ].map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                aria-label={value === "ALL" ? "Show all contacts" : value === "#" ? "Show contacts not starting with A to Z" : `Show contacts starting with ${value}`}
-                aria-pressed={alphabetFilter === value}
-                onClick={() => setAlphabetFilter(value)}
-                className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md border px-1.5 text-xs font-semibold transition ${alphabetFilter === value ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {hasFilters && <button type="button" onClick={() => { setQuery(""); setCategory("ALL"); setAlphabetFilter("ALL"); }} className="font-semibold text-blue-700 hover:underline">Clear filters</button>}
-        </div>
+        {notice && <div role="status" className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"><p>{notice}</p><button type="button" onClick={() => setNotice("")} className="shrink-0 rounded-md px-3 py-1.5 font-semibold text-emerald-900 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-600">OK</button></div>}
         {loading ? <p role="status" className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-600 shadow-sm">Loading contacts...</p>
-          : sortedContacts.length === 0 ? <p className="rounded-lg border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">{contacts.length === 0 ? "No contacts have been added yet." : "No contacts match these filters."}</p> : (
+          : sortedContacts.length === 0 ? <p className="rounded-lg border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">{contacts.length === 0 ? "No contacts have been added yet." : "No contacts match your search."}</p> : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {sortedContacts.map((contact) => (
               <article key={contact.id} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:shadow-md sm:p-5">
@@ -300,6 +275,20 @@ export default function ContactsPage() {
               <h2 id="view-contact-title" className="text-xl font-bold text-slate-900">Contact information</h2>
               <button type="button" onClick={() => setViewingContact(null)} aria-label="Close contact details" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button>
             </div>
+            <div className="mb-5 flex items-center gap-4 border-b border-slate-100 pb-5">
+              {viewingContact.photoUrl ? (
+                <img src={viewingContact.photoUrl} alt={`${viewingContact.contactName} profile`} className="h-20 w-20 shrink-0 rounded-xl border border-slate-200 object-cover" />
+              ) : (
+                <div aria-label={`${viewingContact.contactName} photo placeholder`} className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl font-bold text-slate-400">
+                  {viewingContact.contactName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?"}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">{viewingContact.category}</p>
+                <h3 className="mt-1 break-words text-lg font-bold text-slate-900">{viewingContact.contactName}</h3>
+                <p className="mt-1 break-words text-sm text-slate-600">{viewingContact.companyName}</p>
+              </div>
+            </div>
             <dl className="grid gap-4 text-sm">
               <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Phone Number</dt><dd className="mt-1 text-slate-900">{viewingContact.phone || "Not set"}</dd></div>
               <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</dt><dd className="mt-1 break-all text-slate-900">{viewingContact.email || "Not set"}</dd></div>
@@ -337,6 +326,18 @@ export default function ContactsPage() {
             {message && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{message}</p>}
             <form onSubmit={saveContact} className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm font-medium text-slate-700 sm:col-span-2">Category<select required value={draft.category ?? ""} onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value, employeeId: null }))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"><option value="" disabled>Select category</option>{categories.filter((item) => item !== "Employee Contact").map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+              <div className="grid gap-2 sm:col-span-2">
+                <span className="text-sm font-medium text-slate-700">Contact photo or logo</span>
+                <div className="flex flex-wrap items-center gap-3">
+                  {draft.photoUrl ? <img src={draft.photoUrl} alt="Contact image preview" className="h-20 w-20 rounded-xl border border-slate-200 object-cover" /> : <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400">No image</div>}
+                  <label className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                    <span>{draft.photoUrl ? "Change image" : "Upload image"}</span>
+                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => { uploadContactImage(event.target.files?.[0]); event.currentTarget.value = ""; }} className="sr-only" />
+                  </label>
+                  {draft.photoUrl && <button type="button" onClick={() => setDraft((current) => ({ ...current, photoUrl: null }))} className="text-sm font-medium text-red-700 hover:text-red-800">Remove image</button>}
+                  <span className="text-xs text-slate-500">PNG, JPEG, WebP, or GIF · 2 MB max</span>
+                </div>
+              </div>
                   <label className="grid gap-1 text-sm font-medium text-slate-700">Company name<input required maxLength={120} value={draft.companyName} onChange={(event) => setDraft((current) => ({ ...current, companyName: event.target.value }))} className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
                   <label className="grid gap-1 text-sm font-medium text-slate-700">Contact name<input required maxLength={120} value={draft.contactName} onChange={(event) => setDraft((current) => ({ ...current, contactName: event.target.value }))} className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
                   <label className="grid gap-1 text-sm font-medium text-slate-700">Email<input type="email" value={draft.email ?? ""} onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))} className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>

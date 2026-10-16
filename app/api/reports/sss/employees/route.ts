@@ -42,6 +42,6 @@ export async function GET(request: NextRequest) {
     }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error(includeAllEmployees ? "Load all SSS report employees error:" : "Search SSS report employees error:", error);
-    return NextResponse.json({ error: includeAllEmployees ? "Unable to load employees for SSS loans" : "Unable to search employees by SS Number" }, { status: 500 });
+    return NextResponse.json({ error: includeAllEmployees ? "Unable to load SSS report employees" : "Unable to search employees by SS Number" }, { status: 500 });
   }
 }

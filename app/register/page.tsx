@@ -14,12 +14,10 @@ export default function AuthPage() {
     confirmPassword: "",
   });
   const [message, setMessage] = useState("");
-  const [verificationUrl, setVerificationUrl] = useState("");
 
   // LOGIN HANDLER
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setVerificationUrl("");
     try {
       const res = await fetch("/api/login", {
         method: "POST",
@@ -48,6 +46,18 @@ export default function AuthPage() {
       setMessage("Passwords do not match");
       return;
     }
+    // Mirror the server's password policy so the user sees the rule immediately.
+    const passwordBytes = new TextEncoder().encode(form.password).length;
+    const passwordOkay =
+      form.password.length >= 8
+      && passwordBytes <= 72
+      && /[A-Z]/.test(form.password)
+      && /[0-9]/.test(form.password)
+      && /[^\p{L}\p{N}\s]/u.test(form.password);
+    if (!passwordOkay) {
+      setMessage("Password must be 8-72 characters and include an uppercase letter, a number, and a special character");
+      return;
+    }
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -65,7 +75,6 @@ export default function AuthPage() {
         setMessage(data.message || "Registration failed");
       } else {
         setMessage(data.message);
-        setVerificationUrl(data.verificationUrl);
       }
     } catch {
       setMessage("Server error");
@@ -166,14 +175,6 @@ export default function AuthPage() {
         {message && (
           <div className="mt-4 text-center">
             <p className="text-gray-800">{message}</p>
-            {verificationUrl && (
-              <a
-                href={verificationUrl}
-                className="mt-2 inline-block break-all font-medium text-blue-700 underline hover:text-blue-900"
-              >
-                Open verification link
-              </a>
-            )}
           </div>
         )}
       </div>

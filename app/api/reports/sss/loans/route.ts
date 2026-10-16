@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
-import { calculateSssLoanOutstandingBalanceCents, calculateSssLoanPaymentAmountCents, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
+import { calculateSssLoanOutstandingBalanceCents, calculateSssLoanPaymentAmountCents, getSssLoanReportTiming, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
 import { isSssLoanType } from "@/lib/sssLoanTypes";
 import { prisma } from "@/lib/prisma";
 
@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
   const requestedMonth = request.nextUrl.searchParams.get("month");
   const requestedYear = request.nextUrl.searchParams.get("year");
   const forReport = request.nextUrl.searchParams.get("forReport") === "true";
+  const forLoanEntry = request.nextUrl.searchParams.get("forLoanEntry") === "true";
+  const forReportEntry = request.nextUrl.searchParams.get("forReportEntry") === "true";
+  const forLoanStatusReport = request.nextUrl.searchParams.get("forLoanStatusReport") === "true";
   const applicableMonth = requestedMonth === null ? null : Number(requestedMonth);
   const applicableYear = requestedYear === null ? null : Number(requestedYear);
   if (employerId !== null && (!Number.isSafeInteger(employerId) || employerId <= 0)) {
@@ -33,6 +36,12 @@ export async function GET(request: NextRequest) {
     || (applicableYear !== null && (!Number.isInteger(applicableYear) || applicableYear < 2000 || applicableYear > 2200))) {
     return NextResponse.json({ error: "Select a valid applicable month and year" }, { status: 400 });
   }
+  if (forReportEntry && (!forLoanEntry || applicableMonth === null || applicableYear === null)) {
+    return NextResponse.json({ error: "A valid report month and year are required for eligible loan entries" }, { status: 400 });
+  }
+  if (forLoanStatusReport && (employerId === null || applicableMonth === null || applicableYear === null)) {
+    return NextResponse.json({ error: "Select an employer and valid month and year to view the loan report" }, { status: 400 });
+  }
 
   try {
     const employer = employerId === null
@@ -42,7 +51,10 @@ export async function GET(request: NextRequest) {
     const loans = await prisma.sssLoan.findMany({
       where: employerId === null ? undefined : { employerId },
       orderBy: [{ employeeName: "asc" }, { loanAccountNumber: "asc" }],
-      include: { employer: { select: { name: true } } },
+      include: {
+        employer: { select: { name: true } },
+        employee: { select: { employerId: true, status: true, employer: { select: { name: true } } } },
+      },
     });
     const asOfDate = applicableMonth !== null && applicableYear !== null
       ? new Date(Date.UTC(applicableYear, applicableMonth - 1, 1))
@@ -55,17 +67,36 @@ export async function GET(request: NextRequest) {
         decimalToCents(loan.monthlyAmortization),
         loan.loanDate,
         asOfDate,
+        isSssLoanType(loan.loanType) ? loan.loanType : "S",
       );
-      const isVisible = forReport
-        ? loan.status === "ACTIVE" && monthlyPaymentCents > 0
-        : true;
+      const reportTiming = forReportEntry && isSssLoanType(loan.loanType)
+        ? getSssLoanReportTiming({
+          status: loan.status,
+          employeeStatus: loan.employee?.status ?? null,
+          loanDate: loan.loanDate,
+          loanType: loan.loanType,
+        }, asOfDate)
+        : null;
+      const isVisible = forLoanStatusReport
+        ? true
+        : forReportEntry
+        ? loan.employeeId !== null && reportTiming !== null
+        : forLoanEntry
+          ? loan.status === "ACTIVE" && loan.employeeId !== null
+        : forReport
+          ? loan.status === "ACTIVE" && loan.employeeId !== null && monthlyPaymentCents > 0
+          : true;
       return isVisible
         ? [{
           ...loan,
           employerName: loan.employer.name,
+          employeeEmployerId: loan.employee?.employerId ?? null,
+          employeeEmployerName: loan.employee?.employer?.name ?? null,
+          ...(forLoanStatusReport ? { employeeStatus: loan.employee?.status ?? null } : {}),
           employeeSssNumber: null,
           outstandingBalance: outstandingBalanceCents === null ? null : centsToMoney(outstandingBalanceCents),
           monthlyPayment: centsToMoney(monthlyPaymentCents),
+          ...(forReportEntry ? { reportTiming } : {}),
         }]
         : [];
     });
@@ -102,6 +133,7 @@ export async function POST(request: NextRequest) {
   const employerId = Number(body.employerId);
   const employeeId = Number(body.employeeId);
   const loanAccountNumber = typeof body.loanAccountNumber === "string" ? body.loanAccountNumber.trim() : "";
+  const loanAccountNumberKey = loanAccountNumber.toUpperCase();
   const transactionNumber = typeof body.transactionNumber === "string" ? body.transactionNumber.trim() : "";
   const loanType = body.loanType;
   const loanDate = parseSssLoanDateOnly(body.loanDate);
@@ -143,21 +175,30 @@ export async function POST(request: NextRequest) {
     }
 
     const middleInitial = employee.middleName?.trim().charAt(0);
-    const loan = await prisma.sssLoan.create({
-      data: {
-        employerId,
-        employeeId,
-        employeeName: `${employee.lastName}, ${employee.firstName}${middleInitial ? ` ${middleInitial.toLocaleUpperCase()}.` : ""}`,
-        employeeCode: employee.employeeCode,
-        biometricNo,
-        loanAccountNumber,
-        transactionNumber: transactionNumber || null,
-        loanType,
-        loanDate,
-        loanAmount: loanAmountCents === null ? null : centsToMoney(loanAmountCents),
-        monthlyAmortization: centsToMoney(monthlyAmortizationCents),
-      },
+    const loan = await prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`WITH loan_account_lock AS MATERIALIZED (SELECT pg_advisory_xact_lock(hashtext(${loanAccountNumberKey})::bigint)) SELECT TRUE FROM loan_account_lock`;
+      const duplicate = await transaction.sssLoan.findFirst({
+        where: { loanAccountNumber: { equals: loanAccountNumber, mode: "insensitive" } },
+        select: { id: true },
+      });
+      if (duplicate) return null;
+      return transaction.sssLoan.create({
+        data: {
+          employerId,
+          employeeId,
+          employeeName: `${employee.lastName}, ${employee.firstName}${middleInitial ? ` ${middleInitial.toLocaleUpperCase()}.` : ""}`,
+          employeeCode: employee.employeeCode,
+          biometricNo,
+          loanAccountNumber,
+          transactionNumber: transactionNumber || null,
+          loanType,
+          loanDate,
+          loanAmount: loanAmountCents === null ? null : centsToMoney(loanAmountCents),
+          monthlyAmortization: centsToMoney(monthlyAmortizationCents),
+        },
+      });
     });
+    if (!loan) return NextResponse.json({ error: "This Loan Account Number already exists" }, { status: 409 });
     const outstandingBalanceCents = calculateSssLoanOutstandingBalanceCents(
       loanAmountCents,
     );

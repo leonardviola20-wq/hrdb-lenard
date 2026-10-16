@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronLeftIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, Squares2X2Icon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, Squares2X2Icon, TrashIcon } from "@heroicons/react/24/outline";
 import { parseCsv, toCsv } from "@/lib/csv";
 import { JOB_LEVELS } from "@/lib/employeePayload";
 import { employeeProfileHref, matchesEmployeeStatus, sortNavigableEmployees } from "@/lib/employeeNavigation";
@@ -296,14 +296,14 @@ function EmployeesPageContent() {
       const employer = employee.employer
         ? `${employee.employer.name} ${employee.employer.company || ""}`.toLowerCase()
         : "";
-      return (!search || fullName.includes(search) || (employee.biometricNo || "").toLowerCase().includes(search) || employer.includes(search))
+      return (!search || fullName.includes(search) || (employee.branch || "").toLowerCase().includes(search) || (employee.biometricNo || "").toLowerCase().includes(search) || employer.includes(search))
         && (statusFilter === "ALL"
           || matchesEmployeeStatus(employee.status, statusFilter))
         && (!employerFilter || employee.employer?.id.toString() === employerFilter)
         && (!branchFilter || employee.branch === branchFilter)
         && (!hiredWithinDays || (employee.dateStarted
           && new Date(employee.dateStarted).getTime() >= Date.now() - hiredWithinDays * 24 * 60 * 60 * 1000))
-        && (requirementsFilter !== "missing" || countEmployeesMissingRequirements([employee]) > 0);
+        && (requirementsFilter !== "missing" || (matchesEmployeeStatus(employee.status, "ACTIVE") && countEmployeesMissingRequirements([employee]) > 0));
     });
   }, [employees, query, statusFilter, employerFilter, branchFilter, hiredWithinDays, requirementsFilter]);
 
@@ -553,6 +553,25 @@ function EmployeesPageContent() {
     }
   };
 
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!adminMenuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!adminMenuRef.current?.contains(event.target as Node)) setAdminMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAdminMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [adminMenuOpen]);
+
   const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -563,42 +582,26 @@ function EmployeesPageContent() {
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <Link
-            href="/dashboard"
-            onClick={(event) => {
-              if (window.matchMedia("(max-width: 767px)").matches) {
-                event.preventDefault();
-                window.dispatchEvent(new Event("hrdb-open-sidebar"));
-              }
-            }}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-          >
-            <ChevronLeftIcon className="h-4 w-4" /> Back
-          </Link>
           <Link href="/employees/new" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
             <PlusIcon className="h-4 w-4" /> Add
           </Link>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search employees..."
-            aria-label="Search employees"
+            placeholder="Filter by name, branch, or employer..."
+            aria-label="Filter employees by name, branch, or employer"
             className="hidden h-10 min-w-[140px] flex-[1_1_178px] rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block"
           />
-          <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="hidden h-10 w-[180px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
+          <span className="hidden whitespace-nowrap px-1 text-xs text-gray-600 lg:inline">
+            {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
+          </span>
+          <select aria-label="Quick filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="hidden h-10 w-[180px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
             <option value="ALL">All employees</option>
             <option value="ACTIVE">Active employees</option>
             <option value="INACTIVE">Inactive employees</option>
             <option value="Trainee">Trainee</option>
+            <option value="Contractual">Contractual</option>
           </select>
-          <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="hidden h-10 w-[180px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
-            <option value="">All employers</option>
-            {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
-          </select>
-            <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => updateNavigationFilters({ branchFilter: event.target.value })} className="hidden h-10 w-[230px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 lg:block">
-              <option value="">All branches</option>
-              {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-            </select>
           <button
             type="button"
             aria-label="View first employee matching filters"
@@ -644,25 +647,41 @@ function EmployeesPageContent() {
                 Transfer
               </button>
               {isAdmin && (
-                <>
+                <div ref={adminMenuRef} className="relative hidden md:block">
                   <button
                     type="button"
-                    onClick={exportEmployees}
-                    disabled={filteredEmployees.length === 0 || exporting}
-                    className="hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
+                    onClick={() => setAdminMenuOpen((open) => !open)}
+                    aria-haspopup="menu"
+                    aria-expanded={adminMenuOpen}
+                    aria-controls="employee-admin-menu"
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <ArrowDownTrayIcon className="h-4 w-4" /> {exporting ? "Exporting..." : "Export"}
+                    Admin <ChevronDownIcon aria-hidden="true" className={`h-4 w-4 transition ${adminMenuOpen ? "rotate-180" : ""}`} />
                   </button>
+                  {adminMenuOpen && (
+                    <div id="employee-admin-menu" role="menu" className="absolute right-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => { setAdminMenuOpen(false); void exportEmployees(); }}
+                        disabled={filteredEmployees.length === 0 || exporting}
+                        className="inline-flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <ArrowDownTrayIcon aria-hidden="true" className="h-4 w-4" /> {exporting ? "Exporting..." : "Export CSV"}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => { setAdminMenuOpen(false); fileInputRef.current?.click(); }}
+                        disabled={importing}
+                        className="inline-flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <ArrowUpTrayIcon aria-hidden="true" className="h-4 w-4" /> {importing ? "Importing..." : "Import CSV"}
+                      </button>
+                    </div>
+                  )}
                   <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleImportFile} className="hidden" />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={importing}
-                    className="hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 disabled:opacity-50 md:inline-flex"
-                  >
-                    <ArrowUpTrayIcon className="h-4 w-4" /> {importing ? "Importing..." : "Import"}
-                  </button>
-                </>
+                </div>
               )}
           </div>
         </div>
@@ -678,34 +697,27 @@ function EmployeesPageContent() {
           >
             <MagnifyingGlassIcon aria-hidden="true" className="h-5 w-5" />
           </button>
-            <span className="whitespace-nowrap text-xs text-gray-600">
-              {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
-            </span>
           </div>
           {mobileFiltersOpen && (
             <div id="mobile-employee-filters" className="mt-3 flex flex-col gap-3">
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search employees..."
-                aria-label="Search employees"
+                placeholder="Filter by name, branch, or employer..."
+                aria-label="Filter employees by name, branch, or employer"
                 className="h-10 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
-              <select aria-label="Filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+              <span className="whitespace-nowrap text-xs text-gray-600">
+                {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
+              </span>
+              <select aria-label="Quick filter by employee status" value={statusFilter} onChange={(event) => updateNavigationFilters({ statusFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 <option value="ALL">All employees</option>
                 <option value="ACTIVE">Active employees</option>
                 <option value="INACTIVE">Inactive employees</option>
                 <option value="Trainee">Trainee</option>
-              </select>
-              <select aria-label="Filter by employer" value={employerFilter} onChange={(event) => updateNavigationFilters({ employerFilter: event.target.value })} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="">All employers</option>
-                {employers.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
+                <option value="Contractual">Contractual</option>
               </select>
               <div className="flex items-center gap-2">
-                <select aria-label="Filter by branch" value={branchFilter} onChange={(event) => updateNavigationFilters({ branchFilter: event.target.value })} className="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                  <option value="">All branches</option>
-                  {employeeBranches.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-                </select>
                 <button
                   type="button"
                   aria-label="View first employee matching filters"
@@ -722,30 +734,6 @@ function EmployeesPageContent() {
               </div>
             </div>
           )}
-        </div>
-        <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
-          <div className="hidden flex-wrap items-center gap-2 lg:flex">
-            <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
-            {[
-              { value: "ACTIVE", label: "Active employees" },
-              { value: "Trainee", label: "Trainee" },
-              { value: "Contractual", label: "Contractual" },
-              { value: "ALL", label: "All employees" },
-              { value: "INACTIVE", label: "Inactive employees" },
-            ].map((quickFilter) => (
-              <button
-                key={quickFilter.value}
-                type="button"
-                onClick={() => updateNavigationFilters({ statusFilter: quickFilter.value })}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === quickFilter.value ? "border-blue-200 bg-blue-100 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
-              >
-                {quickFilter.label}
-              </button>
-            ))}
-          </div>
-          <span className="ml-auto hidden whitespace-nowrap text-xs text-gray-600 md:inline">
-            {loading ? "Loading..." : <>Showing <span className="font-semibold text-gray-900">{filteredEmployees.length}</span> of <span className="font-semibold text-gray-900">{employees.length}</span></>}
-          </span>
         </div>
         <section
             id="employee-transfer-panel"
@@ -817,26 +805,19 @@ function EmployeesPageContent() {
         )}
         {message && <p role="alert" className="mb-4 mt-4 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{message}</p>}
         {loading ? (
-          <div role="status" aria-label="Loading employees" className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div role="status" aria-label="Loading employees" className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             <span className="sr-only">Loading employees</span>
             {Array.from({ length: 8 }, (_, index) => (
-              <div key={index} className="animate-pulse rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                <div className="mb-4 h-24 w-24 rounded-full bg-gray-200" />
-                <div className="h-4 w-2/3 rounded bg-gray-200" />
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="h-3 rounded bg-gray-100" />
-                  <div className="h-3 rounded bg-gray-100" />
-                  <div className="h-3 rounded bg-gray-100" />
-                  <div className="h-3 rounded bg-gray-100" />
+              <div key={index} className="animate-pulse rounded-xl border border-gray-200 bg-white p-5 shadow-md">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="h-4 w-16 rounded bg-gray-200" />
+                  <div className="h-4 w-12 rounded bg-gray-200" />
                 </div>
-                <div className="mt-5 border-t border-gray-100 pt-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="h-3 rounded bg-gray-100" />
-                    <div className="h-3 rounded bg-gray-100" />
-                    <div className="h-3 rounded bg-gray-100" />
-                    <div className="h-3 rounded bg-gray-100" />
-                  </div>
-                </div>
+                <div className="mx-auto h-24 w-24 rounded-full bg-gray-200" />
+                <div className="mx-auto mt-3 h-4 w-2/3 rounded bg-gray-200" />
+                <div className="mx-auto mt-2 h-3 w-1/2 rounded bg-gray-100" />
+                <div className="mx-auto mt-2 h-5 w-20 rounded-full bg-gray-100" />
+                <div className="mx-auto mt-2 h-3 w-2/3 rounded bg-gray-100" />
               </div>
             ))}
           </div>
@@ -844,12 +825,13 @@ function EmployeesPageContent() {
           <p className="mt-4 rounded-xl border border-gray-200 bg-white p-6 text-gray-600 shadow-sm">No employees found.</p>
         ) : (
           employeeView === "cards" ? (
-            <div className="mt-4 grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {sortedEmployees.map((employee) => {
+            <div className="mt-4 grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+              {sortedEmployees.map((employee, index) => {
                 const fullName = [employee.firstName, employee.middleName, employee.lastName].filter(Boolean).join(" ");
                 const isCardSelected = selectedCardId === employee.id;
+                const isActive = activeEmployeeStatuses.includes(employee.status || "");
                 return (
-                  <article key={employee.id} className={`relative isolate w-full min-w-0 rounded-xl border p-4 shadow-sm transition sm:p-5 ${isCardSelected ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100 shadow-md" : "border-gray-200 bg-white hover:shadow-md"}`}>
+                  <article key={employee.id} style={{ animationDelay: `${Math.min(index, 11) * 60}ms` }} className={`card-lift relative isolate w-full min-w-0 rounded-xl border p-4 shadow-md transition sm:p-5 ${isCardSelected ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100 shadow-lg" : "border-gray-200 bg-white shadow-md hover:shadow-lg"}`}>
                     <button
                       type="button"
                       aria-label={`${isCardSelected ? "Unselect" : "Select"} ${fullName}`}
@@ -859,26 +841,16 @@ function EmployeesPageContent() {
                     />
                     <div className="pointer-events-none relative z-10">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-3">
-                          {employee.photoUrl
-                            ? <img src={employee.photoUrl} alt="" className="h-24 w-24 rounded-full border-2 border-gray-200 object-cover" />
-                            : <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs text-gray-400">No photo</div>}
-                          <div className="min-w-0">
-                            <div className="text-xs font-medium text-gray-500">Date Joined</div>
-                            <div className="mt-1 text-sm font-bold text-gray-900">{displayJoinedDate(employee.dateStarted)}</div>
-                          </div>
-                        </div>
-                        <h2 className="truncate text-base font-semibold text-gray-900">{fullName}</h2>
-                      </div>
-                      <div className="pointer-events-auto flex shrink-0 items-start gap-1">
+                      <div className="pointer-events-auto flex min-w-0 items-start gap-2">
                         {employeeSelectionMode && <input
                           type="checkbox"
                           checked={selectedEmployeeIds.has(employee.id)}
                           onChange={() => toggleEmployeeSelection(employee.id)}
                           aria-label={`Select ${fullName} for transfer`}
-                          className="mt-2 h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
+                          className="pointer-events-auto mt-1 h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-600"
                         />}
+                      </div>
+                      <div className="pointer-events-auto flex shrink-0 items-start gap-1">
                         {isCardSelected && <Link
                           href={profileHref(employee.id)}
                           aria-label={`View ${fullName}`}
@@ -886,14 +858,6 @@ function EmployeesPageContent() {
                           className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <EyeIcon aria-hidden="true" className="h-5 w-5" />
-                        </Link>}
-                        {isCardSelected && <Link
-                          href={`/employees/new/${employee.id}`}
-                          aria-label={`Edit ${fullName}`}
-                          title={`Edit ${fullName}`}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
                         </Link>}
                         {isCardSelected && canDeleteEmployees && <button
                           type="button"
@@ -907,29 +871,15 @@ function EmployeesPageContent() {
                         </button>}
                       </div>
                     </div>
-                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
-                      <div className="grid content-start gap-1">
-                        {(() => {
-                          const isActive = activeEmployeeStatuses.includes(employee.status || "");
-                          return (
-                            <>
-                              <span className={`font-semibold ${isActive ? "text-green-600" : "text-red-600"}`}>{isActive ? "Active" : "Inactive"}</span>
-                              <span className={`font-medium ${isActive ? "text-gray-700" : "text-red-700"}`}>{employee.status || "Not set"}</span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                      <div className="grid min-w-0 content-start gap-1">
-                        <span className="truncate text-gray-900">{employee.branch || "Branch not set"}</span>
-                        <span className="truncate text-gray-900">{employee.position || "Position not set"}</span>
-                      </div>
+                    <div className="mt-3 flex flex-col items-center">
+                      {employee.photoUrl
+                        ? <img src={employee.photoUrl} alt="" className="h-24 w-24 rounded-full border-2 border-gray-200 object-cover sm:h-28 sm:w-28" />
+                        : <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-sm text-gray-400 sm:h-28 sm:w-28">No photo</div>}
+                      <h2 className="mt-3 w-full truncate text-center text-base font-bold text-gray-900">{fullName}</h2>
+                      <p className="mt-1 w-full truncate text-center text-sm font-medium text-gray-700">{employee.biometricNo || "Not set"}</p>
+                      <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{isActive ? "Active" : "Inactive"}</span>
+                      <p className="mt-2 w-full truncate text-center text-sm text-gray-600">{employee.position || "Position not set"}<span className="px-1 text-gray-400">•</span>{employee.branch || "Branch not set"}</p>
                     </div>
-                    <dl className="mt-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-3 border-t border-gray-100 pt-4 text-sm">
-                      <div className="min-w-0"><dt className="text-gray-500">Biometric No.</dt><dd className="mt-1 truncate text-gray-900">{employee.biometricNo || "Not set"}</dd></div>
-                      <div className="min-w-0"><dt className="text-gray-500">Employer</dt><dd className="mt-1 truncate text-gray-900">{employee.employer?.name || "Unassigned"}</dd></div>
-                      <div className="min-w-0"><dt className="text-gray-500">Phone</dt><dd className="mt-1 break-words text-gray-900">{displayMobile(employee.mobileNumber)}</dd></div>
-                      <div className="min-w-0"><dt className="text-gray-500">Email</dt><dd className="mt-1 truncate text-gray-900">{employee.email || "Not set"}</dd></div>
-                    </dl>
                     </div>
                   </article>
                 );

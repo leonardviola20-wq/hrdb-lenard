@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +15,18 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Email and password are required" },
         { status: 400 }
+      );
+    }
+
+    // Throttle by both the submitted email and the client IP so that neither
+    // per-account guessing nor cross-account spraying from one host is cheap.
+    const emailLimit = checkRateLimit(`login:email:${email}`, 10, 15 * 60 * 1000);
+    const ipLimit = checkRateLimit(`login:ip:${getClientIp(req)}`, 30, 15 * 60 * 1000);
+    if (!emailLimit.allowed || !ipLimit.allowed) {
+      const retryAfter = Math.max(emailLimit.retryAfterSeconds, ipLimit.retryAfterSeconds);
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } },
       );
     }
 

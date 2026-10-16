@@ -9,6 +9,7 @@ describe("getEmployeeServiceSummary", () => {
     const summary = getEmployeeServiceSummary("Trainee", "2024-01-01", null, localDate("2024-01-02"));
     assert.deepEqual(summary, {
       duration: "00 years 00 months 01 day",
+      years: 0,
       durationState: "in-service",
       expiryDaysRemaining: null,
     });
@@ -18,6 +19,7 @@ describe("getEmployeeServiceSummary", () => {
     const summary = getEmployeeServiceSummary("Contractual", "2024-02-01", "2024-04-01", localDate("2024-03-01"));
     assert.deepEqual(summary, {
       duration: "00 years 01 month 00 days",
+      years: 0,
       durationState: "in-service",
       expiryDaysRemaining: 31,
     });
@@ -27,6 +29,7 @@ describe("getEmployeeServiceSummary", () => {
     const summary = getEmployeeServiceSummary("Contractual", "2024-01-01", "2024-02-01", localDate("2024-02-05"));
     assert.deepEqual(summary, {
       duration: "00 years 01 month 00 days",
+      years: 0,
       durationState: "in-service",
       expiryDaysRemaining: -4,
     });
@@ -36,6 +39,7 @@ describe("getEmployeeServiceSummary", () => {
     const summary = getEmployeeServiceSummary("Resigned", "2020-03-10", "2022-06-15", localDate("2024-01-01"));
     assert.deepEqual(summary, {
       duration: "02 years 03 months 05 days",
+      years: 2,
       durationState: "in-service",
       expiryDaysRemaining: null,
     });
@@ -61,5 +65,13 @@ describe("getEmployeeServiceSummary", () => {
     assert.equal(getEmployeeServiceSummary("Regular", null, null, localDate("2024-01-01")).durationState, "not-set");
     assert.equal(getEmployeeServiceSummary("Resigned", "2020-01-01", null, localDate("2024-01-01")).durationState, "not-active");
     assert.equal(getEmployeeServiceSummary("Regular", "2024-02-01", null, localDate("2024-01-01")).durationState, "invalid-range");
+  });
+
+  it("reports completed years for the years-only service display", () => {
+    assert.equal(getEmployeeServiceSummary("Regular", "2024-01-31", null, localDate("2025-01-30")).years, 0);
+    assert.equal(getEmployeeServiceSummary("Regular", "2024-01-31", null, localDate("2025-01-31")).years, 1);
+    assert.equal(getEmployeeServiceSummary("Regular", "2020-01-01", null, localDate("2024-01-01")).years, 4);
+    assert.equal(getEmployeeServiceSummary("Resigned", "2020-03-10", "2022-06-15", localDate("2024-01-01")).years, 2);
+    assert.equal(getEmployeeServiceSummary("Regular", null, null, localDate("2024-01-01")).years, null);
   });
 });

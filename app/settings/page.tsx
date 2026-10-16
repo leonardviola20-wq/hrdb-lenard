@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRightIcon, EyeIcon, EyeSlashIcon, KeyIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowUpRightIcon, EyeIcon, EyeSlashIcon, KeyIcon, ShieldCheckIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
@@ -87,25 +87,43 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 sm:px-6 sm:py-8">
-      <div className="max-w-6xl">
-        <div className="mb-6">
-          {error && <p role="alert" className="mt-3 text-sm font-medium text-red-700">{error}</p>}
-        </div>
+    <main className="min-h-[calc(100dvh-5rem)] bg-gradient-to-b from-slate-50 to-slate-100/70 px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto w-full max-w-6xl">
+        <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Account center</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Profile &amp; security</h2>
+            <p className="mt-1 max-w-2xl text-sm text-slate-600">Manage your personal details, sign-in credentials, and workspace access.</p>
+          </div>
+          {user && <div className="flex items-center gap-3 rounded-2xl border border-white bg-white/80 px-4 py-3 shadow-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-800">
+              <UserCircleIcon className="h-7 w-7" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-slate-900">{user.name || user.username || "Your account"}</span>
+              <span className="block truncate text-xs text-slate-500">{user.email}</span>
+            </span>
+            <span className="ml-2 hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 sm:inline-flex">
+              <ShieldCheckIcon className="h-4 w-4" /> {user.role}
+            </span>
+          </div>}
+        </header>
 
-        <div className="grid items-start gap-5 lg:grid-cols-2">
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-center gap-3 border-b border-gray-100 pb-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-800">
+        {error && <p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</p>}
+
+        <div className="grid items-stretch gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+            <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-800 ring-1 ring-blue-100">
                 <UserCircleIcon className="h-6 w-6" />
               </span>
               <div>
-                <h2 className="text-lg font-semibold text-gray-950">Profile</h2>
-                <p className="mt-0.5 text-sm text-gray-500">Your name and account details</p>
+                <h3 className="text-lg font-bold text-slate-950">Profile</h3>
+                <p className="mt-0.5 text-sm text-slate-500">Your name and account details</p>
               </div>
             </div>
 
-            <form onSubmit={saveName}>
+            <form onSubmit={saveName} className="space-y-3">
               <label className="grid gap-1.5 text-sm font-medium text-gray-700">
                 <span>Display name</span>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -119,39 +137,39 @@ export default function SettingsPage() {
                     placeholder="Enter your name"
                     className={fieldClass}
                   />
-                  <button type="submit" disabled={savingName || !user || displayName.trim() === (user.name || "")} className="shrink-0 rounded-lg bg-[#172554] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">
+                  <button type="submit" disabled={savingName || !user || displayName.trim() === (user.name || "")} className="shrink-0 rounded-lg bg-[#172554] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                     {savingName ? "Saving..." : "Save name"}
                   </button>
                 </div>
               </label>
-              {nameError && <p role="alert" className="mt-2 text-sm font-medium text-red-700">{nameError}</p>}
-              {nameMessage && <p role="status" className="mt-2 text-sm font-medium text-green-700">{nameMessage}</p>}
+              {nameError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{nameError}</p>}
+              {nameMessage && <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">{nameMessage}</p>}
             </form>
 
-            <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 border-t border-gray-100 pt-5">
-              <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Username</dt>
-                <dd className="mt-1 truncate text-sm font-medium text-gray-900">{user?.username || "Not set"}</dd>
+            <dl className="mt-6 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
+              <div className="min-w-0 rounded-xl bg-slate-50 p-3.5">
+                <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Username</dt>
+                <dd className="mt-1 truncate text-sm font-semibold text-slate-900">{user?.username || "Not set"}</dd>
               </div>
-              <div className="min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Role</dt>
-                <dd className="mt-1 text-sm font-medium text-gray-900">{user?.role || "Loading..."}</dd>
+              <div className="min-w-0 rounded-xl bg-slate-50 p-3.5">
+                <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Role</dt>
+                <dd className="mt-1 text-sm font-semibold text-slate-900">{user?.role || "Loading..."}</dd>
               </div>
-              <div className="col-span-2 min-w-0">
-                <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">Email</dt>
-                <dd className="mt-1 break-all text-sm font-medium text-gray-900">{user?.email || "Loading..."}</dd>
+              <div className="min-w-0 rounded-xl bg-slate-50 p-3.5 sm:col-span-2">
+                <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Email address</dt>
+                <dd className="mt-1 break-all text-sm font-semibold text-slate-900">{user?.email || "Loading..."}</dd>
               </div>
             </dl>
           </section>
 
-          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-center gap-3 border-b border-gray-100 pb-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+            <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100">
                 <KeyIcon className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-lg font-semibold text-gray-950">Password</h2>
-                <p className="mt-0.5 text-sm text-gray-500">Update your sign-in credentials</p>
+                <h3 className="text-lg font-bold text-slate-950">Password</h3>
+                <p className="mt-0.5 text-sm text-slate-500">Update your sign-in credentials</p>
               </div>
             </div>
 
@@ -185,10 +203,10 @@ export default function SettingsPage() {
                   </span>
                 </label>
               </div>
-              <p className="text-xs leading-5 text-gray-500">At least 8 characters, with an uppercase letter, a number, and a special character.</p>
-              {passwordError && <p role="alert" className="text-sm font-medium text-red-700">{passwordError}</p>}
-              {passwordMessage && <p role="status" className="text-sm font-medium text-green-700">{passwordMessage}</p>}
-              <button type="submit" disabled={changingPassword} className="w-fit rounded-lg bg-[#172554] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-60">
+              <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">Use at least 8 characters, including an uppercase letter, a number, and a special character.</p>
+              {passwordError && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{passwordError}</p>}
+              {passwordMessage && <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">{passwordMessage}</p>}
+              <button type="submit" disabled={changingPassword} className="w-fit rounded-lg bg-[#172554] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
                 {changingPassword ? "Updating..." : "Change password"}
               </button>
             </form>
@@ -196,10 +214,10 @@ export default function SettingsPage() {
         </div>
 
         {user?.role === "ADMIN" && (
-          <Link href="/admin" className="mt-5 flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-white px-5 py-4 text-gray-900 shadow-sm transition hover:border-blue-300 hover:bg-blue-50">
+          <Link href="/admin" className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-slate-900 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
             <span>
-              <span className="block text-sm font-semibold">Administration</span>
-              <span className="mt-1 block text-sm text-gray-500">Manage users and workspace access</span>
+              <span className="block text-sm font-bold">Administration</span>
+              <span className="mt-1 block text-sm text-slate-500">Manage users and workspace access</span>
             </span>
             <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-blue-800" />
           </Link>

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   employeeDirectoryHref,
   employeeProfileHref,
+  employeeProfileTabHref,
   getFirstMatchingEmployee,
   getEmployeeNavigation,
   matchesEmployeeNavigationFilters,
@@ -26,6 +27,7 @@ describe("employee navigation filters", () => {
   it("uses the directory's active, inactive, all, and specific status semantics", () => {
     assert.equal(matchesEmployeeStatus("Regular", "ACTIVE"), true);
     assert.equal(matchesEmployeeStatus("Leave", "ACTIVE"), true);
+    assert.equal(matchesEmployeeStatus("Resigned", "ACTIVE"), false);
     assert.equal(matchesEmployeeStatus("Resigned", "INACTIVE"), true);
     assert.equal(matchesEmployeeStatus("Resigned", "ALL"), true);
     assert.equal(matchesEmployeeStatus("Regular", "Trainee"), false);
@@ -108,6 +110,21 @@ describe("employee navigation filters", () => {
     assert.equal(
       employeeDirectoryHref(filters),
       "/employees?status=Trainee&branch=Branch+A&employer=12",
+    );
+  });
+
+  it("keeps the current profile query when switching tabs", () => {
+    assert.equal(
+      employeeProfileTabHref(17, "status=Trainee&branch=Branch+A&employer=12", "Government"),
+      "/employees/17?status=Trainee&branch=Branch+A&employer=12&tab=Government",
+    );
+    assert.equal(
+      employeeProfileTabHref(17, "", "Personal Information"),
+      "/employees/17?tab=Personal+Information",
+    );
+    assert.equal(
+      employeeProfileTabHref(17, "tab=Employment", "Requirements"),
+      "/employees/17?tab=Requirements",
     );
   });
 
