@@ -125,6 +125,7 @@ export default function SssReportsPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedLoanIds, setSelectedLoanIds] = useState<number[]>([]);
+  const [loanEntrySearch, setLoanEntrySearch] = useState("");
   const [selectedMsc, setSelectedMsc] = useState("");
   const [employeeSssSearch, setEmployeeSssSearch] = useState("");
   const [contributionEmployees, setContributionEmployees] = useState<Employee[]>([]);
@@ -143,6 +144,7 @@ export default function SssReportsPage() {
   const draftIdRef = useRef<number | null>(null);
   const draftSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const draftMenuRef = useRef<HTMLDivElement>(null);
+  const reportMenuRef = useRef<HTMLDivElement>(null);
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draft, setDraft] = useState({ employerId: "", prn: "", month: String(currentMonth), year: String(currentYear), amountDue: "" });
   const [entries, setEntries] = useState<DraftEntry[]>([]);
@@ -228,7 +230,7 @@ export default function SssReportsPage() {
   useEffect(() => {
     if (!reportMenuOpen) return;
     const closeOnOutsideClick = (event: MouseEvent) => {
-      if (event.target instanceof Node) setReportMenuOpen(null);
+      if (event.target instanceof Node && !reportMenuRef.current?.contains(event.target)) setReportMenuOpen(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setReportMenuOpen(null);
@@ -304,9 +306,26 @@ export default function SssReportsPage() {
 
   const currentEmployer = employers.find((employer) => String(employer.id) === selectedEmployerId) ?? null;
   const selectedEmployer = employers.find((employer) => String(employer.id) === draft.employerId) ?? null;
+  const existingLoanReportMonths = useMemo(() => {
+    if (kind !== "LOAN" || !draft.employerId) return new Set<number>();
+    return new Set(reports
+      .filter((report) => report.kind === "LOAN"
+        && report.employerId === Number(draft.employerId)
+        && report.applicableYear === Number(draft.year))
+      .map((report) => report.applicableMonth));
+  }, [draft.employerId, draft.year, kind, reports]);
   const loanEmployer = employers.find((employer) => String(employer.id) === loanForm.employerId) ?? null;
   const selectedLoanEmployee = loanEmployees.find((employee) => String(employee.id) === loanForm.employeeId) ?? null;
-    const visibleReportDrafts = reportDrafts.filter((savedDraft) => savedDraft.kind === kind && String(savedDraft.employerId) === selectedEmployerId);
+  const visibleReportDrafts = reportDrafts.filter((savedDraft) => savedDraft.kind === kind && String(savedDraft.employerId) === selectedEmployerId);
+  const availableLoanEntries = useMemo(() => {
+    const needle = loanEntrySearch.trim().toLocaleLowerCase();
+    return loanRecords.filter((loan) => loan.employeeId !== null
+      && !entries.some((entry) => entry.sssLoanId === loan.id)
+      && (!needle
+        || loan.employeeName.toLocaleLowerCase().includes(needle)
+        || (loan.employeeSssNumber ?? "").toLocaleLowerCase().includes(needle)
+        || loan.loanAccountNumber.toLocaleLowerCase().includes(needle)));
+  }, [entries, loanEntrySearch, loanRecords]);
   const years = useMemo(() => [...new Set([String(currentYear), ...reports.map((report) => String(report.applicableYear))])].sort((a, b) => b.localeCompare(a)), [reports, currentYear]);
   const annualReports = useMemo(() => {
     const selectedYear = yearFilter || String(currentYear);
@@ -820,6 +839,7 @@ export default function SssReportsPage() {
         loanAmount: loanReportEntryAmount(loan),
       }))]);
       setSelectedLoanIds([]);
+      setLoanEntrySearch("");
       setPickerOpen(false);
       return;
     }
@@ -860,6 +880,7 @@ export default function SssReportsPage() {
   const openEmployeePicker = async () => {
     setSelectedEmployeeId("");
     setSelectedLoanIds([]);
+    setLoanEntrySearch("");
     setEmployeeSssSearch("");
     setSelectedMsc("");
     setPendingEmployee(null);
@@ -869,12 +890,10 @@ export default function SssReportsPage() {
     setError("");
     try {
       if (kind === "LOAN") {
-        const month = Number(draft.month);
-        const year = Number(draft.year);
-        if (!selectedEmployer || !Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year)) {
-          throw new Error("Select an employer and valid applicable month/year before adding a loan account.");
+        if (!selectedEmployer) {
+          throw new Error("Select an employer before adding a loan account.");
         }
-        await loadOutstandingLoans(selectedEmployer.id, { month, year }, false, true, true);
+        await loadOutstandingLoans();
         return;
       }
       await loadAllReportEmployees();
@@ -1067,6 +1086,21 @@ export default function SssReportsPage() {
     if (!isTally) return;
     const employer = selectedEmployer;
     if (!employer) return;
+    if (!editReport && kind === "LOAN") {
+      const applicableMonth = Number(draft.month);
+      const applicableYear = Number(draft.year);
+      const duplicate = reports.some((report) =>
+        report.kind === "LOAN"
+        && report.employerId === employer.id
+        && report.applicableMonth === applicableMonth
+        && report.applicableYear === applicableYear,
+      );
+      if (duplicate) {
+        setError(`A Loan report for ${monthNames[applicableMonth - 1]} ${applicableYear} already exists for ${employer.name}. Select another Applicable Month or edit the existing report.`);
+        setPreview(false);
+        return;
+      }
+    }
     if (!window.confirm(`${editReport ? "Update" : "Save"} this ${kind.toLocaleLowerCase()} report for ${employer.name}?`)) return;
     setSaving(true);
     setError("");
@@ -1178,7 +1212,7 @@ export default function SssReportsPage() {
                   {visibleReportDrafts.length ? <ul className="divide-y divide-slate-100">{visibleReportDrafts.map((savedDraft) => <li key={savedDraft.id} className="flex items-start gap-3 px-4 py-3">
                     <button type="button" disabled={saving} onClick={() => void resumeReportDraft(savedDraft)} className="min-w-0 flex-1 rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
                       <span className="block truncate text-sm font-semibold text-slate-800">{reportEmployerLabel(savedDraft.entries, employers.find((employer) => employer.id === savedDraft.employerId)?.name || "Employer not selected")}</span>
-                      <span className="mt-1 block text-xs text-slate-600">{savedDraft.prn ? `PRN ${savedDraft.prn} · ` : ""}{monthNames[savedDraft.applicableMonth - 1]} {savedDraft.applicableYear} · {savedDraft.entries.length} employee{savedDraft.entries.length === 1 ? "" : "s"}</span>
+                      <span className="mt-1 block text-xs text-slate-600">{savedDraft.prn ? `PRN ${savedDraft.prn} · ` : ""}{monthNames[savedDraft.applicableMonth - 1]} {savedDraft.applicableYear} · {savedDraft.entries.length} {savedDraft.kind === "LOAN" ? `loan account${savedDraft.entries.length === 1 ? "" : "s"}` : `employee${savedDraft.entries.length === 1 ? "" : "s"}`}</span>
                       <span className="mt-1 block text-[11px] text-slate-500">Updated {new Date(savedDraft.updatedAt).toLocaleString()}</span>
                     </button>
                     <button type="button" disabled={saving} onClick={() => void deleteReportDraft(savedDraft)} className="shrink-0 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50">Delete</button>
@@ -1223,7 +1257,7 @@ export default function SssReportsPage() {
                     <td className="px-1.5 py-1.5 text-right sm:px-2 md:px-3"><div className="inline-flex flex-wrap items-center justify-end gap-1">
                       <button type="button" onClick={() => setViewReport(report)} aria-label={`View ${report.employerName} report`} title="View report and payment details" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-blue-700 hover:bg-blue-100"><EyeIcon className="h-4 w-4" /></button>
                       {canEditPayments ? (
-                        <div className="relative">
+                        <div ref={reportMenuOpen === report.id ? reportMenuRef : null} className="relative">
                           <button type="button" onClick={() => setReportMenuOpen(reportMenuOpen === report.id ? null : report.id)} aria-label={`Actions for ${report.employerName} report`} title="Report actions" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-200"><EllipsisVerticalIcon className="h-4 w-4" /></button>
                           {reportMenuOpen === report.id && <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-slate-200 bg-white shadow-lg">
                             <button type="button" onClick={() => { setReportMenuOpen(null); openPaymentForm(report); }} className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">{report.amountPaid ? "Edit payment" : "Add payment"}</button>
@@ -1254,11 +1288,16 @@ export default function SssReportsPage() {
         {draftSaveStatus !== "idle" && <p role="status" className="mb-4 text-xs font-medium text-slate-500">{draftSaveStatus === "saving" ? "Saving draft..." : "Draft saved automatically."}</p>}
         {!preview ? <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Field label="Employer" required><select required value={draft.employerId} onChange={(event) => { setDraft((current) => ({ ...current, employerId: event.target.value })); if (!editReport) setEntries([]); }} className={inputClass}><option value="">Select employer</option>{employers.map((employer) => <option key={employer.id} value={String(employer.id)}>{employer.name}</option>)}</select></Field>
+            <Field label="Employer" required><select required value={draft.employerId} onChange={(event) => { setDraft((current) => ({ ...current, employerId: event.target.value })); setError(""); if (!editReport) setEntries([]); }} className={inputClass}><option value="">Select employer</option>{employers.map((employer) => <option key={employer.id} value={String(employer.id)}>{employer.name}</option>)}</select></Field>
             <Field label="PRN (Payment Reference Number)" required><input required value={draft.prn} onChange={(event) => setDraft((current) => ({ ...current, prn: event.target.value }))} className={inputClass} placeholder="Enter PRN" /></Field>
             <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3 lg:col-span-3">
-              <Field label="Applicable Month" required><select value={draft.month} onChange={(event) => setDraft((current) => ({ ...current, month: event.target.value }))} className={inputClass}>{monthNames.map((month, index) => <option key={month} value={String(index + 1)}>{month}</option>)}</select></Field>
-              <Field label="Applicable Year" required><select value={draft.year} onChange={(event) => setDraft((current) => ({ ...current, year: event.target.value }))} className={inputClass}>{Array.from({ length: Math.max(1, currentYear - 2025 + 2) }, (_, index) => String(currentYear + 1 - index)).filter((year) => Number(year) >= 2025).map((year) => <option key={year} value={year}>{year}</option>)}</select></Field>
+              <Field label="Applicable Month" required><select value={draft.month} onChange={(event) => { setDraft((current) => ({ ...current, month: event.target.value })); setError(""); }} className={inputClass}>{monthNames.map((month, index) => {
+                const monthNumber = index + 1;
+                const alreadyExists = existingLoanReportMonths.has(monthNumber);
+                const unavailable = !editReport && alreadyExists;
+                return <option key={month} value={String(monthNumber)} disabled={unavailable}>{month}{unavailable ? " (Paid)" : ""}</option>;
+              })}</select>{kind === "LOAN" && !editReport && <p className="mt-1 text-xs text-slate-500">Months marked “Paid” are unavailable for this employer and year.</p>}</Field>
+              <Field label="Applicable Year" required><select value={draft.year} onChange={(event) => { setDraft((current) => ({ ...current, year: event.target.value })); setError(""); }} className={inputClass}>{Array.from({ length: Math.max(1, currentYear - 2025 + 2) }, (_, index) => String(currentYear + 1 - index)).filter((year) => Number(year) >= 2025).map((year) => <option key={year} value={year}>{year}</option>)}</select></Field>
               <Field label="Amount Due" required><AmountDueInput value={draft.amountDue} onChange={(value) => setDraft((current) => ({ ...current, amountDue: value }))} /></Field>
             </div>
           </div>
@@ -1295,16 +1334,17 @@ export default function SssReportsPage() {
 
         {pickerOpen && <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-slate-950/50 px-4 pb-4 pt-[8vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerOpen(false); }}>
           <section role="dialog" aria-modal="true" aria-labelledby="employee-entry-title" className="flex h-[min(80dvh,42rem)] w-full max-w-xl flex-col rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-            <div className="flex shrink-0 items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wide text-blue-700">{kind === "CONTRIBUTION" ? "Contribution entry" : "Loan entry"}</p><h3 id="employee-entry-title" className="mt-1 text-lg font-bold text-slate-900">{kind === "CONTRIBUTION" ? "Select employee" : "Select loan account"}</h3><p className="mt-1 text-xs text-slate-500">{kind === "CONTRIBUTION" ? "Choose any employee from the database, regardless of employer or status." : "Active loan accounts across all employers, whether or not payment is scheduled for this month."}</p></div><button type="button" onClick={() => setPickerOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
+            <div className="flex shrink-0 items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wide text-blue-700">{kind === "CONTRIBUTION" ? "Contribution entry" : "Loan entry"}</p><h3 id="employee-entry-title" className="mt-1 text-lg font-bold text-slate-900">{kind === "CONTRIBUTION" ? "Select employee" : "Select loan account"}</h3><p className="mt-1 text-xs text-slate-500">{kind === "CONTRIBUTION" ? "Choose any employee from the database, regardless of employer or status." : "Choose any saved loan account linked to an employee, regardless of status or report period."}</p></div><button type="button" onClick={() => setPickerOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
             <div className="mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto">
               {kind === "CONTRIBUTION" && <Field label="Search by employee name or SS Number"><input type="search" value={employeeSssSearch} onChange={(event) => setEmployeeSssSearch(event.target.value)} className={inputClass} placeholder="Type a name or SS Number" autoComplete="off" /></Field>}
+              {kind === "LOAN" && <Field label="Search by name or SS Number"><input type="search" value={loanEntrySearch} onChange={(event) => setLoanEntrySearch(event.target.value)} className={inputClass} placeholder="Type a name or SS Number" autoComplete="off" /></Field>}
               {kind === "CONTRIBUTION" && employeeSearchQuery && <div className="-mt-2 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white" role="listbox" aria-label="Matching employees">
                 {filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id)).length === 0 && <p className="px-3 py-2 text-sm text-slate-500">No employees match this name or SS Number.</p>}
                 {filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id)).map((employee) => <button key={employee.id} type="button" role="option" aria-selected={selectedEmployeeId === String(employee.id)} onClick={() => selectEmployeeForContribution(employee)} className={`block w-full border-b border-slate-100 px-3 py-2 text-left last:border-b-0 hover:bg-blue-50 ${selectedEmployeeId === String(employee.id) ? "bg-blue-50" : "bg-white"}`}><span className="block text-sm font-semibold text-slate-900">{employeeName(employee)} <span className="font-mono font-medium">· {employee.sssNumber || "No SS Number"}</span></span><span className="mt-0.5 block text-xs text-slate-600">{employee.employerName || "No employer assigned"}{employee.status ? ` · ${employee.status}` : ""}</span></button>)}
               </div>}
               {kind === "CONTRIBUTION"
                 ? <Field label="Employee from database" required><select value={selectedEmployeeId} onChange={(event) => { const employee = pickerEmployees.find((candidate) => String(candidate.id) === event.target.value) ?? null; setSelectedEmployeeId(event.target.value); setPendingEmployee(employee); }} disabled={loadingEmployerEmployees} className={inputClass}><option value="">{loadingEmployerEmployees ? "Loading employees..." : "Select employee"}</option>{filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id) || String(employee.id) === selectedEmployeeId).map((employee) => <option key={employee.id} value={String(employee.id)}>{employeeName(employee)} · SS Number: {employee.sssNumber || "Not set"}{employee.employerName ? ` · ${employee.employerName}` : " · No employer assigned"}{employee.status && employee.status !== "Active" ? ` · ${employee.status}` : ""}</option>)}</select></Field>
-                : <Field label="Loan Account" required><div className="overflow-hidden rounded-lg border border-slate-300" role="group" aria-label="Loan accounts"><div className="grid grid-cols-[minmax(0,1fr)_minmax(7rem,0.7fr)_minmax(6rem,auto)] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600"><span>Name</span><span>Loan Type</span><span className="text-right">Amount</span></div><div className="max-h-64 overflow-y-auto">{loadingLoans ? <p className="px-3 py-4 text-center text-sm text-slate-500">Loading loan accounts...</p> : loanRecords.filter((loan) => loan.employeeId !== null && !entries.some((entry) => entry.sssLoanId === loan.id)).map((loan) => <label key={loan.id} className={`grid cursor-pointer grid-cols-[minmax(0,1fr)_minmax(7rem,0.7fr)_minmax(6rem,auto)] items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0 hover:bg-blue-50 ${selectedLoanIds.includes(loan.id) ? "bg-blue-50" : "bg-white"}`}><span className="flex min-w-0 items-center gap-2 font-medium text-slate-900"><input type="checkbox" name="loan-account" value={loan.id} checked={selectedLoanIds.includes(loan.id)} onChange={() => setSelectedLoanIds((current) => current.includes(loan.id) ? current.filter((id) => id !== loan.id) : [...current, loan.id])} className="shrink-0 rounded accent-blue-600" /><span className="truncate">{loan.employeeName}</span></span><span className="text-xs text-slate-700">{getSssLoanTypeLabel(loan.loanType)}{loan.reportTiming === "OVERDUE" && <span className="block text-[11px] font-medium text-amber-700">Past due · optional</span>}</span><span className="text-right font-semibold tabular-nums text-slate-900">{formatMoney(Number(loan.monthlyPayment) > 0 ? loan.monthlyPayment : loan.monthlyAmortization)}</span></label>)}{!loadingLoans && loanRecords.filter((loan) => loan.employeeId !== null && !entries.some((entry) => entry.sssLoanId === loan.id)).length === 0 && <p className="px-3 py-4 text-center text-sm text-slate-500">No unselected current or past-due active loan accounts are available.</p>}</div></div></Field>}
+                : <Field label="Loan Account" required><div className="overflow-hidden rounded-lg border border-slate-300" role="group" aria-label="Loan accounts"><div className="grid grid-cols-[minmax(0,1fr)_minmax(8rem,0.8fr)_minmax(6rem,auto)] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600"><span>Name</span><span>Loan Account Number</span><span className="text-right">Loan Amount</span></div><div className="max-h-60 overflow-y-auto">{loadingLoans ? <p className="px-3 py-4 text-center text-sm text-slate-500">Loading loan accounts...</p> : availableLoanEntries.map((loan) => <label key={loan.id} className={`grid cursor-pointer grid-cols-[minmax(0,1fr)_minmax(8rem,0.8fr)_minmax(6rem,auto)] items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0 hover:bg-blue-50 ${selectedLoanIds.includes(loan.id) ? "bg-blue-50" : "bg-white"}`}><span className="flex min-w-0 items-center gap-2 font-medium text-slate-900"><input type="checkbox" name="loan-account" value={loan.id} checked={selectedLoanIds.includes(loan.id)} onChange={() => setSelectedLoanIds((current) => current.includes(loan.id) ? current.filter((id) => id !== loan.id) : [...current, loan.id])} className="shrink-0 rounded accent-blue-600" /><span className="truncate">{loan.employeeName}</span></span><span className="truncate font-mono text-xs text-slate-700">{loan.loanAccountNumber}</span><span className="text-right font-semibold tabular-nums text-slate-900">{formatMoney(Number(loan.monthlyPayment) > 0 ? loan.monthlyPayment : loan.monthlyAmortization)}</span></label>)}{!loadingLoans && availableLoanEntries.length === 0 && <p className="px-3 py-4 text-center text-sm text-slate-500">{loanEntrySearch.trim() ? "No loan accounts match this name or SS Number." : "No unselected saved loan accounts are available."}</p>}</div></div></Field>}
               {kind === "CONTRIBUTION" && <Field label="MSC"><button type="button" disabled={!selectedEmployeeId} onClick={() => setRangePickerTarget("new")} className={`${inputClass} flex items-center justify-between text-left disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500`}><span>{selectedMsc ? formatMoney(Number(selectedMsc)) : selectedEmployeeId ? "Select range" : "Select an employee first"}</span><ChevronDownIcon className="h-4 w-4 shrink-0 text-slate-600" /></button></Field>}
             </div>
             <div className="mt-4 flex shrink-0 justify-end gap-2"><button type="button" onClick={() => setPickerOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>{kind === "LOAN" && <button type="button" disabled={loadingLoans || selectedLoanIds.length === 0} onClick={addSelectedEmployee} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"><CheckIcon className="h-4 w-4" /> Add {selectedLoanIds.length} Account{selectedLoanIds.length === 1 ? "" : "s"}</button>}</div>

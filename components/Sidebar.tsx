@@ -345,6 +345,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function getPageTitle(pathname: string) {
   if (pathname === "/reports") return "Reports Dashboard";
   if (pathname === "/reports/sss") return "SSS Reports";
+  if (pathname.startsWith("/reports/pagibig")) return "Pag-IBIG Reports";
   if (pathname.startsWith("/tasks")) return "Tasks";
   if (pathname === "/dashboard") return "Dashboard";
   if (pathname.startsWith("/employees/new/")) return "Update Employee";
@@ -365,6 +366,7 @@ function getPageTitle(pathname: string) {
 function getPageSubtitle(pathname: string) {
   if (pathname === "/reports") return "Choose a report type to manage payroll and compliance records.";
   if (pathname === "/reports/sss") return "Monitor SSS employer contributions and loan payments.";
+  if (pathname.startsWith("/reports/pagibig")) return "Manage Pag-IBIG member accounts, savings, loans, and payments.";
   if (pathname.startsWith("/tasks")) return "Plan, prioritize, and keep your work moving.";
   if (pathname === "/dashboard") return "Your personal workspace and task overview.";
   if (pathname === "/employees/new") return "Create an employee profile and record their work information.";

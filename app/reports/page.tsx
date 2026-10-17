@@ -19,18 +19,18 @@ const reportCards = [
     Icon: DocumentChartBarIcon,
     accent: "from-blue-600 to-blue-700",
     actions: [
-      { label: "Contribution", href: "/reports/sss?kind=CONTRIBUTION" },
-      { label: "Loan", href: "/reports/sss?kind=LOAN" },
+      { label: "Contribution", href: "/reports/sss?kind=CONTRIBUTION", requiresEmployer: true },
+      { label: "Loan", href: "/reports/sss?kind=LOAN", requiresEmployer: true },
     ],
   },
   {
     title: "Pag-IBIG",
-    description: "Coming soon",
+    description: "Member accounts and payment reports",
     Icon: BanknotesIcon,
     accent: "from-violet-500 to-violet-600",
     actions: [
-      { label: "Contribution", href: null },
-      { label: "Loan", href: null },
+      { label: "View", href: "/reports/pagibig?view=members", requiresEmployer: true },
+      { label: "Payments", href: "/reports/pagibig?view=payments", requiresEmployer: true },
     ],
   },
   {
@@ -39,7 +39,7 @@ const reportCards = [
     Icon: ShieldCheckIcon,
     accent: "from-emerald-500 to-emerald-600",
     actions: [
-      { label: "Contribution", href: null },
+      { label: "Contribution", href: null, requiresEmployer: false },
     ],
   },
 ] as const;
@@ -143,7 +143,7 @@ function ReportsDashboardContent() {
                     );
                   }
 
-                  if (!selectedEmployerId) {
+                  if (action.requiresEmployer && !selectedEmployerId) {
                     return (
                       <button key={action.label} type="button" disabled title="Select an employer first" className="inline-flex h-10 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2 text-center text-xs font-semibold text-slate-400 disabled:opacity-60 sm:text-sm">
                         {content}

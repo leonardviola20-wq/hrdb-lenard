@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracket, toSssMoney } from "@/lib/sssContributionTable";
+import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -79,7 +80,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       kind === "LOAN"
         ? prisma.sssLoan.findMany({
           where: { id: { in: loanIds } },
-          select: { id: true, employeeId: true, loanAccountNumber: true, status: true },
+          select: { id: true, employeeId: true, loanAccountNumber: true },
         })
         : Promise.resolve([]),
     ]);
@@ -122,8 +123,8 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       const loanCents = parseMoney(entry.loanAmount);
       if (loanCents === null || loanCents <= 0) throw new Error("Each loan entry must have an amount greater than zero");
       const loan = loanById.get(entry.sssLoanId!);
-      if (!loan || loan.employeeId !== employee.id || loan.status !== "ACTIVE") {
-        throw new Error("Each loan entry must reference an active loan account for that employee");
+      if (!isLoanAccountLinkedToReportEmployee(loan, employee.id)) {
+        throw new Error("Each loan entry must reference a saved loan account belonging to that employee");
       }
       totalCents += loanCents;
       return {

@@ -20,35 +20,11 @@ I understand this refinement as: remove the Employer dropdown from the View Loan
 
 ### user
 
-Create a new branch from updated main (enter its name)
-
-### agent
-
-The new branch name was requested because the selected branch-creation choice did not include a name.
-
-### user
-
-feature/10-16-2026
-
-### agent
-
-Confirmed: after merging and pushing all current changes to `origin/main`, create and switch to `feature/10-16-2026`. The separate main worktree has an unrelated untracked backup dump; it will not be staged or changed.
-
-### user
-
 git commit, merge, push then branch
 
 ### agent
 
 The worktree contains a large set of staged, unstaged, and untracked changes across multiple features, not just the latest SSS employer-column fix. I am checking the intended commit scope and what “then branch” means before committing, merging, pushing, or switching branches; the current branch is `feature/10-07-2026`.
-
-### user
-
-All current staged, unstaged, and untracked changes
-
-### agent
-
-Confirmed: include all current changes. The current branch is `feature/10-07-2026`, its upstream is up to date, and the configured remote default branch is `main`. I still need the final branch action specified before proceeding with the commit, merge, and push.
 
 ### user
 
@@ -407,6 +383,14 @@ implement
 
 ### agent
 
+Implemented the Contacts category filter. The toolbar now places a single-select category dropdown between text search and the clear button. It defaults to “All categories,” lists the built-in categories and any additional categories found in loaded contacts, and combines with text search. Clear filters resets both controls, and successful contact saves clear both filters so the saved contact remains visible.
+
+Updated TECHNICAL.md, project memory, and Iteration 19 in the TODO checklist.
+
+Validation passed: `npx eslint app/contacts/page.tsx` (0 errors; three existing `<img>` warnings), `npx tsc --noEmit`, and `git diff --check`.
+
+### user
+
 Implemented the report refinement. The read-only Report now includes ACTIVE loans linked to active employees when the calculated Start Date is in the current month or any earlier month. Future Start Dates, inactive loans, and inactive employees remain excluded. Updated the report subtitle and empty state, shared eligibility helper, API filtering, regression tests, TECHNICAL.md, and project memory. The report remains scoped to the dashboard-selected employer and is not saved.
 
 Validation passed: all 17 focused SSS loan tests, focused ESLint, `npx tsc --noEmit`, Problems checks for the changed TypeScript files, and `git diff --check`.
@@ -555,25 +539,18 @@ Validation passed: focused contribution-history tests (10/10), TypeScript, Probl
 
 ### user
 
-git commit, merge, push then branch
+Contacts
+add a filter base on the category
+place it beside the filter before the refresh button
 
 ### agent
 
-The worktree contains staged, unstaged, and untracked changes across multiple features. I checked the current branch and remote: the current branch is `feature/10-07-2026`, and origin's default branch is `main`. I asked which changes to include and the user confirmed all current worktree changes.
+Working in `task_20261015_contact-success-confirmation.md`.
+
+Plan: add a single-select category dropdown to the Contacts toolbar, positioned immediately after the search field and before the existing clear button. It will default to “All categories,” offer the existing built-in categories plus any additional categories loaded from contacts, and combine with the existing text search. The clear button will reset both filters. Agent Kanban requires the `implement` command before code changes.
 
 ### user
 
-Assuming the merge and push target is `origin/main`, the user selected creating a new branch from updated main afterward. The branch name is still needed before proceeding.
+implement
 
 ### agent
-
-What should I name the new branch to create from the updated `main` after merging and pushing?
-
-### user
-feature/10-16-2026
-
-### agent
-
-Confirmed: after merging and pushing all current changes to `origin/main`, create and switch to `feature/10-16-2026`. The separate main worktree has an unrelated untracked backup dump; it will not be staged or changed.
-
-### user

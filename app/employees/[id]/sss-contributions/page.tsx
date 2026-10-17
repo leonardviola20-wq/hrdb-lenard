@@ -1,13 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeftIcon, EyeIcon, InformationCircleIcon, ListBulletIcon, Squares2X2Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { ChevronLeftIcon, EyeIcon, InformationCircleIcon, ListBulletIcon, PencilSquareIcon, Squares2X2Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { HistoryBackLink } from "@/components/HistoryBackLink";
 import { useAppHeaderActions } from "@/components/Sidebar";
 import { buildSssContributionMatrix, type SssContributionHistory } from "@/lib/sssContributionHistory";
-import { getSssLoanFirstAmortizationDate } from "@/lib/sssLoanBalance";
-import { getSssLoanTypeLabel, isSssLoanType, type SssLoanType } from "@/lib/sssLoanTypes";
+import { getSssLoanFirstAmortizationDate, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
+import { getSssLoanTypeLabel, isSssLoanType, sssLoanTypes } from "@/lib/sssLoanTypes";
+import { isSssLoanStatus, type SssLoanStatus } from "@/lib/sssLoanStatus";
 
 type ContributionsEmployee = {
   firstName: string;
@@ -38,6 +39,7 @@ type SssLoanReport = {
 type SssLoanAccount = {
   id: number | null;
   loanAccountNumber: string;
+  transactionNumber: string | null;
   loanType: string | null;
   loanDate: string | null;
   loanAmount: string | null;
@@ -49,8 +51,20 @@ type SssLoanAccount = {
 
 type SssLoanHistoryResponse = {
   employee?: ContributionsEmployee;
+  canEditLoans?: boolean;
   loans?: SssLoanAccount[];
   error?: string;
+};
+
+type SssLoanEditForm = {
+  loanAccountNumber: string;
+  transactionNumber: string;
+  loanType: string;
+  loanDate: string;
+  loanAmount: string;
+  monthlyAmortization: string;
+  status: SssLoanStatus;
+  reason: string;
 };
 
 type ContributionsView = "table" | "list";
@@ -117,25 +131,34 @@ export default function EmployeeSssContributionsPage() {
   const [failure, setFailure] = useState<ContributionsFailure | null>(null);
   const [view, setView] = useState<ContributionsView>("table");
   const [recordType, setRecordType] = useState<"CONTRIBUTION" | "LOAN">("CONTRIBUTION");
-  const [selectedLoanType, setSelectedLoanType] = useState("ALL");
+  const [loanTypeFilter, setLoanTypeFilter] = useState<{ employeeId: string; type: string }>({ employeeId, type: "ALL" });
+  const selectedLoanType = loanTypeFilter.employeeId === employeeId ? loanTypeFilter.type : "ALL";
   const [loanStatusFilter, setLoanStatusFilter] = useState<{ employeeId: string; status: "ALL" | "ACTIVE" | "INACTIVE" }>({ employeeId, status: "ALL" });
   const selectedLoanStatus = loanStatusFilter.employeeId === employeeId ? loanStatusFilter.status : "ALL";
-  const [paymentDetailsLoan, setPaymentDetailsLoan] = useState<SssLoanAccount | null>(null);
+  const [paymentDetailsLoan, setPaymentDetailsLoan] = useState<{ employeeId: string; loan: SssLoanAccount } | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const historyRefreshTimerRef = useRef<number | null>(null);
   const [loanHistory, setLoanHistory] = useState<{ employeeId: string; loans: SssLoanAccount[] } | null>(null);
   const [loanFailure, setLoanFailure] = useState<ContributionsFailure | null>(null);
-  const [loanLoading, setLoanLoading] = useState(false);
+  const [canEditLoans, setCanEditLoans] = useState(false);
+  const [loanEditTarget, setLoanEditTarget] = useState<SssLoanAccount | null>(null);
+  const [loanEditForm, setLoanEditForm] = useState<SssLoanEditForm>({
+    loanAccountNumber: "",
+    transactionNumber: "",
+    loanType: "S",
+    loanDate: "",
+    loanAmount: "",
+    monthlyAmortization: "",
+    status: "ACTIVE",
+    reason: "",
+  });
+  const [loanEditSaving, setLoanEditSaving] = useState(false);
+  const [loanEditError, setLoanEditError] = useState("");
 
   useEffect(() => {
     setAppHeaderActions({ actions: null, backHref: `/employees/${employeeId}?tab=Government`, hideBack: true });
     return () => setAppHeaderActions(null);
   }, [employeeId, setAppHeaderActions]);
-
-  useEffect(() => {
-    setSelectedLoanType("ALL");
-    setPaymentDetailsLoan(null);
-  }, [employeeId]);
 
   useEffect(() => {
     const refreshHistory = () => {
@@ -196,21 +219,18 @@ export default function EmployeeSssContributionsPage() {
   useEffect(() => {
     if (recordType !== "LOAN") return;
     let cancelled = false;
-    setLoanLoading(true);
     fetch(`/api/employees/${employeeId}/sss-loans`, { cache: "no-store" })
       .then(async (response) => {
         const data: SssLoanHistoryResponse = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to load SSS loan reports");
         if (cancelled) return;
         setLoanHistory({ employeeId, loans: data.loans ?? [] });
+        setCanEditLoans(data.canEditLoans === true);
         setLoanFailure(null);
       })
       .catch((loadError: unknown) => {
         if (cancelled) return;
         setLoanFailure({ employeeId, message: loadError instanceof Error ? loadError.message : "Unable to load SSS loan reports" });
-      })
-      .finally(() => {
-        if (!cancelled) setLoanLoading(false);
       });
     return () => {
       cancelled = true;
@@ -261,6 +281,61 @@ export default function EmployeeSssContributionsPage() {
     (sum, month) => sum + Math.round(Number(month.totalAmount) * 100),
     0,
   );
+
+  const openLoanEdit = (loan: SssLoanAccount) => {
+    if (loan.id === null) return;
+    setLoanEditTarget(loan);
+    setLoanEditForm({
+      loanAccountNumber: loan.loanAccountNumber,
+      transactionNumber: loan.transactionNumber ?? "",
+      loanType: isSssLoanType(loan.loanType) ? loan.loanType : "S",
+      loanDate: loan.loanDate ?? "",
+      loanAmount: loan.loanAmount ?? "",
+      monthlyAmortization: loan.monthlyAmortization ?? "",
+      status: isSssLoanStatus(loan.status) ? loan.status : "ACTIVE",
+      reason: loan.statusReason ?? "",
+    });
+    setLoanEditError("");
+  };
+
+  const saveLoanEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!loanEditTarget || loanEditTarget.id === null) return;
+    if (!parseSssLoanDateOnly(loanEditForm.loanDate)) {
+      setLoanEditError("Enter a valid Loan Date using a four-digit year.");
+      return;
+    }
+    if (!isSssLoanType(loanEditForm.loanType) || !isSssLoanStatus(loanEditForm.status)) {
+      setLoanEditError("Choose a valid loan type and status.");
+      return;
+    }
+    setLoanEditSaving(true);
+    setLoanEditError("");
+    try {
+      const response = await fetch(`/api/reports/sss/loans/${loanEditTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          loanAccountNumber: loanEditForm.loanAccountNumber,
+          transactionNumber: loanEditForm.transactionNumber,
+          loanType: loanEditForm.loanType,
+          loanDate: loanEditForm.loanDate,
+          loanAmount: loanEditForm.loanAmount,
+          monthlyAmortization: loanEditForm.monthlyAmortization,
+          status: loanEditForm.status,
+          reason: loanEditForm.reason,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to update SSS loan");
+      setLoanEditTarget(null);
+      window.dispatchEvent(new Event("hrdb-sss-records-updated"));
+    } catch (saveError) {
+      setLoanEditError(saveError instanceof Error ? saveError.message : "Unable to update SSS loan");
+    } finally {
+      setLoanEditSaving(false);
+    }
+  };
 
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
@@ -330,7 +405,7 @@ export default function EmployeeSssContributionsPage() {
                     </span>
                   </span>}
                 </div>
-                <select aria-label="Filter by Loan Type" value={selectedLoanType} onChange={(event) => setSelectedLoanType(event.target.value)} className="h-9 min-w-[9rem] rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <select aria-label="Filter by Loan Type" value={selectedLoanType} onChange={(event) => setLoanTypeFilter({ employeeId, type: event.target.value })} className="h-9 min-w-[9rem] rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                   <option value="ALL">All loan types</option>
                   {loanTypeOptions.map((loanType) => <option key={loanType} value={loanType}>{loanType === "UNKNOWN" ? "Unknown" : isSssLoanType(loanType) ? getSssLoanTypeLabel(loanType) : loanType}</option>)}
                 </select>
@@ -359,7 +434,7 @@ export default function EmployeeSssContributionsPage() {
               </div>
             </div>
 
-            {recordType === "LOAN" ? (loanLoading || (!currentLoans && !currentLoanFailure)) ? (
+            {recordType === "LOAN" ? (!currentLoans && !currentLoanFailure) ? (
               <p role="status" className="text-sm text-gray-600">Loading SSS loan reports...</p>
             ) : currentLoanFailure && !currentLoans ? (
               <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{currentLoanFailure.message}</p>
@@ -386,6 +461,11 @@ export default function EmployeeSssContributionsPage() {
                   return (
                     <section key={loan.loanAccountNumber} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                       <div className="w-full space-y-4 border-b border-gray-200 bg-gray-50 px-4 py-4 text-left text-sm">
+                        {canEditLoans && loan.id !== null && <div className="flex justify-end">
+                          <button type="button" onClick={() => openLoanEdit(loan)} aria-label={`Edit loan ${loan.loanAccountNumber}`} title="Edit loan" className="inline-flex h-9 items-center gap-2 rounded-lg border border-blue-200 bg-white px-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <PencilSquareIcon aria-hidden="true" className="h-4 w-4" /> Edit
+                          </button>
+                        </div>}
                         <div className="grid grid-cols-1 items-start gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
                           <div className="flex min-w-0 flex-col items-start gap-1"><span className="min-h-4 text-xs font-medium leading-4 text-gray-500">Loan Type</span><span className="min-h-5 font-semibold leading-5 text-gray-900">{loanType ? getSssLoanTypeLabel(loanType) : loan.loanType || "—"}</span></div>
                           <div className="flex min-w-0 flex-col items-start gap-1"><span className="min-h-4 text-xs font-medium leading-4 text-gray-500">Status</span><span className={`min-h-5 font-semibold leading-5 ${isActive ? "text-emerald-700" : "text-amber-700"}`}>{statusLabel}</span></div>
@@ -433,7 +513,7 @@ export default function EmployeeSssContributionsPage() {
                     const statusLabel = loan.status === "ACTIVE" ? "Active" : loan.status === "ON_HOLD" ? "Inactive" : loan.status || "—";
                     const summaryCell = (label: string, value: ReactNode, align = "left") => <div className={`flex min-h-12 flex-col gap-1 ${align === "center" ? "items-center text-center" : align === "right" ? "items-end text-right" : "items-start text-left"}`}><span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</span><span className="font-semibold tabular-nums text-gray-900">{value}</span></div>;
                     return <tr key={loan.loanAccountNumber} className="border-b border-gray-100 last:border-b-0">
-                      <th scope="row" className="break-all px-3 py-3 align-top"><div className="flex flex-col items-start gap-1"><span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Loan Account Number</span><span className="font-semibold text-gray-900">{loan.loanAccountNumber}</span><span className="flex items-center gap-1.5"><span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${loan.status === "ACTIVE" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{statusLabel}</span><button type="button" onClick={() => setPaymentDetailsLoan(loan)} aria-label={`View payments for loan ${loan.loanAccountNumber}`} title="View payments" className="inline-flex h-7 w-7 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"><EyeIcon aria-hidden="true" className="h-4 w-4" /></button></span></div></th>
+                      <th scope="row" className="break-all px-3 py-3 align-top"><div className="flex flex-col items-start gap-1"><span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Loan Account Number</span><span className="font-semibold text-gray-900">{loan.loanAccountNumber}</span><span className="flex items-center gap-1.5"><span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${loan.status === "ACTIVE" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{statusLabel}</span><button type="button" onClick={() => setPaymentDetailsLoan({ employeeId, loan })} aria-label={`View payments for loan ${loan.loanAccountNumber}`} title="View payments" className="inline-flex h-7 w-7 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"><EyeIcon aria-hidden="true" className="h-4 w-4" /></button>{canEditLoans && loan.id !== null && <button type="button" onClick={() => openLoanEdit(loan)} aria-label={`Edit loan ${loan.loanAccountNumber}`} title="Edit loan" className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"><PencilSquareIcon aria-hidden="true" className="h-4 w-4" /></button>}</span></div></th>
                       <td className="px-3 py-3 align-top">{summaryCell("Monthly Amortization", `₱${formatAmount(loan.monthlyAmortization)}`, "right")}</td>
                       <td className="px-3 py-3 align-top">{summaryCell("Loan Amount", loan.loanAmount === null ? "Unknown" : formatAmount(loan.loanAmount), "right")}</td>
                       <td className="px-3 py-3 align-top">{summaryCell("Loan Type", loanType)}</td>
@@ -548,21 +628,53 @@ export default function EmployeeSssContributionsPage() {
           </>
         )}
       </div>
-      {paymentDetailsLoan && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentDetailsLoan(null); }}>
+      {loanEditTarget && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget && !loanEditSaving) setLoanEditTarget(null); }}>
+        <section role="dialog" aria-modal="true" aria-labelledby="employee-loan-edit-title" className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <header className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:px-6">
+            <div>
+              <h2 id="employee-loan-edit-title" className="text-lg font-semibold text-gray-900">Update SSS Loan</h2>
+              <p className="mt-1 text-sm text-gray-600">{loanEditTarget.loanAccountNumber}</p>
+            </div>
+            <button type="button" aria-label="Close edit loan" onClick={() => { if (!loanEditSaving) setLoanEditTarget(null); }} disabled={loanEditSaving} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"><XMarkIcon aria-hidden="true" className="h-5 w-5" /></button>
+          </header>
+          <form onSubmit={(event) => void saveLoanEdit(event)} className="min-h-0 space-y-4 overflow-y-auto p-5 sm:p-6">
+            {loanEditError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loanEditError}</div>}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-medium text-gray-700">Loan Account Number<input required maxLength={80} value={loanEditForm.loanAccountNumber} onChange={(event) => setLoanEditForm((current) => ({ ...current, loanAccountNumber: event.target.value }))} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="block text-sm font-medium text-gray-700">Transaction Number<input maxLength={80} value={loanEditForm.transactionNumber} onChange={(event) => setLoanEditForm((current) => ({ ...current, transactionNumber: event.target.value }))} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="block text-sm font-medium text-gray-700">Loan Type<select required value={loanEditForm.loanType} onChange={(event) => setLoanEditForm((current) => ({ ...current, loanType: event.target.value }))} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">{sssLoanTypes.map((loanType) => <option key={loanType.code} value={loanType.code}>{getSssLoanTypeLabel(loanType.code)}</option>)}</select></label>
+              <label className="block text-sm font-medium text-gray-700">Loan Date<input required type="date" min="0001-01-01" max="9999-12-31" value={loanEditForm.loanDate} onChange={(event) => setLoanEditForm((current) => ({ ...current, loanDate: event.target.value }))} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="block text-sm font-medium text-gray-700">Approved Loan Amount<input type="number" min="0.01" max="999999999.99" step="0.01" value={loanEditForm.loanAmount} onChange={(event) => setLoanEditForm((current) => ({ ...current, loanAmount: event.target.value }))} placeholder="Optional if unknown" className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="block text-sm font-medium text-gray-700">Monthly Amortization<input required type="number" min="0.01" max="999999999.99" step="0.01" value={loanEditForm.monthlyAmortization} onChange={(event) => setLoanEditForm((current) => ({ ...current, monthlyAmortization: event.target.value }))} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+              <label className="block text-sm font-medium text-gray-700">Status<select required value={loanEditForm.status} onChange={(event) => {
+                const status = event.target.value;
+                if (isSssLoanStatus(status)) setLoanEditForm((current) => ({ ...current, status, reason: "" }));
+              }} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"><option value="ACTIVE">Active</option><option value="ON_HOLD">On-Hold</option><option value="PAID">Paid</option><option value="NOT_CONNECTED">Not connected</option></select></label>
+              {loanEditForm.status === "PAID" && <label className="block text-sm font-medium text-gray-700">Paid Reason<select required value={loanEditForm.reason} onChange={(event) => setLoanEditForm((current) => ({ ...current, reason: event.target.value }))} className="mt-1.5 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"><option value="">Select reason</option><option value="APPLIED_FOR_NEW_LOAN">Applied for new loan</option><option value="FULLY_PAID">Fully paid</option></select></label>}
+              {loanEditForm.status === "NOT_CONNECTED" && <p className="self-end rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Reason: Resigned</p>}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
+              <button type="button" onClick={() => setLoanEditTarget(null)} disabled={loanEditSaving} className="h-10 rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 disabled:opacity-50">Cancel</button>
+              <button type="submit" disabled={loanEditSaving || (loanEditForm.status === "PAID" && !loanEditForm.reason)} className="h-10 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{loanEditSaving ? "Saving..." : "Save Changes"}</button>
+            </div>
+          </form>
+        </section>
+      </div>}
+      {paymentDetailsLoan?.employeeId === employeeId && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentDetailsLoan(null); }}>
         <section role="dialog" aria-modal="true" aria-labelledby="loan-payments-title" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
           <header className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:px-6">
             <div>
               <h2 id="loan-payments-title" className="text-lg font-semibold text-gray-900">Payments Made</h2>
-              <p className="mt-1 text-sm text-gray-600">Loan Account Number: <span className="font-semibold text-gray-900">{paymentDetailsLoan.loanAccountNumber}</span></p>
+              <p className="mt-1 text-sm text-gray-600">Loan Account Number: <span className="font-semibold text-gray-900">{paymentDetailsLoan.loan.loanAccountNumber}</span></p>
             </div>
             <button type="button" aria-label="Close payments" onClick={() => setPaymentDetailsLoan(null)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"><XMarkIcon aria-hidden="true" className="h-5 w-5" /></button>
           </header>
           <div className="min-h-0 overflow-auto p-4 sm:p-6">
-            {paymentDetailsLoan.reports.filter((report) => report.payDate !== null).length === 0 ? <p className="rounded-lg bg-gray-50 p-5 text-sm text-gray-600">No payments have been recorded for this loan account.</p> : <table className="w-full min-w-[62rem] border-collapse text-left text-sm text-gray-900">
+            {paymentDetailsLoan.loan.reports.filter((report) => report.payDate !== null).length === 0 ? <p className="rounded-lg bg-gray-50 p-5 text-sm text-gray-600">No payments have been recorded for this loan account.</p> : <table className="w-full min-w-[62rem] border-collapse text-left text-sm text-gray-900">
               <thead className="sticky top-0 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600"><tr className="border-b border-gray-200">
                 <th scope="col" className="px-3 py-2.5">Period</th><th scope="col" className="px-3 py-2.5">Employer</th><th scope="col" className="px-3 py-2.5">PRN</th><th scope="col" className="px-3 py-2.5">Payment Date</th><th scope="col" className="px-3 py-2.5 text-right">Amount Due</th><th scope="col" className="px-3 py-2.5">Trans Ref</th><th scope="col" className="px-3 py-2.5">Branch</th>
               </tr></thead>
-              <tbody>{paymentDetailsLoan.reports.filter((report) => report.payDate !== null).map((report) => <tr key={report.id} className="border-b border-gray-100 last:border-0">
+              <tbody>{paymentDetailsLoan.loan.reports.filter((report) => report.payDate !== null).map((report) => <tr key={report.id} className="border-b border-gray-100 last:border-0">
                 <td className="whitespace-nowrap px-3 py-3">{formatPeriod(report.applicableYear, report.applicableMonth)}</td><td className="px-3 py-3">{report.employerName}</td><td className="px-3 py-3">{report.prn || "—"}</td><td className="whitespace-nowrap px-3 py-3">{formatPaymentDate(report.payDate)}</td><td className="whitespace-nowrap px-3 py-3 text-right font-semibold tabular-nums">₱{formatAmount(report.amount)}</td><td className="px-3 py-3">{report.transactionReference || "—"}</td><td className="px-3 py-3">{report.sssBranch || "—"}</td>
               </tr>)}</tbody>
             </table>}

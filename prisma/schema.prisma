@@ -25,6 +25,8 @@ model User {
   tasks                    Task[]
   sssReportDrafts          SssReportDraft[]
   sssReports               SssReport[]
+  PagibigReport            PagibigReport[]
+  PagibigReportDraft       PagibigReportDraft[]
 }
 
 model Post {
@@ -143,6 +145,9 @@ model employee {
   bdoAccountNumbers      EmployeeBdoAccountNumber[]
   sssReportEntries       SssReportEntry[]
   sssLoans               SssLoan[]
+  pagibigEmployeeRecords PagibigEmployeeRecord[]
+  pagibigReportEntries   PagibigReportEntry[]
+  pagibigLoans           PagibigLoan[]
   requirementsBypassed   Boolean                         @default(false)
 
   @@index([employerId])
@@ -280,6 +285,10 @@ model employer {
   employees              employee[]
   sssReports             SssReport[]
   sssLoans               SssLoan[]
+  pagibigEmployeeLoans   PagibigEmployeeLoan[]
+  pagibigEmployeeRecords PagibigEmployeeRecord[]
+  pagibigLoans           PagibigLoan[]
+  pagibigReports         PagibigReport[]
 }
 
 model SssLoan {
@@ -380,6 +389,145 @@ model SssReportDraft {
 
   @@index([createdBy, updatedAt])
   @@index([continuedBy, updatedAt])
+}
+
+model PagibigEmployeeLoan {
+  id                    Int                   @id @default(autoincrement())
+  recordId              Int
+  employerId            Int
+  loanType              String
+  applicationNo         String
+  loanTermDate          DateTime              @db.Date
+  termYears             Int
+  termEndDate           DateTime              @db.Date
+  amount                Decimal?              @db.Decimal(12, 2)
+  status                String                @default("INACTIVE")
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime
+  employer              employer              @relation(fields: [employerId], references: [id])
+  PagibigEmployeeRecord PagibigEmployeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@unique([employerId, loanType, applicationNo])
+  @@unique([recordId, loanType])
+  @@index([employerId, loanTermDate])
+  @@index([recordId])
+}
+
+model PagibigEmployeeRecord {
+  id                 Int                   @id @default(autoincrement())
+  employeeId         Int
+  employerId         Int
+  year               Int
+  eeShare            Decimal               @default(200) @db.Decimal(12, 2)
+  erShare            Decimal               @default(200) @db.Decimal(12, 2)
+  mp2AccountNo       String?
+  mp2Amount          Decimal               @default(0) @db.Decimal(12, 2)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime
+  excludedFromReport Boolean               @default(false)
+  PagibigEmployeeLoan PagibigEmployeeLoan[]
+  employee           employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employer           employer              @relation(fields: [employerId], references: [id])
+
+  @@unique([employeeId, employerId, year])
+  @@index([employerId, year])
+}
+
+model PagibigLoan {
+  id                  Int                  @id @default(autoincrement())
+  employerId          Int
+  employeeId          Int
+  employeeName        String
+  employeeCode        String
+  applicationNo       String
+  transactionNumber   String?
+  loanType            String
+  loanDate            DateTime             @db.Date
+  loanAmount          Decimal?             @db.Decimal(12, 2)
+  monthlyAmortization Decimal              @db.Decimal(12, 2)
+  status              String               @default("ACTIVE")
+  statusReason        String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime
+  employee            employee             @relation(fields: [employeeId], references: [id])
+  employer            employer             @relation(fields: [employerId], references: [id])
+  PagibigReportEntry  PagibigReportEntry[]
+
+  @@unique([employerId, applicationNo])
+  @@index([employeeId, loanDate])
+  @@index([employerId, loanDate])
+}
+
+model PagibigReport {
+  id                    Int                  @id @default(autoincrement())
+  kind                  String
+  employerId            Int
+  employerName          String
+  employerPagibigNumber String?
+  pin                   String
+  applicableMonth       Int
+  applicableYear        Int
+  amountDue             Decimal              @db.Decimal(12, 2)
+  amountPaid            Decimal?             @db.Decimal(12, 2)
+  paymentType           String?
+  payDate               DateTime?            @db.Date
+  transactionReference  String?
+  createdBy             Int?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime
+  User                  User?                @relation(fields: [createdBy], references: [id])
+  employer              employer             @relation(fields: [employerId], references: [id])
+  PagibigReportEntry    PagibigReportEntry[]
+
+  @@index([employerId, applicableYear, applicableMonth])
+  @@index([kind, createdAt])
+}
+
+model PagibigReportDraft {
+  id              Int       @id @default(autoincrement())
+  createdBy       Int
+  kind            String
+  employerId      Int?
+  pin             String    @default("")
+  applicableMonth Int       @default(1)
+  applicableYear  Int
+  entries         Json
+  continuedBy     Int?
+  continuedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+  User            User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([continuedBy, updatedAt])
+  @@index([createdBy, updatedAt])
+}
+
+model PagibigReportEntry {
+  id                    Int           @id @default(autoincrement())
+  reportId              Int
+  employeeId            Int?
+  employeeName          String
+  employeeCode          String
+  employeePagibigNumber String?
+  employeeEmployerId    Int?
+  employeeEmployerName  String?
+  pagibigLoanId         Int?
+  applicationNo         String?
+  memberSavings         Decimal       @default(0) @db.Decimal(12, 2)
+  modifiedSavings       Decimal       @default(0) @db.Decimal(12, 2)
+  multiPurposeLoan      Decimal       @default(0) @db.Decimal(12, 2)
+  calamityLoan          Decimal       @default(0) @db.Decimal(12, 2)
+  safeLoan              Decimal       @default(0) @db.Decimal(12, 2)
+  loanAmount            Decimal       @default(0) @db.Decimal(12, 2)
+  totalAmount           Decimal       @db.Decimal(12, 2)
+  ledgerSnapshot        Json?
+  emergencyLoan         Decimal       @default(0) @db.Decimal(12, 2)
+  employee              employee?     @relation(fields: [employeeId], references: [id])
+  PagibigLoan           PagibigLoan?  @relation(fields: [pagibigLoanId], references: [id])
+  PagibigReport         PagibigReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, reportId])
+  @@index([pagibigLoanId])
 }
 
 model OfficeContact {

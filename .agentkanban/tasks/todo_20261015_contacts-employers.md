@@ -114,3 +114,9 @@ The user clarified that the requested behavior applies to Contribution Reports. 
 
 - [x] Show the payment report's employer in the per-employee SSS Contribution history Employer column instead of the employee employer snapshot.
 - [x] Update documentation and add/adjust regression coverage; validate the focused history feature.
+
+# Iteration 19 — Contacts Category Filter
+
+- [x] Add a single-select category dropdown beside contact search and before the clear/refresh control; combine it with existing text search.
+- [x] Make the clear control reset both filters and clear filters after a successful save so the saved contact remains visible.
+- [x] Update technical documentation and project memory; validate lint, TypeScript, and whitespace.

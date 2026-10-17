@@ -9,9 +9,11 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const session = getAuthenticatedSession(request);
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  let accessiblePages: string[] = [];
   if (session.role !== "ADMIN") {
     const user = await prisma.user.findUnique({ where: { id: session.id }, select: { accessiblePages: true } });
-    if (!user?.accessiblePages.includes("/employees")) {
+    accessiblePages = user?.accessiblePages ?? [];
+    if (!accessiblePages.includes("/employees")) {
       return NextResponse.json({ error: "Employees access required" }, { status: 403 });
     }
   }
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         select: {
           id: true,
           loanAccountNumber: true,
+          transactionNumber: true,
           loanType: true,
           loanDate: true,
           loanAmount: true,
@@ -58,6 +61,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
           sssLoan: {
             select: {
               loanAccountNumber: true,
+              transactionNumber: true,
               loanType: true,
               loanDate: true,
               loanAmount: true,
@@ -97,6 +101,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     type LoanAccount = {
       id: number | null;
       loanAccountNumber: string;
+      transactionNumber: string | null;
       loanType: string | null;
       loanDate: string | null;
       loanAmount: string | null;
@@ -112,6 +117,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       accounts.set(accountNumber, {
         id: loan.id,
         loanAccountNumber: accountNumber,
+        transactionNumber: loan.transactionNumber,
         loanType: loan.loanType,
         loanDate: loan.loanDate.toISOString().slice(0, 10),
         loanAmount: loan.loanAmount?.toString() ?? null,
@@ -128,6 +134,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       const account = accounts.get(accountNumber) ?? {
         id: entry.sssLoan ? entry.sssLoanId : null,
         loanAccountNumber: accountNumber,
+        transactionNumber: entry.sssLoan?.transactionNumber ?? null,
         loanType: entry.sssLoan?.loanType ?? null,
         loanDate: entry.sssLoan?.loanDate.toISOString().slice(0, 10) ?? null,
         loanAmount: entry.sssLoan?.loanAmount?.toString() ?? null,
@@ -158,6 +165,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         lastName: employee.lastName,
         sssNumber: employee.sssNumber,
       },
+      canEditLoans: session.role === "ADMIN" || accessiblePages.includes("/reports/sss"),
       loans: [...accounts.values()].sort((left, right) =>
         (right.loanDate ?? "").localeCompare(left.loanDate ?? "")
         || left.loanAccountNumber.localeCompare(right.loanAccountNumber),

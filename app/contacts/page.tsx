@@ -43,6 +43,7 @@ const emptyContactDraft: ContactDraft = {
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
@@ -107,6 +108,7 @@ export default function ContactsPage() {
   const filteredContacts = useMemo(() => {
     const search = query.trim().toLowerCase();
     return contacts.filter((contact) => {
+      const matchesCategory = !selectedCategory || contact.category === selectedCategory;
       const matchesSearch =
         !search ||
         contact.companyName.toLowerCase().includes(search) ||
@@ -117,9 +119,9 @@ export default function ContactsPage() {
         (contact.address || "").toLowerCase().includes(search) ||
         (contact.branch || "").toLowerCase().includes(search) ||
         `${contact.employee?.firstName || ""} ${contact.employee?.lastName || ""}`.toLowerCase().includes(search);
-      return matchesSearch;
+      return matchesCategory && matchesSearch;
     });
-  }, [contacts, query]);
+  }, [contacts, query, selectedCategory]);
   const sortedContacts = useMemo(() => [...filteredContacts].sort((a, b) => {
     return a.contactName.localeCompare(b.contactName);
   }), [filteredContacts]);
@@ -142,6 +144,7 @@ export default function ContactsPage() {
         ? current.map((contact) => contact.id === editingContactId ? data.contact as Contact : contact)
         : [...current, data.contact as Contact]);
       setQuery("");
+      setSelectedCategory("");
       setDraft(emptyContactDraft);
       setPhones([""]);
       setAddOpen(false);
@@ -214,7 +217,11 @@ export default function ContactsPage() {
             <PlusIcon className="h-4 w-4" /> Add contact
           </button>
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search contacts..." aria-label="Search contacts" className="h-10 min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
-          <button type="button" onClick={() => setQuery("")} disabled={!query} aria-label="Clear contact search" title="Clear search" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
+          <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} aria-label="Filter contacts by category" className="h-10 w-[190px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            <option value="">All categories</option>
+            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+          </select>
+          <button type="button" onClick={() => { setQuery(""); setSelectedCategory(""); }} disabled={!query && !selectedCategory} aria-label="Clear contact filters" title="Clear filters" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
             <ArrowPathIcon className="h-4 w-4" />
           </button>
           <span className="ml-auto whitespace-nowrap text-sm text-gray-600">Showing <strong className="text-gray-900">{sortedContacts.length}</strong> of <strong className="text-gray-900">{contacts.length}</strong> contacts</span>
@@ -259,6 +266,7 @@ export default function ContactsPage() {
                       <p className="mt-1 break-words text-xs leading-5 text-gray-700 sm:text-sm">{contact.companyName}</p>
                     </div>
                     <p className="mt-2 break-words text-xs font-medium leading-5 text-gray-800 sm:text-sm">{contact.phone || "Phone not set"}</p>
+                    <p className="mt-1 break-words whitespace-pre-wrap text-xs leading-5 text-gray-600">{contact.address || "Address not set"}</p>
                     {contact.category === "Employee Contact" && <p className="mt-1 break-words text-xs leading-5 text-gray-600 sm:text-sm">{contact.services || "Position not set"}</p>}
                   </div>
                 </div>

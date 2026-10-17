@@ -3,8 +3,7 @@ import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracket, toSssMoney } from "@/lib/sssContributionTable";
-import { getSssLoanReportTiming } from "@/lib/sssLoanBalance";
-import { isSssLoanType } from "@/lib/sssLoanTypes";
+import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
 
 type ReportEntryInput = { employeeId: number; sssLoanId?: number | null; monthlySalaryCredit?: number; loanAmount?: number };
@@ -149,7 +148,7 @@ export async function POST(request: NextRequest) {
       kind === "LOAN"
         ? prisma.sssLoan.findMany({
           where: { id: { in: loanIds } },
-          select: { id: true, employeeId: true, loanAccountNumber: true, status: true, loanDate: true, loanType: true },
+          select: { id: true, employeeId: true, loanAccountNumber: true },
         })
         : Promise.resolve([]),
     ]);
@@ -177,16 +176,8 @@ export async function POST(request: NextRequest) {
       const loanCents = parseMoney(entry.loanAmount);
       if (loanCents === null || loanCents <= 0) throw new Error("Each loan entry must have an amount greater than zero");
       const loan = loanById.get(entry.sssLoanId!);
-      const reportTiming = loan && isSssLoanType(loan.loanType)
-        ? getSssLoanReportTiming({
-          status: loan.status,
-          employeeStatus: employee.status,
-          loanDate: loan.loanDate,
-          loanType: loan.loanType,
-        }, new Date(Date.UTC(year, month - 1, 1)))
-        : null;
-      if (!loan || loan.employeeId !== employee.id || reportTiming === null) {
-        throw new Error("Each loan entry must reference an active loan account for an active employee that is due or past due for this report period");
+      if (!isLoanAccountLinkedToReportEmployee(loan, employee.id)) {
+        throw new Error("Each loan entry must reference a saved loan account belonging to the selected employee");
       }
       totalCents += loanCents;
       return {
@@ -214,6 +205,15 @@ export async function POST(request: NextRequest) {
     }
 
     const report = await prisma.$transaction(async (transaction) => {
+      if (kind === "LOAN") {
+        const reportPeriodKey = `sss-loan-report:${employerId}:${year}:${month}`;
+        await transaction.$queryRaw`WITH report_period_lock AS MATERIALIZED (SELECT pg_advisory_xact_lock(hashtext(${reportPeriodKey})::bigint)) SELECT TRUE FROM report_period_lock`;
+        const duplicate = await transaction.sssReport.findFirst({
+          where: { kind: "LOAN", employerId, applicableMonth: month, applicableYear: year },
+          select: { id: true },
+        });
+        if (duplicate) throw new Error("SSS_LOAN_REPORT_DUPLICATE");
+      }
       const saved = await transaction.sssReport.create({
         data: {
           kind,
@@ -243,6 +243,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error && error.message === "SSS_DRAFT_NOT_FOUND") {
       return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });
+    }
+    if (error instanceof Error && error.message === "SSS_LOAN_REPORT_DUPLICATE") {
+      return NextResponse.json({ error: "A Loan report already exists for this employer and applicable month. Edit the existing report instead." }, { status: 409 });
     }
     if (error instanceof Error && (error.message.includes("valid SSS compensation") || error.message.includes("loan entry") || error.message.includes("Loan amount due"))) {
       return NextResponse.json({ error: error.message }, { status: 400 });

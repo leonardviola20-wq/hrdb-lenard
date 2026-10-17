@@ -3,8 +3,7 @@ import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracket } from "@/lib/sssContributionTable";
-import { getSssLoanReportTiming } from "@/lib/sssLoanBalance";
-import { isSssLoanType } from "@/lib/sssLoanTypes";
+import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
 
 function employeeName(employee: { firstName: string; middleName: string | null; lastName: string }) {
@@ -96,7 +95,7 @@ export async function POST(request: NextRequest) {
       hasAccountRows
         ? prisma.sssLoan.findMany({
           where: { id: { in: loanIds as number[] } },
-          select: { id: true, employeeId: true, employerId: true, loanAccountNumber: true, status: true, loanDate: true, loanType: true },
+          select: { id: true, employeeId: true, loanAccountNumber: true },
         })
         : Promise.resolve([]),
     ]);
@@ -113,16 +112,8 @@ export async function POST(request: NextRequest) {
       const loanAmount = typeof entry.loanAmount === "string" && /^[\d.]{0,32}$/.test(entry.loanAmount) ? entry.loanAmount : "";
       const sssLoanId = loanIds[index];
       const loan = sssLoanId === null ? null : loanById.get(sssLoanId);
-      const reportTiming = loan && isSssLoanType(loan.loanType)
-        ? getSssLoanReportTiming({
-          status: loan.status,
-          employeeStatus: employee.status,
-          loanDate: loan.loanDate,
-          loanType: loan.loanType,
-        }, new Date(Date.UTC(year, month - 1, 1)))
-        : null;
-      if (loan && (loan.employeeId !== employee.id || (employerId !== null && loan.employerId !== employerId) || reportTiming === null)) {
-        throw new Error("Draft loan account must belong to the selected employee and employer and be active, eligible, and assigned to an active employee");
+      if (loan && !isLoanAccountLinkedToReportEmployee(loan, employee.id)) {
+        throw new Error("Draft loan account must belong to the selected employee");
       }
       return {
         employeeId: employee.id,
