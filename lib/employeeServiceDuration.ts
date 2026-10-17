@@ -1,5 +1,6 @@
 export type EmployeeServiceSummary = {
   duration: string | null;
+  years: number | null;
   durationState: "in-service" | "not-active" | "not-set" | "invalid-range";
   expiryDaysRemaining: number | null;
 };
@@ -16,7 +17,9 @@ function parseDateOnly(value: string | null) {
     : null;
 }
 
-function calendarDuration(start: Date, end: Date) {
+type CalendarParts = { years: number; months: number; days: number };
+
+function calendarParts(start: Date, end: Date): CalendarParts | null {
   if (end < start) return null;
   const addMonths = (monthCount: number) => {
     const monthIndex = start.getMonth() + monthCount;
@@ -28,12 +31,17 @@ function calendarDuration(start: Date, end: Date) {
   let monthsTotal = (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth();
   if (addMonths(monthsTotal) > end) monthsTotal -= 1;
   const anchor = addMonths(monthsTotal);
-  const years = Math.floor(monthsTotal / 12);
-  const months = monthsTotal % 12;
-  const days = wholeDaysBetween(anchor, end);
+  return {
+    years: Math.floor(monthsTotal / 12),
+    months: monthsTotal % 12,
+    days: wholeDaysBetween(anchor, end),
+  };
+}
+
+function formatCalendarDuration(parts: CalendarParts) {
   const formatUnit = (value: number, singular: string, plural: string) =>
     `${String(value).padStart(2, "0")} ${value === 1 ? singular : plural}`;
-  return `${formatUnit(years, "year", "years")} ${formatUnit(months, "month", "months")} ${formatUnit(days, "day", "days")}`;
+  return `${formatUnit(parts.years, "year", "years")} ${formatUnit(parts.months, "month", "months")} ${formatUnit(parts.days, "day", "days")}`;
 }
 
 function wholeDaysBetween(start: Date, end: Date) {
@@ -55,7 +63,8 @@ export function getEmployeeServiceSummary(
   const serviceEnd = isActive
     ? end && end < currentDay ? end : currentDay
     : end;
-  const duration = start && serviceEnd ? calendarDuration(start, serviceEnd) : null;
+  const parts = start && serviceEnd ? calendarParts(start, serviceEnd) : null;
+  const duration = parts ? formatCalendarDuration(parts) : null;
   const durationState = !start
     ? "not-set"
     : !serviceEnd
@@ -67,5 +76,5 @@ export function getEmployeeServiceSummary(
     ? wholeDaysBetween(currentDay, end)
     : null;
 
-  return { duration, durationState, expiryDaysRemaining };
+  return { duration, years: parts ? parts.years : null, durationState, expiryDaysRemaining };
 }

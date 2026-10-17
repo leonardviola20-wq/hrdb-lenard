@@ -22,7 +22,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 .sidebar-scrollbar-hidden {
@@ -40,7 +40,87 @@ body {
     margin: 1in;
   }
 
-  body > *:not(#attendance-print-overlay) {
+  body:has(#attendance-print-overlay) > *:not(#attendance-print-overlay) {
     display: none !important;
+  }
+}
+
+@media print {
+  body:has(#sss-loan-report-print-overlay) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#sss-loan-report-print-overlay) #sss-loan-report-print-overlay,
+  body:has(#sss-loan-report-print-overlay) #sss-loan-report-print-overlay * {
+    visibility: visible !important;
+  }
+
+  #sss-loan-report-print-overlay {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  #sss-loan-report-print-overlay > .sss-loan-report-print-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .sss-loan-report-print-content {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .sss-loan-report-table {
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .sss-loan-report-table table {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 8pt !important;
+  }
+
+  .sss-loan-report-table th,
+  .sss-loan-report-table td {
+    padding: 4px 3px !important;
+  }
+
+  .sss-loan-report-table tr {
+    break-inside: avoid;
+  }
+}
+
+/* Subtle lift used to cascade cards in on the Employees and Tasks pages.
+   Cards opt in with the `card-lift` class plus a per-index `animationDelay`
+   so each card enters in its own sequential step (no skipped/gapped cadence). */
+@keyframes card-lift {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card-lift {
+  animation: card-lift 0.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-lift {
+    animation: none;
   }
 }

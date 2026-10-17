@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilSquareIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 type Employer = {
   id: number;
@@ -62,9 +62,9 @@ export default function EmployersPage() {
   const [message, setMessage] = useState("");
   const [showFirstEmployerPrompt, setShowFirstEmployerPrompt] = useState(false);
   const [form, setForm] = useState<FormState>({ ...emptyForm });
+  const [formError, setFormError] = useState("");
   const [editing, setEditing] = useState<Employer | null>(null);
   const [selectedEmployer, setSelectedEmployer] = useState<Employer | null>(null);
-  const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -85,6 +85,7 @@ export default function EmployersPage() {
   }, [employers, query]);
 
   const openForm = (employer?: Employer) => {
+    setFormError("");
     setEditing(employer || null);
     setForm(employer ? {
       name: employer.name, tradeName: employer.company || "", status: employer.status,
@@ -101,27 +102,37 @@ export default function EmployersPage() {
     setModalOpen(true);
   };
 
-  const update = (key: keyof FormState, value: string) =>
+  const closeForm = () => {
+    setEditing(null);
+    setForm({ ...emptyForm });
+    setFormError("");
+    setModalOpen(false);
+  };
+
+  const update = (key: keyof FormState, value: string) => {
+    setFormError("");
     setForm((current) => ({ ...current, [key]: value }));
+  };
 
   const uploadLogo = (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setMessage("Logo must be an image file.");
+      setFormError("Logo must be an image file.");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setMessage("Logo must be 2 MB or smaller.");
+      setFormError("Logo must be 2 MB or smaller.");
       return;
     }
     const reader = new FileReader();
     reader.onload = () => update("logo", String(reader.result));
-    reader.onerror = () => setMessage("Unable to read the logo file.");
+    reader.onerror = () => setFormError("Unable to read the logo file.");
     reader.readAsDataURL(file);
   };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setFormError("");
     setSaving(true);
     try {
       const response = await fetch(editing ? `/api/employers/${editing.id}` : "/api/employers", {
@@ -132,11 +143,12 @@ export default function EmployersPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to save employer");
       setForm({ ...emptyForm });
+      setFormError("");
       setEditing(null);
       setModalOpen(false);
       await load();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to save employer");
+      setFormError(error instanceof Error ? error.message : "Unable to save employer");
     } finally {
       setSaving(false);
     }
@@ -158,39 +170,69 @@ export default function EmployersPage() {
       {field("Registration Date", dateKey, "date")}
     </div>
   );
+  const employerDetailSections = selectedEmployer ? [
+    {
+      title: "Employer overview",
+      fields: [
+        ["Status", selectedEmployer.status],
+        ["Branch status", selectedEmployer.branchStatus],
+        ["Branch", selectedEmployer.branches],
+        ["President", selectedEmployer.president],
+        ["Email address", selectedEmployer.email],
+        ["Contact number", selectedEmployer.contactNumber],
+        ["Employees", String(selectedEmployer._count.employees)],
+      ],
+    },
+    {
+      title: "Registered addresses",
+      fields: [
+        ["Short address", selectedEmployer.shortAddress],
+        ["Full address", selectedEmployer.longAddress],
+      ],
+    },
+    {
+      title: "Government registrations",
+      fields: [
+        ["SEC / DTI", selectedEmployer.secDti],
+        ["SEC / DTI registration date", selectedEmployer.secDtiRegistrationDate ? new Date(`${dateValue(selectedEmployer.secDtiRegistrationDate)}T00:00:00`).toLocaleDateString() : null],
+        ["TIN", selectedEmployer.tin],
+        ["TIN registration date", selectedEmployer.tinRegistrationDate ? new Date(`${dateValue(selectedEmployer.tinRegistrationDate)}T00:00:00`).toLocaleDateString() : null],
+        ["SSS", selectedEmployer.sss],
+        ["SSS registration date", selectedEmployer.sssRegistrationDate ? new Date(`${dateValue(selectedEmployer.sssRegistrationDate)}T00:00:00`).toLocaleDateString() : null],
+        ["HDMF", selectedEmployer.hdmf],
+        ["HDMF registration date", selectedEmployer.hdmfRegistrationDate ? new Date(`${dateValue(selectedEmployer.hdmfRegistrationDate)}T00:00:00`).toLocaleDateString() : null],
+        ["PHIC", selectedEmployer.phic],
+        ["PHIC registration date", selectedEmployer.phicRegistrationDate ? new Date(`${dateValue(selectedEmployer.phicRegistrationDate)}T00:00:00`).toLocaleDateString() : null],
+      ],
+    },
+  ] : [];
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="w-full">
-        <header className="mb-6 flex items-center justify-between gap-4">
-          <button type="button" onClick={() => openForm()} className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900"><PlusIcon className="h-4 w-4" />Add employer</button>
+        <header className="mb-6 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => openForm()} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900"><PlusIcon className="h-4 w-4" />Add</button>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employers..." aria-label="Search employers" className={`${inputClass} h-10 min-w-[200px] flex-1`} />
         </header>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employers..." className={`${inputClass} mb-6`} />
         {message && <p className="mb-4 font-medium text-red-700">{message}</p>}
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filtered.map((employer) => (
             <article
               key={employer.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`View details for ${employer.name}`}
-              onClick={() => setSelectedEmployer(employer)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  setSelectedEmployer(employer);
-                }
-              }}
-              className="cursor-pointer rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md"
             >
               <div className="flex justify-between gap-3">
-                <div className="flex gap-3">
+                <div className="flex min-w-0 gap-3">
                   {employer.logo ? <img src={employer.logo} alt={`${employer.name} logo`} className="h-14 w-14 rounded-lg object-cover" /> : <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-500">Logo</div>}
-                  <div><h2 className="font-semibold text-gray-950">{employer.name}</h2><p className="text-sm text-gray-700">{employer.company || "No trade name"}</p></div>
+                  <div className="min-w-0"><h2 className="break-words font-semibold text-gray-950">{employer.name}</h2><p className="break-words text-sm text-gray-700">{employer.company || "No trade name"}</p></div>
                 </div>
-                <div className="relative">
-                  <button type="button" aria-label={`Actions for ${employer.name}`} onClick={(event) => { event.stopPropagation(); setOpenMenu(openMenu === employer.id ? null : employer.id); }} className="text-xl text-gray-500">•••</button>
-                  {openMenu === employer.id && <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedEmployer(null); openForm(employer); setOpenMenu(null); }} className="absolute right-0 top-7 z-10 rounded border bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow">Update</button>}
+                <div className="flex shrink-0 items-start gap-1">
+                  <button type="button" onClick={() => setSelectedEmployer(employer)} aria-label={`View details for ${employer.name}`} title="View details" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <EyeIcon className="h-5 w-5" />
+                  </button>
+                  <button type="button" onClick={() => openForm(employer)} aria-label={`Edit ${employer.name}`} title="Edit employer" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 text-sm">
@@ -217,50 +259,39 @@ export default function EmployersPage() {
         </div>}
         {selectedEmployer && (
           <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setSelectedEmployer(null)}>
-            <section role="dialog" aria-modal="true" aria-labelledby="employer-details-title" onClick={(event) => event.stopPropagation()} className="my-auto w-full max-w-3xl rounded-xl bg-white p-5 shadow-xl sm:p-6">
-              <header className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  {selectedEmployer.logo ? <img src={selectedEmployer.logo} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-gray-200 object-cover" /> : <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-500">Logo</div>}
-                  <div className="min-w-0">
-                    <h2 id="employer-details-title" className="truncate text-xl font-bold text-gray-950">{selectedEmployer.name}</h2>
-                    <p className="truncate text-sm text-gray-600">{selectedEmployer.company || "No trade name"}</p>
+            <section role="dialog" aria-modal="true" aria-labelledby="employer-details-title" onClick={(event) => event.stopPropagation()} className="my-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+              <header className="relative flex flex-wrap items-center gap-4 bg-gradient-to-r from-slate-950 via-blue-950 to-blue-900 p-5 text-white sm:p-7">
+                {selectedEmployer.logo ? <img src={selectedEmployer.logo} alt={`${selectedEmployer.name} logo`} className="h-20 w-20 shrink-0 rounded-2xl border border-white/30 bg-white object-contain p-1 shadow-lg" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-xs font-semibold text-blue-100">No logo</div>}
+                <div className="min-w-0 flex-1 pr-10 sm:pr-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 id="employer-details-title" className="break-words text-xl font-bold sm:text-2xl">{selectedEmployer.name}</h2>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${selectedEmployer.status.toLowerCase() === "active" ? "bg-emerald-400/15 text-emerald-100 ring-1 ring-inset ring-emerald-300/30" : "bg-white/10 text-slate-100 ring-1 ring-inset ring-white/20"}`}>{selectedEmployer.status}</span>
                   </div>
+                  <p className="mt-1 break-words text-sm text-blue-100">{selectedEmployer.company || "No trade name"}</p>
+                  <p className="mt-3 text-xs font-medium text-blue-200">Employer profile <span aria-hidden="true">·</span> {selectedEmployer._count.employees} {selectedEmployer._count.employees === 1 ? "employee" : "employees"}</p>
                 </div>
-                <button type="button" onClick={() => setSelectedEmployer(null)} aria-label="Close employer details" className="rounded-md p-1 text-2xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-900">×</button>
+                <button type="button" onClick={() => setSelectedEmployer(null)} aria-label="Close employer details" className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-100 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/70">
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
               </header>
-              <div className="mt-5 max-h-[65vh] overflow-y-auto pr-2">
-                <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-                  {[
-                    ["Status", selectedEmployer.status],
-                    ["Branch status", selectedEmployer.branchStatus],
-                    ["Branch", selectedEmployer.branches],
-                    ["President", selectedEmployer.president],
-                    ["Email", selectedEmployer.email],
-                    ["Contact number", selectedEmployer.contactNumber],
-                    ["Short address", selectedEmployer.shortAddress],
-                    ["Full address", selectedEmployer.longAddress],
-                    ["Employees", String(selectedEmployer._count.employees)],
-                    ["SEC / DTI", selectedEmployer.secDti],
-                    ["SEC / DTI registration", selectedEmployer.secDtiRegistrationDate ? new Date(selectedEmployer.secDtiRegistrationDate).toLocaleDateString() : null],
-                    ["TIN", selectedEmployer.tin],
-                    ["TIN registration", selectedEmployer.tinRegistrationDate ? new Date(selectedEmployer.tinRegistrationDate).toLocaleDateString() : null],
-                    ["SSS", selectedEmployer.sss],
-                    ["SSS registration", selectedEmployer.sssRegistrationDate ? new Date(selectedEmployer.sssRegistrationDate).toLocaleDateString() : null],
-                    ["HDMF", selectedEmployer.hdmf],
-                    ["HDMF registration", selectedEmployer.hdmfRegistrationDate ? new Date(selectedEmployer.hdmfRegistrationDate).toLocaleDateString() : null],
-                    ["PHIC", selectedEmployer.phic],
-                    ["PHIC registration", selectedEmployer.phicRegistrationDate ? new Date(selectedEmployer.phicRegistrationDate).toLocaleDateString() : null],
-                  ].map(([label, value]) => (
-                    <div key={label} className="min-w-0 border-b border-gray-100 pb-3">
-                      <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</dt>
-                      <dd className="mt-1 break-words text-sm font-medium text-gray-900">{value || "Not set"}</dd>
-                    </div>
-                  ))}
-                </dl>
+              <div className="max-h-[68vh] space-y-5 overflow-y-auto bg-slate-50 p-4 sm:p-6">
+                {employerDetailSections.map((section) => (
+                  <section key={section.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-800">{section.title}</h3>
+                    <dl className="grid gap-3 sm:grid-cols-2">
+                      {section.fields.map(([label, value]) => (
+                        <div key={label} className="min-w-0 rounded-lg bg-slate-50 px-3.5 py-3">
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
+                          <dd className={`mt-1 break-words text-sm font-medium ${value ? "text-slate-900" : "text-slate-400"}`}>{value || "Not set"}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                ))}
               </div>
-              <footer className="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4">
-                <button type="button" onClick={() => setSelectedEmployer(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Close</button>
-                <button type="button" onClick={() => { openForm(selectedEmployer); setSelectedEmployer(null); }} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900">Edit employer</button>
+              <footer className="flex justify-end gap-2 border-t border-slate-200 bg-white p-4 sm:px-6">
+                <button type="button" onClick={() => setSelectedEmployer(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Close</button>
+                <button type="button" onClick={() => { openForm(selectedEmployer); setSelectedEmployer(null); }} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900">Edit employer</button>
               </footer>
             </section>
           </div>
@@ -268,7 +299,8 @@ export default function EmployersPage() {
         {modalOpen && (
           <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/40 p-3 sm:items-center sm:p-4">
             <form onSubmit={submit} className="my-2 max-h-[calc(100vh-1rem)] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-4 shadow-xl sm:my-4 sm:max-h-[calc(100vh-2rem)] sm:p-6">
-              <div className="sticky top-0 z-10 mb-5 flex justify-between bg-white pb-2"><h2 className="text-xl font-bold text-gray-950">{editing ? "Update employer" : "Add employer"}</h2><button type="button" onClick={() => { setEditing(null); setForm({ ...emptyForm }); setModalOpen(false); }} className="text-2xl text-gray-500" aria-label="Close">×</button></div>
+              <div className="sticky top-0 z-10 mb-5 flex justify-between bg-white pb-2"><h2 className="text-xl font-bold text-gray-950">{editing ? "Update employer" : "Add employer"}</h2><button type="button" onClick={closeForm} className="text-2xl text-gray-500" aria-label="Close">×</button></div>
+              {formError && <p role="alert" aria-live="polite" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800">{formError}</p>}
               <div className="grid gap-4 sm:grid-cols-2">
                 {field("Employer Name", "name")}{field("Trade Name", "tradeName")}{field("Email Address", "email", "email")}
                 <label className="grid gap-1.5 text-sm"><span className="font-semibold text-gray-900">Contact Number</span><input value={form.contactNumber} onChange={(event) => update("contactNumber", contact(event.target.value))} placeholder="00 0000 0000" className={inputClass} /></label>
@@ -285,7 +317,7 @@ export default function EmployersPage() {
                 {agencyField("HDMF", "hdmf", "hdmfRegistrationDate", [4, 4, 4])}
                 {agencyField("PHIC", "phic", "phicRegistrationDate", [2, 9, 1])}
               </div>
-              <div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => { setEditing(null); setForm({ ...emptyForm }); setModalOpen(false); }} className="rounded-lg border px-4 py-2 font-medium text-gray-800">Cancel</button><button disabled={saving} className="rounded-lg bg-[#172554] px-4 py-2 font-semibold text-white">{saving ? "Saving..." : "Save employer"}</button></div>
+              <div className="mt-6 flex justify-end gap-2"><button type="button" onClick={closeForm} className="rounded-lg border px-4 py-2 font-medium text-gray-800">Cancel</button><button disabled={saving} className="rounded-lg bg-[#172554] px-4 py-2 font-semibold text-white">{saving ? "Saving..." : "Save employer"}</button></div>
             </form>
           </div>
         )}

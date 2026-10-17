@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { PAGE_ACCESS_OPTIONS, type PageAccessHref } from "@/lib/pageAccess";
 
 type AdminUser = {
@@ -14,6 +14,7 @@ type AdminUser = {
   accessiblePages: PageAccessHref[];
   createdAt: string;
   _count: { tasks: number };
+  isCurrentUser: boolean;
 };
 
 export default function AdminPage() {
@@ -21,8 +22,11 @@ export default function AdminPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
   const [accessUser, setAccessUser] = useState<AdminUser | null>(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<AdminUser | null>(null);
   const [selectedPages, setSelectedPages] = useState<PageAccessHref[]>([]);
   const [accessError, setAccessError] = useState("");
 
@@ -74,6 +78,26 @@ export default function AdminPage() {
     }
   };
 
+  const removeUser = async () => {
+    if (!confirmDeleteUser) return;
+    const user = confirmDeleteUser;
+    setMessage("");
+    setNotice("");
+    setDeletingUserId(user.id);
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to delete user");
+      setUsers((current) => current.filter((item) => item.id !== user.id));
+      setConfirmDeleteUser(null);
+      setNotice(`The account for ${user.name || user.username || user.email} was deleted.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to delete user");
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   const openAccessDialog = (user: AdminUser) => {
     setAccessUser(user);
     setSelectedPages(user.accessiblePages);
@@ -104,7 +128,8 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-6xl">
-        {message && <p className="mb-4 text-red-600">{message}</p>}
+        {message && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p>}
+        {notice && <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</p>}
 
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg bg-white p-5 shadow"><p className="text-sm text-gray-500">Total users</p><p className="mt-1 text-3xl font-bold text-gray-900">{users.length}</p></div>
@@ -135,6 +160,16 @@ export default function AdminPage() {
                           Manage access · {user.accessiblePages.length}
                         </button>
                       ) : <span className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-800">Full access</span>}
+                      <button
+                        type="button"
+                        disabled={user.isCurrentUser || deletingUserId === user.id}
+                        onClick={() => { setMessage(""); setConfirmDeleteUser(user); }}
+                        aria-label={`Delete account for ${user.name || user.username || user.email}`}
+                        title={user.isCurrentUser ? "You cannot delete your own account" : "Delete account"}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </article>
@@ -176,6 +211,33 @@ export default function AdminPage() {
               <button type="button" onClick={() => setAccessUser(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
               <button type="button" onClick={() => void savePageAccess()} disabled={busyUserId === accessUser.id || selectedPages.length === 0} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">
                 {busyUserId === accessUser.id ? "Saving..." : "Save access"}
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
+      {confirmDeleteUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/45 p-4" onClick={() => { if (deletingUserId === null) setConfirmDeleteUser(null); }}>
+          <section role="alertdialog" aria-modal="true" aria-labelledby="delete-user-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-2xl border border-red-100 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start gap-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-700">
+                <TrashIcon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h2 id="delete-user-title" className="text-lg font-bold text-slate-950">Delete registered user?</h2>
+                <p className="mt-1 break-all text-sm font-semibold text-slate-800">{confirmDeleteUser.name || confirmDeleteUser.username || confirmDeleteUser.email}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              This permanently deletes the account and its tasks, report drafts, and authored posts. Saved SSS reports remain, but the creator attribution is cleared. This action cannot be undone.
+            </p>
+            {message && <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>}
+            <footer className="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
+              <button type="button" disabled={deletingUserId === confirmDeleteUser.id} onClick={() => setConfirmDeleteUser(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">
+                Cancel
+              </button>
+              <button type="button" disabled={deletingUserId === confirmDeleteUser.id} onClick={() => void removeUser()} className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-wait disabled:opacity-60">
+                <TrashIcon className="h-4 w-4" /> {deletingUserId === confirmDeleteUser.id ? "Deleting..." : "Delete account"}
               </button>
             </footer>
           </section>

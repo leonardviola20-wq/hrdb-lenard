@@ -18,7 +18,9 @@ export function isPageAccessHref(value: unknown): value is PageAccessHref {
 }
 
 export function hasPageAccess(pathname: string, accessiblePages: readonly string[]) {
-  return accessiblePages.some((page) => pathname === page || pathname.startsWith(`${page}/`));
+  return accessiblePages.some((page) => pathname === page || pathname.startsWith(`${page}/`))
+    || (pathname === "/reports" && accessiblePages.some((page) => page.startsWith("/reports/")))
+    || (pathname.startsWith("/reports/") && accessiblePages.some((page) => page.startsWith("/reports/")));
 }
 
 type PageAccessSubject = {

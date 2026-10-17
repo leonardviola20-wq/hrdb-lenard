@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, BriefcaseIcon, BuildingOffice2Icon, CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon, ClipboardDocumentListIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, PlusIcon, TrashIcon, UserCircleIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, BriefcaseIcon, BuildingOffice2Icon, CalendarDaysIcon, ChevronLeftIcon, ClipboardDocumentListIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, PencilSquareIcon, PlusIcon, TrashIcon, UserCircleIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { getEmployeeServiceSummary } from "@/lib/employeeServiceDuration";
 import {
   employeeRequirementGroups,
@@ -13,13 +13,11 @@ import {
   isSingleEmployee,
   type EmployeeRequirementKey,
 } from "@/lib/employeeRequirements";
+import { HistoryBackLink } from "@/components/HistoryBackLink";
 import { useAppHeaderActions } from "@/components/Sidebar";
 import {
   employeeDirectoryHref,
-  employeeProfileHref,
-  getFirstMatchingEmployee,
-  getEmployeeNavigation,
-  navigationFilterLabel,
+  employeeProfileTabHref,
   type EmployeeNavigationFilters,
   type NavigableEmployee,
 } from "@/lib/employeeNavigation";
@@ -95,14 +93,12 @@ const profileCacheMaxAge = 30_000;
 const profileCacheLimit = 12;
 const employeeProfileCache = new Map<string, { employee: Employee; cachedAt: number }>();
 const profileRequests = new Map<string, Promise<EmployeeProfileResponse>>();
-let employeeNavigationCache: NavigableEmployee[] = [];
 let profileCacheGeneration = 0;
 
 function clearEmployeeProfileCache() {
   profileCacheGeneration += 1;
   employeeProfileCache.clear();
   profileRequests.clear();
-  employeeNavigationCache = [];
 }
 
 if (typeof window !== "undefined") {
@@ -140,9 +136,6 @@ function fetchEmployeeProfile(id: string, includeNavigation: boolean) {
       if (generation === profileCacheGeneration) {
         cacheEmployeeProfile(id, profile.employee);
       }
-      if (generation === profileCacheGeneration && Array.isArray(profile.navigationEmployees)) {
-        employeeNavigationCache = profile.navigationEmployees;
-      }
       return profile;
     })
     .finally(() => {
@@ -151,14 +144,6 @@ function fetchEmployeeProfile(id: string, includeNavigation: boolean) {
 
   profileRequests.set(requestKey, request);
   return request;
-}
-
-function prefetchEmployeeProfile(id: number) {
-  const cached = employeeProfileCache.get(String(id));
-  if (cached && Date.now() - cached.cachedAt < profileCacheMaxAge) return;
-  void fetchEmployeeProfile(String(id), false).catch((error: unknown) => {
-    console.warn(`Unable to prefetch employee ${id}:`, error);
-  });
 }
 
 function readNavigationFilters(searchParams: { get(name: string): string | null }): EmployeeNavigationFilters {
@@ -172,10 +157,15 @@ function readNavigationFilters(searchParams: { get(name: string): string | null 
 const profileTabs = [
   { label: "Personal Information", icon: UserCircleIcon },
   { label: "Employment", icon: BriefcaseIcon },
-  { label: "Government ID", icon: IdentificationIcon },
-  { label: "Assignment and Remarks", icon: ClipboardDocumentListIcon },
+  { label: "Government", icon: IdentificationIcon },
   { label: "Requirements", icon: ClipboardDocumentListIcon },
 ] as const;
+
+// "Government ID" was renamed to "Government"; keep old shared links opening the renamed tab.
+function resolveProfileTabLabel(label: string | null) {
+  const requested = label === "Government ID" ? "Government" : label;
+  return profileTabs.find((tab) => tab.label === requested)?.label;
+}
 function dateText(value: string | null) {
   if (!value) return "Not set";
   const [year, month, day] = value.slice(0, 10).split("-").map(Number);
@@ -212,15 +202,13 @@ export default function EmployeeProfilePage() {
 
 function EmployeeProfileContent() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const setAppHeaderActions = useAppHeaderActions();
   const [employee, setEmployee] = useState<Employee | null>(null);
-  const [navigationEmployees, setNavigationEmployees] = useState<NavigableEmployee[]>(() => employeeNavigationCache);
   const filters = useMemo(() => readNavigationFilters(searchParams), [searchParams]);
   const [loadedEmployeeId, setLoadedEmployeeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshingFilters, setRefreshingFilters] = useState(false);
   const [error, setError] = useState("");
   const [requirementsError, setRequirementsError] = useState("");
   const [savingRequirementKeys, setSavingRequirementKeys] = useState<Set<EmployeeRequirementKey>>(() => new Set());
@@ -233,13 +221,23 @@ function EmployeeProfileContent() {
   const [accountNumberDraft, setAccountNumberDraft] = useState("");
   const [savingAccountNumber, setSavingAccountNumber] = useState(false);
   const [activeTab, setActiveTab] = useState<(typeof profileTabs)[number]["label"]>(
-    () => profileTabs.find((tab) => tab.label === searchParams.get("tab"))?.label ?? profileTabs[0].label,
+    () => resolveProfileTabLabel(searchParams.get("tab")) ?? profileTabs[0].label,
   );
 
   useEffect(() => {
-    const requestedTab = profileTabs.find((tab) => tab.label === searchParams.get("tab"))?.label;
+    const requestedTab = resolveProfileTabLabel(searchParams.get("tab"));
     if (requestedTab) setActiveTab(requestedTab);
   }, [searchParams]);
+
+  // The active tab lives in the URL, so browser Back/Forward — and any return from a
+  // deeper page such as SSS Contributions — reopens the tab the user was reading.
+  const selectProfileTab = useCallback((label: (typeof profileTabs)[number]["label"]) => {
+    setActiveTab(label);
+    const href = employeeProfileTabHref(id, searchParams.toString(), label);
+    if (`${window.location.pathname}${window.location.search}` !== href) {
+      router.replace(href, { scroll: false });
+    }
+  }, [id, router, searchParams]);
 
   useEffect(() => {
     if (!id) return;
@@ -251,17 +249,13 @@ function EmployeeProfileContent() {
       employeeProfileCache.set(id, cachedProfile);
     }
 
-    const hasNavigationCache = employeeNavigationCache.length > 0;
     const isFresh = cachedProfile !== undefined && Date.now() - cachedProfile.cachedAt < profileCacheMaxAge;
     if (isFresh) return () => { active = false; };
 
-    fetchEmployeeProfile(id, !hasNavigationCache)
+    fetchEmployeeProfile(id, false)
       .then((data) => {
         if (active) {
           setEmployee(data.employee);
-          if (Array.isArray(data.navigationEmployees)) {
-            setNavigationEmployees(data.navigationEmployees);
-          }
           setError("");
           setLoadedEmployeeId(id);
         }
@@ -289,41 +283,14 @@ function EmployeeProfileContent() {
   const isProfileLoading = loading && !displayedEmployee || loadedEmployeeId !== id && !displayedEmployee;
   const activeTabIndex = profileTabs.findIndex((tab) => tab.label === activeTab);
   const serviceSummary = getEmployeeServiceSummary(displayedEmployee?.status ?? null, displayedEmployee?.dateStarted ?? null, displayedEmployee?.endDate ?? null);
-  const serviceDurationText = serviceSummary.duration
-    ? `${serviceSummary.duration} in service`
+  const serviceDurationText = serviceSummary.years !== null
+    ? `${serviceSummary.years} ${serviceSummary.years === 1 ? "year" : "years"} in service`
     : serviceSummary.durationState === "not-set"
       ? "Not set"
       : serviceSummary.durationState === "not-active"
         ? "Not active"
         : "Invalid date range";
 
-  const employerOptions = useMemo(() => {
-    const options = new Map<number, string>();
-    navigationEmployees.forEach((record) => {
-      if (record.employerId !== null && record.employerName) {
-        options.set(record.employerId, record.employerName);
-      }
-    });
-    return [...options.entries()]
-      .map(([employerId, name]) => ({ id: employerId, name }))
-      .sort((left, right) => left.name.localeCompare(right.name));
-  }, [navigationEmployees]);
-  const branchOptions = useMemo(
-    () => [...new Set(navigationEmployees.map((record) => record.branch).filter((branch): branch is string => Boolean(branch)))].sort(),
-    [navigationEmployees],
-  );
-  const currentNavigationEmployee = displayedEmployee
-    ? navigationEmployees.find((record) => record.id === displayedEmployee.id) ?? null
-    : null;
-  const navigation = useMemo(
-    () => currentNavigationEmployee
-      ? getEmployeeNavigation(navigationEmployees, currentNavigationEmployee, filters)
-      : { matching: [], currentIndex: -1, position: 0, previous: null, next: null },
-    [currentNavigationEmployee, filters, navigationEmployees],
-  );
-  const selectedEmployerName = employerOptions.find((option) => String(option.id) === filters.employer)?.name ?? null;
-  const previousEmployeeId = navigation.previous?.id ?? null;
-  const nextEmployeeId = navigation.next?.id ?? null;
   const requirementCompletion = displayedEmployee
     ? getEmployeeRequirementCompletion(
       displayedEmployee.requirements,
@@ -344,29 +311,6 @@ function EmployeeProfileContent() {
     updateEmployeeProfileCache(employeeId, update);
     setEmployee((current) => current?.id === employeeId ? update(current) : current);
   }, []);
-
-  const applyNavigationFilters = useCallback(async (nextFilters: EmployeeNavigationFilters) => {
-    setRefreshingFilters(true);
-    setError("");
-    try {
-      const data = await fetchEmployeeProfile(id, true);
-      if (Array.isArray(data.navigationEmployees)) {
-        setNavigationEmployees(data.navigationEmployees);
-      }
-      setEmployee(data.employee);
-      setLoadedEmployeeId(id);
-      const refreshedNavigationEmployees = data.navigationEmployees ?? navigationEmployees;
-      const firstMatchingEmployee = getFirstMatchingEmployee(refreshedNavigationEmployees, nextFilters);
-      router.replace(
-        employeeProfileHref(firstMatchingEmployee?.id ?? Number(id), nextFilters, activeTab),
-        { scroll: false },
-      );
-    } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : "Unable to refresh employee filters");
-    } finally {
-      setRefreshingFilters(false);
-    }
-  }, [activeTab, id, navigationEmployees, router]);
 
   const updateRequirement = useCallback(async (requirementKey: EmployeeRequirementKey, isComplete: boolean) => {
     if (!displayedEmployee) return;
@@ -630,90 +574,13 @@ function EmployeeProfileContent() {
   }, [displayedEmployee, updateDisplayedEmployee]);
 
   useEffect(() => {
-    if (previousEmployeeId !== null) prefetchEmployeeProfile(previousEmployeeId);
-    if (nextEmployeeId !== null) prefetchEmployeeProfile(nextEmployeeId);
-  }, [nextEmployeeId, previousEmployeeId]);
-
-  useEffect(() => {
     if (!displayedEmployee || error) {
       setAppHeaderActions(null);
       return;
     }
-    setAppHeaderActions(
-      {
-        backHref: employeeDirectoryHref(filters),
-        actions: <>
-        {navigation.previous ? (
-          <Link
-            href={employeeProfileHref(navigation.previous.id, filters, activeTab)}
-            aria-label="Previous employee record"
-            title="Previous employee record"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
-          </Link>
-        ) : (
-          <button
-            type="button"
-            disabled
-            aria-label="No previous employee record"
-            title="No previous employee record"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 shadow-sm disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
-          </button>
-        )}
-        {navigation.next ? (
-          <Link
-            href={employeeProfileHref(navigation.next.id, filters, activeTab)}
-            aria-label="Next employee record"
-            title="Next employee record"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <ChevronRightIcon aria-hidden="true" className="h-5 w-5" />
-          </Link>
-        ) : (
-          <button
-            type="button"
-            disabled
-            aria-label="No next employee record"
-            title="No next employee record"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 shadow-sm disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <ChevronRightIcon aria-hidden="true" className="h-5 w-5" />
-          </button>
-        )}
-        <div className="ml-auto flex min-w-0 flex-wrap items-end gap-2">
-          <select
-            aria-label="Filter by branch"
-            value={filters.branch}
-            disabled={refreshingFilters}
-            onChange={(event) => applyNavigationFilters({ ...filters, branch: event.target.value })}
-            className="h-10 w-36 rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">All branches</option>
-            {branchOptions.map((branch) => <option key={branch} value={branch}>{branch}</option>)}
-          </select>
-          <select
-            aria-label="Filter by employer"
-            value={filters.employer}
-            disabled={refreshingFilters}
-            onChange={(event) => applyNavigationFilters({ ...filters, employer: event.target.value })}
-            className="h-10 w-40 rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">All employers</option>
-            {employerOptions.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-          </select>
-          <div className="min-w-fit pb-1 text-xs text-gray-600" aria-live="polite">
-            <div className="font-medium text-gray-700">{navigationFilterLabel(filters, selectedEmployerName)}</div>
-            <div>Showing <span className="font-semibold text-gray-900">{String(navigation.position).padStart(2, "0")}</span> of <span className="font-semibold text-gray-900">{String(navigation.matching.length).padStart(2, "0")}</span></div>
-          </div>
-        </div>
-      </>,
-      },
-    );
+    setAppHeaderActions({ actions: null, backHref: employeeDirectoryHref(filters), hideBack: true });
     return () => setAppHeaderActions(null);
-  }, [activeTab, applyNavigationFilters, branchOptions, displayedEmployee, employerOptions, error, filters, id, navigation.matching.length, navigation.next, navigation.position, navigation.previous, refreshingFilters, router, selectedEmployerName, setAppHeaderActions]);
+  }, [displayedEmployee, error, filters, setAppHeaderActions]);
 
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
@@ -731,18 +598,41 @@ function EmployeeProfileContent() {
                 <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500">No photo</div>
               )}
               <div className="min-w-0 flex-1">
-                <h2 className="break-words text-xl font-bold text-gray-950 sm:text-2xl">{fullName}</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="break-words text-xl font-bold text-gray-950 sm:text-2xl">{fullName}</h2>
+                  <Link
+                    href={`/employees/new/${displayedEmployee.id}`}
+                    aria-label={`Edit ${fullName}`}
+                    title={`Edit ${fullName}`}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
+                  </Link>
+                </div>
                 <p className="mt-1 text-sm font-medium text-gray-700">{displayedEmployee.position || "Position not set"} <span className="px-1 text-gray-400">•</span> {displayedEmployee.branch || "Branch not set"}</p>
                 <p className="mt-1 text-sm text-gray-600">{displayedEmployee.biometricNo || "Not set"}</p>
                 <p className={`mt-1 text-sm font-semibold ${["Regular", "Contractual", "Trainee", "Leave"].includes(displayedEmployee.status || "") ? "text-green-700" : "text-gray-700"}`}>
                   {displayedEmployee.status || "Status not set"}
                 </p>
               </div>
+              <aside aria-label="Assignment" className="ml-auto flex w-full max-w-sm items-center gap-x-5 self-end pb-1 sm:w-auto sm:shrink-0">
+                <div className="min-w-0"><p className="text-[10px] uppercase tracking-wide text-gray-500">Assigned By</p><p className="mt-0.5 break-words text-xs font-medium leading-snug text-gray-700">{displayedEmployee.assignedBy || "Not set"}</p></div>
+                <div className="min-w-0"><p className="text-[10px] uppercase tracking-wide text-gray-500">Assigned At</p><p className="mt-0.5 break-words text-xs font-medium leading-snug text-gray-700">{dateText(displayedEmployee.assignedAt)}</p></div>
+              </aside>
             </header>
 
             <div className="mt-5 flex flex-1 flex-col">
-              <div role="tablist" aria-label="Employee profile sections" className="shrink-0 overflow-x-auto border-b border-gray-200">
-                <div className="flex min-w-max">
+              <div className="flex shrink-0 items-center gap-1 border-b border-gray-200">
+                <HistoryBackLink
+                  fallbackHref={employeeDirectoryHref(filters)}
+                  aria-label="Back to employee directory"
+                  title="Back to employee directory"
+                  className="mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
+                </HistoryBackLink>
+                <div role="tablist" aria-label="Employee profile sections" className="min-w-0 overflow-x-auto">
+                  <div className="flex min-w-max">
                   {profileTabs.map((tab, index) => {
                     const Icon = tab.icon;
                     return (
@@ -754,7 +644,7 @@ function EmployeeProfileContent() {
                       aria-selected={activeTab === tab.label}
                       aria-controls="employee-profile-panel"
                       tabIndex={activeTab === tab.label ? 0 : -1}
-                      onClick={() => setActiveTab(tab.label)}
+                      onClick={() => selectProfileTab(tab.label)}
                       onKeyDown={(event) => {
                         const nextIndex = event.key === "ArrowRight" || event.key === "ArrowDown"
                           ? (index + 1) % profileTabs.length
@@ -767,7 +657,7 @@ function EmployeeProfileContent() {
                                 : index;
                         if (nextIndex !== index) {
                           event.preventDefault();
-                          setActiveTab(profileTabs[nextIndex].label);
+                          selectProfileTab(profileTabs[nextIndex].label);
                           document.getElementById(`employee-profile-tab-${nextIndex}`)?.focus();
                         }
                       }}
@@ -778,6 +668,7 @@ function EmployeeProfileContent() {
                     </button>
                     );
                   })}
+                    </div>
                 </div>
               </div>
 
@@ -811,6 +702,9 @@ function EmployeeProfileContent() {
                   <Value label="Relation" value={displayedEmployee.emergencyRelation} />
                   <div className="sm:col-span-2"><Value label="Address" value={displayedEmployee.emergencyAddress} /></div>
                 </ProfileSection>
+                <ProfileSection title="Remarks" icon={ClipboardDocumentListIcon}>
+                  <div className="sm:col-span-2"><Value label="Remarks" value={displayedEmployee.remarks} /></div>
+                </ProfileSection>
               </div>}
 
               {activeTab === "Employment" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
@@ -834,20 +728,22 @@ function EmployeeProfileContent() {
                 </ProfileSection>
               </div>}
 
-              {activeTab === "Government ID" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
+              {activeTab === "Government" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
                 <ProfileSection title="Government ID" icon={IdentificationIcon}>
-                  <Value label="SSS" value={displayedEmployee.sssNumber} />
+                  <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                    <Value label="SSS" value={displayedEmployee.sssNumber} />
+                    <Link
+                      href={`/employees/${displayedEmployee.id}/sss-contributions`}
+                      aria-label="View SSS contributions"
+                      title="View SSS contributions"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                    >
+                      <EyeIcon aria-hidden="true" className="h-5 w-5" />
+                    </Link>
+                  </div>
                   <Value label="Pag-IBIG" value={displayedEmployee.pagIbigNumber} />
                   <Value label="PhilHealth" value={displayedEmployee.philHealth} />
                   <Value label="TIN" value={displayedEmployee.tinNumber} />
-                </ProfileSection>
-              </div>}
-
-              {activeTab === "Assignment and Remarks" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
-                <ProfileSection title="Assignment and Remarks" icon={ClipboardDocumentListIcon}>
-                  <Value label="Assigned By" value={displayedEmployee.assignedBy} />
-                  <Value label="Assigned At" value={dateText(displayedEmployee.assignedAt)} />
-                  <div className="sm:col-span-2"><Value label="Remarks" value={displayedEmployee.remarks} /></div>
                 </ProfileSection>
               </div>}
 

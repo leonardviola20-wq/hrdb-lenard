@@ -75,17 +75,53 @@ export async function PATCH(request: NextRequest) {
   const denied = requireAdmin(request);
   if (denied) return denied;
 
-  const body = await request.json().catch(() => null) as { id?: unknown; active?: unknown } | null;
+  const body = await request.json().catch(() => null) as { id?: unknown; active?: unknown; name?: unknown } | null;
   const id = Number(body?.id);
-  if (!Number.isInteger(id) || id < 1 || typeof body?.active !== "boolean") {
-    return NextResponse.json({ error: "A valid category and active state are required" }, { status: 400 });
+  const name = typeof body?.name === "string" ? body.name.trim() : undefined;
+  if (!Number.isInteger(id) || id < 1
+    || (body?.active !== undefined && typeof body.active !== "boolean")
+    || (body?.name !== undefined && (typeof body.name !== "string" || !name || name.length > 100))
+    || (body?.active === undefined && body?.name === undefined)) {
+    return NextResponse.json({ error: "A valid category and name or active state are required" }, { status: 400 });
   }
 
   try {
-    const category = await prisma.employeeCategory.update({ where: { id }, data: { active: body.active } });
+    const category = await prisma.employeeCategory.update({
+      where: { id },
+      data: {
+        ...(body.active !== undefined ? { active: body.active } : {}),
+        ...(name !== undefined ? { name } : {}),
+      },
+    });
     return NextResponse.json({ category });
   } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: "That category already exists" }, { status: 409 });
+    }
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
     console.error("Update employee category error:", error);
     return NextResponse.json({ error: "Unable to update category" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const denied = requireAdmin(request);
+  if (denied) return denied;
+
+  const body = await request.json().catch(() => null) as { id?: unknown } | null;
+  const id = Number(body?.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return NextResponse.json({ error: "A valid category is required" }, { status: 400 });
+  }
+
+  try {
+    const result = await prisma.employeeCategory.deleteMany({ where: { id } });
+    if (result.count === 0) return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    console.error("Delete employee category error:", error);
+    return NextResponse.json({ error: "Unable to delete category" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { contactImageError } from "@/lib/contactImage";
 
 const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
@@ -34,6 +35,11 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
       }
       data[field] = typeof body[field] === "string" ? body[field].trim() || null : null;
     }
+  }
+  if (body.photoUrl !== undefined) {
+    const photoError = contactImageError(body.photoUrl);
+    if (photoError) return NextResponse.json({ error: photoError }, { status: 400 });
+    data.photoUrl = typeof body.photoUrl === "string" && body.photoUrl ? body.photoUrl : null;
   }
   if (typeof body.active === "boolean") data.active = body.active;
   if (body.employeeId !== undefined) {

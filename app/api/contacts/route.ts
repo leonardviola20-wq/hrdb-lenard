@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId } from "@/lib/auth";
+import { contactImageError } from "@/lib/contactImage";
 
 const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
@@ -114,6 +115,8 @@ export async function POST(req: NextRequest) {
   if (companyName.length > 120 || contactName.length > 120 || category.length > 60) {
     return NextResponse.json({ error: "Contact details are too long" }, { status: 400 });
   }
+  const photoError = contactImageError(body.photoUrl);
+  if (photoError) return NextResponse.json({ error: photoError }, { status: 400 });
   if (body.employeeId !== undefined && body.employeeId !== null && (!Number.isInteger(body.employeeId) || body.employeeId < 1)) {
     return NextResponse.json({ error: "Choose a valid employee" }, { status: 400 });
   }
@@ -153,6 +156,7 @@ export async function POST(req: NextRequest) {
       services: typeof body.services === "string" ? body.services.trim() || null : null,
       branch: typeof body.branch === "string" ? body.branch.trim() || null : null,
       notes: typeof body.notes === "string" ? body.notes.trim() || null : null,
+      photoUrl: typeof body.photoUrl === "string" ? body.photoUrl : null,
     },
     include: { employee: { select: { id: true, firstName: true, lastName: true } } },
   });

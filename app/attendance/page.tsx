@@ -1,8 +1,7 @@
 "use client";
 
 import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, ChevronLeftIcon, ChevronUpDownIcon, ChevronUpIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AttendancePrintReport, { AttendancePrintAllReport, attendanceMinutes } from "@/components/AttendancePrintReport";
 
 type Punch = { time: string; deviceNumber: string; branch: string };
@@ -61,7 +60,7 @@ const inputClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-s
 
 // Shared column tracks so the list header and its rows can never drift apart.
 const GRID_COLS = "sm:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_110px_32px_40px]";
-const GRID_ROW = `grid grid-cols-1 gap-x-4 px-3 sm:px-4 ${GRID_COLS}`;
+const GRID_ROW = `grid grid-cols-1 items-center gap-x-4 px-3 sm:px-4 ${GRID_COLS}`;
 
 function localDateValue(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -437,30 +436,25 @@ export default function AttendancePage() {
       <div className="flex w-full min-w-0 flex-1 flex-col space-y-4">
         <div id="reports" className="flex w-full scroll-mt-24 flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-          <Link href="/dashboard" onClick={(event) => { if (window.matchMedia("(max-width: 767px)").matches) { event.preventDefault(); window.dispatchEvent(new Event("hrdb-open-sidebar")); } }} className="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-            <ChevronLeftIcon className="h-4 w-4" /> Back
-          </Link>
           <input ref={fileInputRef} type="file" multiple accept=".dat,.txt,.xls,.xlsx,application/vnd.ms-excel" onChange={uploadFile} className="hidden" />
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-900 disabled:opacity-50">
             <ArrowUpTrayIcon className="h-4 w-4" /> {uploading ? "Uploading..." : "Upload"}
           </button>
+          {totalImported !== null && totalImported > 0 && (
+            <>
+              <button type="button" onClick={() => void backupRecords()} aria-label="Backup attendance records" title="Backup" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-sky-300 bg-white text-sky-700 transition hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <ArrowDownTrayIcon className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => setConfirmDeleteOpen(true)} aria-label="Delete attendance records" title="Delete" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-300 bg-white text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </>
+          )}
           {totalImported !== null && (
             <span className="inline-flex h-10 items-center whitespace-nowrap rounded-lg border border-slate-200 bg-slate-100 px-3 text-sm font-semibold text-slate-600">
-              {totalImported.toLocaleString()} records uploaded
+              {totalImported.toLocaleString()} records
             </span>
           )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {totalImported !== null && totalImported > 0 && (
-              <>
-                <button type="button" onClick={() => void backupRecords()} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-sky-300 bg-white px-3.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50">
-                  <ArrowDownTrayIcon className="h-4 w-4" /> Backup
-                </button>
-                <button type="button" onClick={() => setConfirmDeleteOpen(true)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50">
-                  <TrashIcon className="h-4 w-4" /> Delete
-                </button>
-              </>
-            )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <span className="whitespace-nowrap text-base font-bold text-slate-500">Date Range:</span>

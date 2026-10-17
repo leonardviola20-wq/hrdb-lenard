@@ -158,7 +158,7 @@ export default function DashboardPage() {
                 { label: "Tasks", href: "/tasks", icon: ChartBarIcon, visible: stats.canCreateTasks, color: "text-sky-700", hover: "group-hover:bg-sky-50" },
                 { label: "Employees", href: "/employees", icon: UserGroupIcon, visible: stats.canViewEmployees, color: "text-blue-700", hover: "group-hover:bg-blue-50" },
                 { label: "Attendance", href: "/attendance", icon: CalendarDaysIcon, visible: stats.canViewAttendance, color: "text-teal-700", hover: "group-hover:bg-teal-50" },
-                { label: "Reports", href: "/reports/sss", icon: DocumentChartBarIcon, visible: stats.canViewReports, color: "text-rose-700", hover: "group-hover:bg-rose-50" },
+                { label: "Reports", href: "/reports", icon: DocumentChartBarIcon, visible: stats.canViewReports, color: "text-rose-700", hover: "group-hover:bg-rose-50" },
                 { label: "Contacts", href: "/contacts", icon: IdentificationIcon, visible: stats.canViewContacts, color: "text-fuchsia-700", hover: "group-hover:bg-fuchsia-50" },
                 { label: "Employers", href: "/employers", icon: BriefcaseIcon, visible: stats.canViewEmployers, color: "text-amber-700", hover: "group-hover:bg-amber-50" },
               ].filter((shortcut) => shortcut.visible).map((shortcut) => (
@@ -349,7 +349,7 @@ export default function DashboardPage() {
 
         <div className="mb-4 grid grid-cols-2 items-stretch gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-8">
           {[
-            { label: "Missing Requirement", value: stats.employeesMissingRequirements, icon: ClipboardDocumentListIcon, color: "text-rose-700", bg: "bg-rose-50", href: stats.canViewEmployees ? "/employees?status=ALL&requirements=missing&clearSearch=1" : null },
+            { label: "Missing Requirement", value: stats.employeesMissingRequirements, icon: ClipboardDocumentListIcon, color: "text-rose-700", bg: "bg-rose-50", href: stats.canViewEmployees ? "/employees?status=ACTIVE&requirements=missing&clearSearch=1" : null },
             { label: "Newly Hired", value: stats.newlyHired, icon: UserPlusIcon, color: "text-violet-700", bg: "bg-violet-50", href: stats.canViewEmployees ? "/employees?status=ALL&hiredWithin=30&clearSearch=1" : null },
             { label: "Trainee", value: stats.traineeEmployees, icon: AcademicCapIcon, color: "text-cyan-700", bg: "bg-cyan-50", href: stats.canViewEmployees ? "/employees?status=Trainee&clearSearch=1" : null },
             { label: "Active Employees", value: stats.activeEmployees, icon: UsersIcon, color: "text-green-700", bg: "bg-green-50", href: stats.canViewEmployees ? "/employees?status=ACTIVE&clearSearch=1" : null },

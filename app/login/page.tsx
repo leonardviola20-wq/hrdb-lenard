@@ -8,7 +8,6 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ email: "", password: "", username: "", confirmPassword: "" });
   const [error, setError] = useState("");
-  const [verificationUrl, setVerificationUrl] = useState("");
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -41,10 +40,22 @@ export default function AuthPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setVerificationUrl("");
 
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+
+    // Mirror the server's password policy so the user sees the rule immediately.
+    const passwordBytes = new TextEncoder().encode(form.password).length;
+    const passwordOkay =
+      form.password.length >= 8
+      && passwordBytes <= 72
+      && /[A-Z]/.test(form.password)
+      && /[0-9]/.test(form.password)
+      && /[^\p{L}\p{N}\s]/u.test(form.password);
+    if (!passwordOkay) {
+      setError("Password must be 8-72 characters and include an uppercase letter, a number, and a special character");
       return;
     }
 
@@ -56,7 +67,6 @@ export default function AuthPage() {
           username: form.username,
           email: form.email,
           password: form.password,
-          role: "USER",
         }),
       });
       const data = await res.json();
@@ -66,8 +76,7 @@ export default function AuthPage() {
         return;
       }
 
-      setError("Registration successful. Verify your email before logging in.");
-      setVerificationUrl(data.verificationUrl);
+      setError(data.message || "Registration received. An administrator must verify your account before you can log in.");
     } catch {
       setError("Something went wrong");
     }
@@ -222,14 +231,6 @@ export default function AuthPage() {
           {error && (
             <div className="mt-4 text-center">
               <p className="text-gray-800">{error}</p>
-              {verificationUrl && (
-                <a
-                  href={verificationUrl}
-                  className="mt-2 inline-block break-all font-medium text-blue-700 underline hover:text-blue-900"
-                >
-                  Open verification link
-                </a>
-              )}
             </div>
           )}
         </div>

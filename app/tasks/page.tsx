@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   CheckCircleIcon,
-  ChevronLeftIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   EllipsisHorizontalIcon,
@@ -560,19 +558,7 @@ export default function TasksPage() {
   return (
     <main className="min-h-screen bg-[#f5f7fb] px-4 pb-4 pt-6 sm:px-5 sm:pb-5 sm:pt-6">
       <div className="w-full min-w-0">
-        <div className="mb-4 grid grid-cols-2 items-center gap-2 md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]">
-          <Link
-            href="/dashboard"
-            onClick={(event) => {
-              if (window.matchMedia("(max-width: 767px)").matches) {
-                event.preventDefault();
-                window.dispatchEvent(new Event("hrdb-open-sidebar"));
-              }
-            }}
-            className="ml-1 inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-          >
-            <ChevronLeftIcon className="h-4 w-4" /> Back
-          </Link>
+        <div className="mb-4 grid grid-cols-2 items-center gap-2 md:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
           <button type="button" onClick={() => setShowCreateForm((current) => !current)} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
             <PlusIcon className="h-4 w-4" /> Add task
           </button>
@@ -666,7 +652,7 @@ export default function TasksPage() {
                   <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
                     {columnTasks.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-slate-300 bg-white/40 p-5 text-center text-sm text-slate-500">No tasks here</div>
-                    ) : columnTasks.map((task) => {
+                    ) : columnTasks.map((task, index) => {
                       const completedPrerequisites = task.prerequisites.filter((prerequisite) => prerequisite.isCompleted).length;
                       const incompletePrerequisites = task.prerequisites.length - completedPrerequisites;
                       const prerequisiteProgress = task.prerequisites.length > 0
@@ -678,7 +664,7 @@ export default function TasksPage() {
                           ? 50 + prerequisiteProgress
                           : prerequisiteProgress;
                       return (
-                      <article key={task.id} className="flex h-full flex-col rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                      <article key={task.id} style={{ animationDelay: `${Math.min(index, 11) * 60}ms` }} className="card-lift flex h-full flex-col rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                         <div className="mb-2 flex flex-wrap items-center gap-1.5">
                           <span className={`rounded-md px-2 py-1 text-[11px] font-semibold ${priorityStyle[task.priority]}`}>{task.priority}</span>
                           {task.isFlagged && <span className="inline-flex items-center gap-1 rounded-md bg-rose-100 px-2 py-1 text-[11px] font-semibold text-rose-700"><FlagIcon className="h-3 w-3" /> Flagged</span>}
