@@ -46,3 +46,9 @@ description: Actionable implementation checklist for Pag-IBIG employee accounts 
 - [x] Replace action labels with accessible icon buttons and tooltips.
 - [x] Replace the native employee selector with a searchable listbox whose options scroll independently.
 - [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 7 — Refine Pag-IBIG Account Editor
+- [x] Remove the Account Year field while retaining selected-year context for account saves.
+- [x] Redesign the account editor into Name/MID, Member Savings, MP2, and Loans cards with shared savings/MP2 and loan color groups.
+- [x] Replace always-visible loan forms with an add/edit loan flow and saved-loan type/amount list.
+- [x] Add Active/Inactive loan list toggles and validate the updated editor with focused checks.

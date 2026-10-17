@@ -157,6 +157,9 @@ function PagIbigReportsContent() {
   const [returnToReportPreview, setReturnToReportPreview] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [accountForm, setAccountForm] = useState<AccountForm>(emptyAccountForm);
+  const [loanEditorType, setLoanEditorType] = useState<PagibigLoanType | "" | null>(null);
+  const [loanEditorDetail, setLoanEditorDetail] = useState<LoanDetail>(emptyLoanDetail);
+  const [loanStatusFilter, setLoanStatusFilter] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
   const [savingAccount, setSavingAccount] = useState(false);
   const [accountError, setAccountError] = useState("");
   const [reportFormOpen, setReportFormOpen] = useState(false);
@@ -233,6 +236,9 @@ function PagIbigReportsContent() {
     setReturnToReportPreview(false);
     setEditingMember(null);
     setAccountForm({ ...emptyAccountForm(), year: accountYear });
+    setLoanEditorType(null);
+    setLoanEditorDetail(emptyLoanDetail());
+    setLoanStatusFilter("ACTIVE");
     setAccountError("");
     setAccountFormOpen(true);
   };
@@ -257,13 +263,56 @@ function PagIbigReportsContent() {
         return [type, detail ? { ...detail, termYears: String(detail.termYears) } : emptyLoanDetail()];
       })) as Record<PagibigLoanType, LoanDetail>,
     });
+    setLoanEditorType(null);
+    setLoanEditorDetail(emptyLoanDetail());
+    setLoanStatusFilter("ACTIVE");
     setAccountFormOpen(true);
   };
 
   const closeAccountForm = () => {
     setAccountFormOpen(false);
+    setLoanEditorType(null);
     if (returnToReportPreview) setReportFormOpen(true);
     setReturnToReportPreview(false);
+  };
+
+  const openLoanEditor = (type: PagibigLoanType | "" | null) => {
+    setLoanEditorType(type);
+    setLoanEditorDetail(type ? { ...accountForm.loanDetails[type] } : emptyLoanDetail());
+    setAccountError("");
+  };
+
+  const saveLoanDetail = () => {
+    if (!loanEditorType) {
+      setAccountError("Choose a loan type.");
+      return;
+    }
+    const type = loanEditorType;
+    const detail = loanEditorDetail;
+    const amount = Number(detail.amount);
+    if (!detail.applicationNo.trim() || !detail.loanTermDate || !Number.isInteger(Number(detail.termYears))
+      || Number(detail.termYears) < 1 || Number(detail.termYears) > 50 || !Number.isFinite(amount) || amount < 0
+      || !["ACTIVE", "INACTIVE"].includes(detail.status)) {
+      setAccountError("Complete the loan application number, term date, term, amount, and status.");
+      return;
+    }
+    setAccountForm((current) => ({
+      ...current,
+      loanDetails: { ...current.loanDetails, [type]: { ...detail, applicationNo: detail.applicationNo.trim() } },
+    }));
+    setLoanEditorType(null);
+    setLoanEditorDetail(emptyLoanDetail());
+    setAccountError("");
+  };
+
+  const accountEmployee = members.find((member) => String(member.id) === accountForm.employeeId) ?? editingMember;
+  const availableLoanTypes = PAGIBIG_LOAN_TYPES.filter((type) => !accountForm.loanDetails[type].applicationNo.trim());
+  const visibleAccountLoanTypes = PAGIBIG_LOAN_TYPES.filter((type) =>
+    accountForm.loanDetails[type].applicationNo.trim() && accountForm.loanDetails[type].status === loanStatusFilter,
+  );
+  const accountLoanCounts = {
+    ACTIVE: PAGIBIG_LOAN_TYPES.filter((type) => accountForm.loanDetails[type].applicationNo.trim() && accountForm.loanDetails[type].status === "ACTIVE").length,
+    INACTIVE: PAGIBIG_LOAN_TYPES.filter((type) => accountForm.loanDetails[type].applicationNo.trim() && accountForm.loanDetails[type].status === "INACTIVE").length,
   };
 
   const loadReportYearAccounts = async (year: string) => {
@@ -487,31 +536,74 @@ function PagIbigReportsContent() {
         )}</>}
 
       {accountFormOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) closeAccountForm(); }}>
-        <form onSubmit={saveAccount} className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4"><div><h2 className="text-lg font-bold text-slate-900">{editingMember ? "Edit Pag-IBIG Account" : "Add Pag-IBIG Employee Account"}</h2><p className="mt-0.5 text-xs text-slate-500">Maintain the employee&apos;s MID, yearly savings, MP2, and loan account details.</p></div><button type="button" onClick={closeAccountForm} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
-          <div className="grid gap-4 p-5 sm:grid-cols-2">
-            <div className="sm:col-span-2"><span id="pagibig-employee-picker-label" className={labelClass}>Employee</span><EmployeePicker options={members.filter((member) => !member.pagIbigAccount || member.id === editingMember?.id)} value={accountForm.employeeId} onChange={(employeeId) => { setAccountForm((current) => ({ ...current, employeeId })); setAccountError(""); }} disabled={Boolean(editingMember)} /></div>
-            <label className="sm:col-span-2"><span className={labelClass}>Account Year</span><select disabled value={accountForm.year} className={inputClass}>{accountYears.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
-            <label className="sm:col-span-2"><span className={labelClass}>MID Number</span><input required maxLength={40} value={accountForm.midNumber} onChange={(event) => setAccountForm((current) => ({ ...current, midNumber: event.target.value }))} className={inputClass} /></label>
-            <MoneyInput label="Member Savings · EE" value={accountForm.employeeSavings} onChange={(value) => setAccountForm((current) => ({ ...current, employeeSavings: value }))} />
-            <MoneyInput label="Member Savings · ER" value={accountForm.employerSavings} onChange={(value) => setAccountForm((current) => ({ ...current, employerSavings: value }))} />
-            <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 sm:col-span-2"><input type="checkbox" checked={accountForm.excludedFromReport} onChange={(event) => setAccountForm((current) => ({ ...current, excludedFromReport: event.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-600" />Exclude this employee from generated reports</label>
-            <label><span className={labelClass}>MP2 Account No.</span><input maxLength={80} value={accountForm.mp2AccountNumber} onChange={(event) => setAccountForm((current) => ({ ...current, mp2AccountNumber: event.target.value }))} className={inputClass} /></label>
-            <MoneyInput label="MP2 Monthly Amount" value={accountForm.mp2Amount} onChange={(value) => setAccountForm((current) => ({ ...current, mp2Amount: value }))} />
-            <div className="sm:col-span-2"><h3 className="mb-1 border-b border-slate-200 pb-2 text-sm font-bold text-slate-800">Loan Accounts</h3><p className="mb-3 text-xs text-slate-500">Enter an application number, start date, term, and monthly amount for each loan. The end date is calculated from the term.</p><div className="grid gap-4 md:grid-cols-2">
-              {PAGIBIG_LOAN_TYPES.map((type) => <fieldset key={type} className="rounded-xl border border-slate-200 p-4"><legend className="px-1 text-sm font-semibold text-slate-800">{loanLabels[type]}</legend>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="sm:col-span-2"><span className={labelClass}>Application No.</span><input maxLength={120} value={accountForm.loanDetails[type].applicationNo} onChange={(event) => setAccountForm((current) => ({ ...current, loanDetails: { ...current.loanDetails, [type]: { ...current.loanDetails[type], applicationNo: event.target.value } } }))} className={inputClass} /></label>
-                  <label><span className={labelClass}>Loan Term Date</span><input type="date" value={accountForm.loanDetails[type].loanTermDate} onChange={(event) => setAccountForm((current) => ({ ...current, loanDetails: { ...current.loanDetails, [type]: { ...current.loanDetails[type], loanTermDate: event.target.value } } }))} className={inputClass} /></label>
-                  <label><span className={labelClass}>Term (Years)</span><input type="number" min="1" max="50" step="1" value={accountForm.loanDetails[type].termYears} onChange={(event) => setAccountForm((current) => ({ ...current, loanDetails: { ...current.loanDetails, [type]: { ...current.loanDetails[type], termYears: event.target.value } } }))} className={inputClass} /></label>
-                  <MoneyInput label="Monthly Amount" value={accountForm.loanDetails[type].amount} onChange={(value) => setAccountForm((current) => ({ ...current, loanDetails: { ...current.loanDetails, [type]: { ...current.loanDetails[type], amount: value } } }))} />
-                  <label><span className={labelClass}>Status</span><select value={accountForm.loanDetails[type].status} onChange={(event) => setAccountForm((current) => ({ ...current, loanDetails: { ...current.loanDetails, [type]: { ...current.loanDetails[type], status: event.target.value } } }))} className={inputClass}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label>
+        <form onSubmit={saveAccount} className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-slate-50 shadow-2xl">
+          <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 sm:px-7"><div><h2 className="text-xl font-bold text-slate-950">{editingMember ? "Edit Pag-IBIG Account" : "Add Pag-IBIG Account"}</h2><p className="mt-1 text-sm text-slate-600">Member details, savings, MP2, and loan accounts</p></div><button type="button" onClick={closeAccountForm} aria-label="Close" className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"><XMarkIcon className="h-5 w-5" /></button></div>
+          <div className="space-y-4 p-4 sm:p-6">
+            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <h3 className="mb-4 text-base font-bold text-slate-900">Member Information</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><span id="pagibig-employee-picker-label" className={labelClass}>Name</span><EmployeePicker options={members.filter((member) => !member.pagIbigAccount || member.id === editingMember?.id)} value={accountForm.employeeId} onChange={(employeeId) => { setAccountForm((current) => ({ ...current, employeeId })); setAccountError(""); }} disabled={Boolean(editingMember)} /></div>
+                <label><span className={labelClass}>MID Number</span><input required maxLength={40} value={accountForm.midNumber} onChange={(event) => setAccountForm((current) => ({ ...current, midNumber: event.target.value }))} className={inputClass} placeholder="Enter Pag-IBIG MID number" /></label>
+              </div>
+              {accountEmployee && <p className="mt-3 text-xs font-medium text-slate-500">Account for {formatEmployeeName(accountEmployee)}</p>}
+            </section>
+
+            <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 shadow-sm sm:p-5">
+              <div className="mb-4"><h3 className="text-base font-bold text-sky-950">Member Savings</h3><p className="mt-1 text-sm text-sky-800">Monthly employee and employer contributions.</p></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <MoneyInput label="EE · Employee Share" value={accountForm.employeeSavings} onChange={(value) => setAccountForm((current) => ({ ...current, employeeSavings: value }))} />
+                <MoneyInput label="ER · Employer Share" value={accountForm.employerSavings} onChange={(value) => setAccountForm((current) => ({ ...current, employerSavings: value }))} />
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-sky-200 bg-sky-50 p-4 shadow-sm sm:p-5">
+              <div className="mb-4"><h3 className="text-base font-bold text-sky-950">MP2 Savings</h3><p className="mt-1 text-sm text-sky-800">Optional MP2 membership savings.</p></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label><span className={labelClass}>Account No.</span><input maxLength={80} value={accountForm.mp2AccountNumber} onChange={(event) => setAccountForm((current) => ({ ...current, mp2AccountNumber: event.target.value }))} className={inputClass} placeholder="Enter MP2 account number" /></label>
+                <MoneyInput label="Amount" value={accountForm.mp2Amount} onChange={(value) => setAccountForm((current) => ({ ...current, mp2Amount: value }))} />
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div><h3 className="text-base font-bold text-amber-950">Loans</h3><p className="mt-1 text-sm text-amber-900">Manage the employee&apos;s Pag-IBIG loan accounts.</p></div>
+                <button type="button" onClick={() => openLoanEditor("")} disabled={availableLoanTypes.length === 0 || loanEditorType !== null} className="inline-flex h-9 items-center gap-2 rounded-lg bg-amber-700 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"><PlusIcon className="h-4 w-4" />Add Loan</button>
+              </div>
+              <div className="mt-4 inline-flex rounded-lg border border-amber-200 bg-white p-1" role="group" aria-label="Filter loans by status">
+                {(["ACTIVE", "INACTIVE"] as const).map((status) => <button key={status} type="button" aria-pressed={loanStatusFilter === status} onClick={() => setLoanStatusFilter(status)} className={`rounded-md px-4 py-2 text-sm font-semibold transition ${loanStatusFilter === status ? "bg-amber-700 text-white shadow-sm" : "text-amber-900 hover:bg-amber-50"}`}>{status === "ACTIVE" ? "Active" : "Inactive"} <span className={loanStatusFilter === status ? "ml-1 text-amber-100" : "ml-1 text-amber-700"}>({accountLoanCounts[status]})</span></button>)}
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-lg border border-amber-200 bg-white">
+                <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-amber-100 bg-amber-100/70 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-amber-950"><span>Type of Loan</span><span className="text-right">Loan Amount</span><span className="w-16 text-right">Action</span></div>
+                {visibleAccountLoanTypes.map((type) => <div key={type} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-slate-100 px-4 py-3 last:border-0">
+                  <div><p className="font-semibold text-slate-900">{loanLabels[type]}</p><p className="mt-0.5 text-xs text-slate-500">Application {accountForm.loanDetails[type].applicationNo}</p></div>
+                  <p className="text-right text-sm font-semibold tabular-nums text-slate-900">{formatAmount(accountForm.loanDetails[type].amount)}</p>
+                  <button type="button" onClick={() => openLoanEditor(type)} aria-label={`Edit ${loanLabels[type]} loan`} title={`Edit ${loanLabels[type]} loan`} className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"><PencilSquareIcon className="h-4 w-4" /></button>
+                </div>)}
+                {visibleAccountLoanTypes.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-600">{accountLoanCounts.ACTIVE + accountLoanCounts.INACTIVE === 0 ? "No loan accounts added yet." : `No ${loanStatusFilter.toLocaleLowerCase()} loans.`}</p>}
+              </div>
+
+              {loanEditorType !== null && <div className="mt-4 rounded-xl border border-amber-300 bg-white p-4 shadow-sm">
+                <div className="mb-4 flex items-center justify-between gap-3"><div><h4 className="font-bold text-slate-900">{loanEditorType && accountForm.loanDetails[loanEditorType].applicationNo ? `Edit ${loanLabels[loanEditorType]} Loan` : "Add Loan Account"}</h4><p className="mt-1 text-xs text-slate-600">Save the loan here, then save the Pag-IBIG account to persist your changes.</p></div><button type="button" onClick={() => setLoanEditorType(null)} aria-label="Close loan editor" className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-4 w-4" /></button></div>
+                <label><span className={labelClass}>Type of Loan</span>{loanEditorType && accountForm.loanDetails[loanEditorType].applicationNo ? <input readOnly value={loanLabels[loanEditorType]} className={`${inputClass} bg-slate-50 font-semibold`} /> : <select required value={loanEditorType} onChange={(event) => {
+                    const nextType = event.target.value as PagibigLoanType;
+                    setLoanEditorType(nextType);
+                    setLoanEditorDetail({ ...accountForm.loanDetails[nextType] });
+                  }} className={inputClass}><option value="">Select loan type</option>{availableLoanTypes.map((type) => <option key={type} value={type}>{loanLabels[type]}</option>)}</select>}</label>
+                {loanEditorType && <><div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="sm:col-span-2"><span className={labelClass}>Application No.</span><input required maxLength={120} value={loanEditorDetail.applicationNo} onChange={(event) => setLoanEditorDetail((current) => ({ ...current, applicationNo: event.target.value }))} className={inputClass} /></label>
+                  <label><span className={labelClass}>Loan Term Date</span><input required type="date" value={loanEditorDetail.loanTermDate} onChange={(event) => setLoanEditorDetail((current) => ({ ...current, loanTermDate: event.target.value }))} className={inputClass} /></label>
+                  <label><span className={labelClass}>Term (Years)</span><input required type="number" min="1" max="50" step="1" value={loanEditorDetail.termYears} onChange={(event) => setLoanEditorDetail((current) => ({ ...current, termYears: event.target.value }))} className={inputClass} /></label>
+                  <MoneyInput label="Loan Amount" value={loanEditorDetail.amount} onChange={(value) => setLoanEditorDetail((current) => ({ ...current, amount: value }))} />
+                  <label><span className={labelClass}>Status</span><select value={loanEditorDetail.status} onChange={(event) => setLoanEditorDetail((current) => ({ ...current, status: event.target.value }))} className={inputClass}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label>
                 </div>
-              </fieldset>)}
-            </div></div>
-            {accountError && <p role="alert" className="sm:col-span-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{accountError}</p>}
+                <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setLoanEditorType(null)} className="h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button><button type="button" onClick={saveLoanDetail} className="h-9 rounded-lg bg-amber-700 px-4 text-sm font-semibold text-white hover:bg-amber-800">Save Loan</button></div></>}
+              </div>}
+            </section>
+            <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"><input type="checkbox" checked={accountForm.excludedFromReport} onChange={(event) => setAccountForm((current) => ({ ...current, excludedFromReport: event.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-600" />Exclude this employee from generated reports</label>
+            {accountError && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">{accountError}</p>}
           </div>
-          <div className="sticky bottom-0 flex justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4"><button type="button" onClick={closeAccountForm} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button disabled={savingAccount} className="h-10 rounded-lg bg-violet-700 px-5 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-60">{savingAccount ? "Saving..." : "Save"}</button></div>
+          <div className="sticky bottom-0 z-20 flex justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4 sm:px-7"><button type="button" onClick={closeAccountForm} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button><button disabled={savingAccount || loanEditorType !== null} className="h-10 rounded-lg bg-violet-700 px-5 text-sm font-semibold text-white shadow-sm hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60">{savingAccount ? "Saving..." : "Save Account"}</button></div>
         </form>
       </div>}
 
