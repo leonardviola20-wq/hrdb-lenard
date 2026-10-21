@@ -23,3 +23,7 @@ export function getSssLoanTypeLabel(value: SssLoanType) {
 export function getSssLoanTypeListLabel(value: SssLoanType) {
   return `${value}-${loanTypeLabels[value].split(" ")[0]}`;
 }
+
+export function getSssLoanTypeShortLabel(value: SssLoanType) {
+  return `${value} - ${loanTypeLabels[value].split(" ")[0]}`;
+}

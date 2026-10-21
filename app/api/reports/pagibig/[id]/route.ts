@@ -68,3 +68,28 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Unable to record Pag-IBIG payment" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const access = await authorizeReports(request);
+  if (access.error) return access.error;
+  if (access.session?.role !== "ADMIN") {
+    return NextResponse.json({ error: "Admin access is required to delete Pag-IBIG reports" }, { status: 403 });
+  }
+
+  const id = Number((await params).id);
+  if (!Number.isSafeInteger(id) || id <= 0) return NextResponse.json({ error: "Invalid Pag-IBIG report id" }, { status: 400 });
+
+  try {
+    await prisma.$transaction([
+      prisma.pagibigReportEntry.deleteMany({ where: { reportId: id } }),
+      prisma.pagibigReport.delete({ where: { id } }),
+    ]);
+    return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+      return NextResponse.json({ error: "Pag-IBIG report not found" }, { status: 404 });
+    }
+    console.error("Delete Pag-IBIG report error:", error);
+    return NextResponse.json({ error: "Unable to delete Pag-IBIG report" }, { status: 500 });
+  }
+}

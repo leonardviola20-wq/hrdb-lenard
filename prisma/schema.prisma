@@ -27,6 +27,7 @@ model User {
   sssReports               SssReport[]
   PagibigReport            PagibigReport[]
   PagibigReportDraft       PagibigReportDraft[]
+  philHealthReports        PhilHealthReport[]
 }
 
 model Post {
@@ -148,6 +149,8 @@ model employee {
   pagibigEmployeeRecords PagibigEmployeeRecord[]
   pagibigReportEntries   PagibigReportEntry[]
   pagibigLoans           PagibigLoan[]
+  philHealthEmployeeRecords PhilHealthEmployeeRecord[]
+  philHealthReportEntries  PhilHealthReportEntry[]
   requirementsBypassed   Boolean                         @default(false)
 
   @@index([employerId])
@@ -289,6 +292,8 @@ model employer {
   pagibigEmployeeRecords PagibigEmployeeRecord[]
   pagibigLoans           PagibigLoan[]
   pagibigReports         PagibigReport[]
+  philHealthEmployeeRecords PhilHealthEmployeeRecord[]
+  philHealthReports      PhilHealthReport[]
 }
 
 model SssLoan {
@@ -528,6 +533,75 @@ model PagibigReportEntry {
 
   @@index([employeeId, reportId])
   @@index([pagibigLoanId])
+}
+
+model PhilHealthEmployeeRecord {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employerId Int
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  employee   employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employer   employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, employerId])
+  @@index([employerId, active])
+}
+
+model PhilHealthReport {
+  id                    Int                     @id @default(autoincrement())
+  employerId            Int
+  employerName          String
+  employerPhicNumber    String?
+  applicableMonth       Int
+  applicableYear        Int
+  amountDue             Decimal                 @db.Decimal(12, 2)
+  createdBy             Int?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  employer              employer                @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  creator               User?                   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  entries                PhilHealthReportEntry[]
+  payment                PhilHealthPayment?
+
+  @@unique([employerId, applicableYear, applicableMonth])
+  @@index([employerId, applicableYear, applicableMonth])
+}
+
+model PhilHealthReportEntry {
+  id                       Int              @id @default(autoincrement())
+  reportId                 Int
+  employeeId               Int?
+  employeeName             String
+  employeeCode             String
+  employeePhilHealthNumber String?
+  amount                   Decimal          @db.Decimal(12, 2)
+  report                   PhilHealthReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  employee                 employee?        @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@index([reportId, employeeName])
+  @@index([employeeId])
+}
+
+model PhilHealthPayment {
+  id                             Int              @id @default(autoincrement())
+  reportId                       Int              @unique
+  payorName                      String
+  pen                            String
+  spa                            String?
+  applicablePeriod               String
+  amountPaid                     Decimal          @db.Decimal(12, 2)
+  accreditedCollectingAgent      String?
+  transactionConfirmationNumber String?
+  transactionDate                DateTime         @db.Date
+  eparNumber                     String?
+  eparDate                       DateTime?        @db.Date
+  createdAt                      DateTime         @default(now())
+  updatedAt                      DateTime         @updatedAt
+  report                         PhilHealthReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([transactionDate])
 }
 
 model OfficeContact {

@@ -1,0 +1,2 @@
+ALTER TABLE "PagibigReportEntry"
+ADD COLUMN "emergencyLoan" DECIMAL(12, 2) NOT NULL DEFAULT 0;

@@ -8,6 +8,13 @@ import { BanknotesIcon, ChartBarIcon, DocumentChartBarIcon, ShieldCheckIcon } fr
 type EmployerOption = { id: number; name: string };
 type ReportKind = "CONTRIBUTION" | "LOAN";
 type RecentPayment = { id: number; applicableMonth: number; applicableYear: number; amountDue: string };
+type RecentPagibigPayment = { id: number; applicableMonth: number; applicableYear: number; amountDue: string };
+type RecentPhilHealthPayment = {
+  id: number;
+  applicableMonth: number;
+  applicableYear: number;
+  payment: { amountPaid: string; transactionDate: string };
+};
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const formatAmountDue = (value: string) => `₱${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -15,7 +22,7 @@ const formatAmountDue = (value: string) => `₱${Number(value).toLocaleString("e
 const reportCards = [
   {
     title: "SSS",
-    description: "Contribution and loan tracking",
+    description: "Reports",
     Icon: DocumentChartBarIcon,
     accent: "from-blue-600 to-blue-700",
     actions: [
@@ -25,7 +32,7 @@ const reportCards = [
   },
   {
     title: "Pag-IBIG",
-    description: "Member accounts and payment reports",
+    description: "Reports",
     Icon: BanknotesIcon,
     accent: "from-violet-500 to-violet-600",
     actions: [
@@ -35,11 +42,12 @@ const reportCards = [
   },
   {
     title: "PhilHealth",
-    description: "Coming soon",
+    description: "Reports",
     Icon: ShieldCheckIcon,
     accent: "from-emerald-500 to-emerald-600",
     actions: [
-      { label: "Contribution", href: null, requiresEmployer: false },
+      { label: "Contribution", href: "/reports/philhealth?view=employees", requiresEmployer: true },
+      { label: "Payments", href: "/reports/philhealth?view=payments", requiresEmployer: true },
     ],
   },
 ] as const;
@@ -135,14 +143,6 @@ function ReportsDashboardContent() {
                     </>
                   );
 
-                  if (!action.href) {
-                    return (
-                      <button key={action.label} type="button" disabled title="Coming soon" className="inline-flex h-10 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2 text-center text-xs font-semibold text-slate-400 disabled:opacity-60 sm:text-sm">
-                        {content}
-                      </button>
-                    );
-                  }
-
                   if (action.requiresEmployer && !selectedEmployerId) {
                     return (
                       <button key={action.label} type="button" disabled title="Select an employer first" className="inline-flex h-10 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-2 text-center text-xs font-semibold text-slate-400 disabled:opacity-60 sm:text-sm">
@@ -166,6 +166,24 @@ function ReportsDashboardContent() {
                 })}
               </div>
 
+              {title === "Pag-IBIG" && (
+                <section aria-labelledby="pagibig-payment-history" className="mt-5 border-t border-slate-200 pt-4">
+                  <h3 id="pagibig-payment-history" className="text-sm font-bold text-slate-900">Payment History</h3>
+                  {selectedEmployerId ? <RecentPagibigPayments key={selectedEmployerId} employerId={selectedEmployerId} /> : (
+                    <p className="mt-3 text-xs text-slate-500">Select an employer to view payment history.</p>
+                  )}
+                </section>
+              )}
+
+              {title === "PhilHealth" && (
+                <section aria-labelledby="philhealth-payment-history" className="mt-5 border-t border-slate-200 pt-4">
+                  <h3 id="philhealth-payment-history" className="text-sm font-bold text-slate-900">Payment History</h3>
+                  {selectedEmployerId ? <RecentPhilHealthPayments key={selectedEmployerId} employerId={selectedEmployerId} /> : (
+                    <p className="mt-3 text-xs text-slate-500">Select an employer to view payment history.</p>
+                  )}
+                </section>
+              )}
+
               {title === "SSS" && (
                 <section aria-labelledby="sss-payment-history" className="mt-5 border-t border-slate-200 pt-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -188,6 +206,106 @@ function ReportsDashboardContent() {
         </div>
       </div>
     </main>
+  );
+}
+
+function RecentPhilHealthPayments({ employerId }: { employerId: string }) {
+  const [payments, setPayments] = useState<RecentPhilHealthPayment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/reports/philhealth/reports?employerId=${encodeURIComponent(employerId)}&view=payments`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load PhilHealth payment history");
+        return data.reports as RecentPhilHealthPayment[];
+      })
+      .then((rows) => {
+        if (!cancelled) setPayments(rows);
+      })
+      .catch((loadError: unknown) => {
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Unable to load PhilHealth payment history");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [employerId]);
+
+  if (loading) return <p role="status" className="mt-3 text-xs text-slate-500">Loading payment history...</p>;
+  if (error) return <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700">{error}</p>;
+  if (!payments.length) return <p className="mt-3 text-xs text-slate-500">No PhilHealth payments found.</p>;
+
+  return (
+    <div className="mt-3">
+      <table className="w-full table-fixed text-left text-xs sm:text-sm">
+        <thead className="text-[10px] font-semibold uppercase text-slate-500 sm:text-xs">
+          <tr><th className="w-2/3 py-2 pr-2">Period Covered</th><th className="py-2 text-right">Amount Paid</th></tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {payments.map((report) => (
+            <tr key={report.id} className="text-slate-700">
+              <td className="whitespace-nowrap py-2 pr-2">{monthNames[report.applicableMonth - 1]} {report.applicableYear}</td>
+              <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums">{formatAmountDue(report.payment.amountPaid)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RecentPagibigPayments({ employerId }: { employerId: string }) {
+  const [payments, setPayments] = useState<RecentPagibigPayment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/reports/pagibig?employerId=${encodeURIComponent(employerId)}&view=payments`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load Pag-IBIG payment history");
+        return data.payments as RecentPagibigPayment[];
+      })
+      .then((rows) => {
+        if (!cancelled) setPayments(rows);
+      })
+      .catch((loadError: unknown) => {
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Unable to load Pag-IBIG payment history");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [employerId]);
+
+  if (loading) return <p role="status" className="mt-3 text-xs text-slate-500">Loading payment history...</p>;
+  if (error) return <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700">{error}</p>;
+  if (payments.length === 0) return <p className="mt-3 text-xs text-slate-500">No Pag-IBIG payments found.</p>;
+
+  return (
+    <div className="mt-3">
+      <table className="w-full table-fixed text-left text-xs sm:text-sm">
+        <thead className="text-[10px] font-semibold uppercase text-slate-500 sm:text-xs">
+          <tr><th className="w-2/3 py-2 pr-2">Period Covered</th><th className="py-2 text-right">Amount Due</th></tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {payments.map((payment) => (
+            <tr key={payment.id} className="text-slate-700">
+              <td className="whitespace-nowrap py-2 pr-2">{monthNames[payment.applicableMonth - 1]} {payment.applicableYear}</td>
+              <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums">{formatAmountDue(payment.amountDue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

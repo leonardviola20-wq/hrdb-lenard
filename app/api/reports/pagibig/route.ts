@@ -25,12 +25,37 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const employer = await prisma.employer.findUnique({
+      where: { id: employerId },
+      select: { id: true, name: true, hdmf: true },
+    });
+    if (!employer) {
+      return NextResponse.json({ error: "Employer not found" }, { status: 404 });
+    }
+    const employerDetails = { id: employer.id, name: employer.name, pagibigNumber: employer.hdmf };
+
+    if (request.nextUrl.searchParams.get("view") === "payments") {
+      const payments = await prisma.pagibigReport.findMany({
+        where: { employerId, payDate: { not: null }, amountPaid: { not: null } },
+        select: {
+          id: true,
+          applicableMonth: true,
+          applicableYear: true,
+          amountDue: true,
+        },
+        orderBy: [{ payDate: "desc" }, { id: "desc" }],
+        take: 8,
+      });
+      return NextResponse.json({ employer: employerDetails, payments }, { headers: { "Cache-Control": "private, no-store" } });
+    }
+
     const reports = await prisma.pagibigReport.findMany({
       where: { employerId },
       orderBy: [{ applicableYear: "desc" }, { applicableMonth: "desc" }, { createdAt: "desc" }],
       include: { PagibigReportEntry: { orderBy: { employeeName: "asc" } } },
     });
     return NextResponse.json({
+      employer: employerDetails,
       reports: reports.map(serializePagibigReport),
       canEditPayments: access.session?.role === "ADMIN",
     }, { headers: { "Cache-Control": "private, no-store" } });
@@ -53,8 +78,9 @@ export async function POST(request: NextRequest) {
   const month = Number(body.applicableMonth);
   const year = validYear(body.applicableYear);
   const pin = typeof body.pin === "string" ? body.pin.trim() : "";
+  const draftId = body.draftId === undefined || body.draftId === null ? null : Number(body.draftId);
   if (!Number.isSafeInteger(employerId) || employerId <= 0 || !Number.isInteger(month) || month < 1 || month > 12
-    || !year || !pin || pin.length > 120) {
+    || !year || !pin || pin.length > 120 || (draftId !== null && (!Number.isSafeInteger(draftId) || draftId <= 0))) {
     return NextResponse.json({ error: "Select a valid employer, report month and year, and enter the Pag-IBIG report PIN" }, { status: 400 });
   }
 
@@ -154,7 +180,7 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      return transaction.pagibigReport.create({
+      const createdReport = await transaction.pagibigReport.create({
         data: {
           kind: "CONTRIBUTION",
           employerId: employer.id,
@@ -170,6 +196,11 @@ export async function POST(request: NextRequest) {
         },
         include: { PagibigReportEntry: { orderBy: { employeeName: "asc" } } },
       });
+      if (draftId !== null && Number.isSafeInteger(access.session?.id)) {
+        const deleted = await transaction.pagibigReportDraft.deleteMany({ where: { id: draftId, createdBy: access.session.id } });
+        if (!deleted.count) throw new Error("PAGIBIG_DRAFT_NOT_FOUND");
+      }
+      return createdReport;
     });
     return NextResponse.json({ report: serializePagibigReport(report) }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
@@ -187,6 +218,7 @@ export async function POST(request: NextRequest) {
       if (error.message === "DUPLICATE_PAGIBIG_LOAN_TYPE") {
         return NextResponse.json({ error: "Multiple existing records use the same Pag-IBIG loan type. Resolve the duplicate records before generating this report." }, { status: 409 });
       }
+      if (error.message === "PAGIBIG_DRAFT_NOT_FOUND") return NextResponse.json({ error: "Pag-IBIG report draft not found" }, { status: 404 });
     }
     console.error("Generate Pag-IBIG report error:", error);
     return NextResponse.json({ error: "Unable to generate Pag-IBIG report" }, { status: 500 });

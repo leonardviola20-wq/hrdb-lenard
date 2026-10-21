@@ -83,24 +83,37 @@ export async function GET(request: NextRequest) {
   if (!year) return NextResponse.json({ error: "Select a valid account year" }, { status: 400 });
 
   try {
-    const employees = await prisma.employee.findMany({
-      where: { employerId },
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }, { employeeCode: "asc" }],
-      select: {
-        id: true,
-        employeeCode: true,
-        firstName: true,
-        middleName: true,
-        lastName: true,
-        status: true,
-        pagIbigNumber: true,
-        pagibigEmployeeRecords: {
-          where: { employerId, year },
-          include: { PagibigEmployeeLoan: true },
+    const [employer, employees] = await Promise.all([
+      prisma.employer.findUnique({
+        where: { id: employerId },
+        select: { id: true, name: true, hdmf: true },
+      }),
+      prisma.employee.findMany({
+        where: {
+          OR: [
+            { employerId },
+            { pagibigEmployeeRecords: { some: { employerId, year } } },
+          ],
         },
-      },
-    });
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }, { employeeCode: "asc" }],
+        select: {
+          id: true,
+          employeeCode: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          status: true,
+          pagIbigNumber: true,
+          pagibigEmployeeRecords: {
+            where: { employerId, year },
+            include: { PagibigEmployeeLoan: true },
+          },
+        },
+      }),
+    ]);
+    if (!employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
     return NextResponse.json({
+      employer: { id: employer.id, name: employer.name, pagibigNumber: employer.hdmf },
       employees: employees.map(({ pagibigEmployeeRecords, ...employee }) => ({
         ...employee,
         pagIbigAccount: pagibigEmployeeRecords[0] ? accountResponse(pagibigEmployeeRecords[0]) : null,
@@ -133,10 +146,12 @@ export async function POST(request: NextRequest) {
   const erShare = parsePagIbigMoneyCents(body.employerSavings);
   const mp2Amount = parsePagIbigMoneyCents(body.mp2Amount);
   const excludedFromReport = body.excludedFromReport;
+  const isNewAccount = body.isNewAccount === true;
   const loanPayload = body.loanDetails;
 
   if (!Number.isSafeInteger(employerId) || employerId <= 0 || !Number.isSafeInteger(employeeId) || employeeId <= 0 || !year || !midNumber || midNumber.length > 40
     || mp2AccountNo.length > 80 || eeShare === null || erShare === null || mp2Amount === null
+    || (body.isNewAccount !== undefined && typeof body.isNewAccount !== "boolean")
     || typeof excludedFromReport !== "boolean"
     || !loanPayload || typeof loanPayload !== "object" || Array.isArray(loanPayload)) {
     return NextResponse.json({ error: "Enter a valid employee, account year, MID number, savings, MP2, and loan details" }, { status: 400 });
@@ -145,10 +160,10 @@ export async function POST(request: NextRequest) {
   try {
     const account = await prisma.$transaction(async (transaction) => {
       const targetEmployee = await transaction.employee.findFirst({
-        where: { id: employeeId, employerId },
+        where: { id: employeeId },
         select: { id: true },
       });
-      if (!targetEmployee) throw new Error("EMPLOYEE_NOT_IN_SELECTED_EMPLOYER");
+      if (!targetEmployee) throw new Error("EMPLOYEE_NOT_FOUND");
       const duplicateMid = await transaction.employee.findFirst({
         where: { pagIbigNumber: midNumber, id: { not: employeeId } },
         select: { id: true },
@@ -165,7 +180,7 @@ export async function POST(request: NextRequest) {
           erShare: moneyDecimal(erShare),
           mp2AccountNo: mp2AccountNo || null,
           mp2Amount: moneyDecimal(mp2Amount),
-          excludedFromReport,
+          excludedFromReport: isNewAccount ? false : excludedFromReport,
           updatedAt: new Date(),
         },
         update: {
@@ -173,7 +188,7 @@ export async function POST(request: NextRequest) {
           erShare: moneyDecimal(erShare),
           mp2AccountNo: mp2AccountNo || null,
           mp2Amount: moneyDecimal(mp2Amount),
-          excludedFromReport,
+          excludedFromReport: isNewAccount ? false : excludedFromReport,
           updatedAt: new Date(),
         },
       });
@@ -235,8 +250,8 @@ export async function POST(request: NextRequest) {
       account: { ...accountResponse(account), employee: account.employee },
     }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    if (error instanceof Error && error.message === "EMPLOYEE_NOT_IN_SELECTED_EMPLOYER") {
-      return NextResponse.json({ error: "Select an employee from the selected employer" }, { status: 400 });
+    if (error instanceof Error && error.message === "EMPLOYEE_NOT_FOUND") {
+      return NextResponse.json({ error: "Employee not found" }, { status: 400 });
     }
     if (error instanceof Error && error.message === "DUPLICATE_PAGIBIG_MID") {
       return NextResponse.json({ error: "This MID number is already assigned to another employee" }, { status: 409 });

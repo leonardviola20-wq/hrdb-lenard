@@ -25,6 +25,150 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+.benefit-report-page {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.benefit-report-header {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background-color: #fff;
+  padding: 0.75rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+}
+
+.benefit-report-panel {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+}
+
+.benefit-report-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.benefit-report-section-heading {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  padding: 0.75rem 1rem;
+}
+
+.benefit-report-title {
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 640px) {
+  .benefit-report-header,
+  .benefit-report-section-heading {
+    padding-right: 1.25rem;
+    padding-left: 1.25rem;
+  }
+
+  .benefit-report-title {
+    font-size: 1.5rem;
+  }
+}
+
+.benefit-report-primary {
+  display: inline-flex;
+  height: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #172554;
+  padding: 0 1rem;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+  transition: background-color 150ms ease;
+}
+
+.benefit-report-primary:hover {
+  background-color: #1e3a8a;
+}
+
+.benefit-report-primary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.benefit-report-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.benefit-report-table {
+  border-collapse: collapse;
+}
+
+.benefit-report-table > thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.benefit-report-table > thead th:not([data-report-accent]) {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.benefit-report-footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #fff;
+  padding: 0.75rem 1rem;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.benefit-report-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+
+.benefit-report-notice-success {
+  border: 1px solid #a7f3d0;
+  background-color: #ecfdf5;
+  color: #065f46;
+}
+
+.benefit-report-notice-error {
+  border: 1px solid #fecdd3;
+  background-color: #fff1f2;
+  color: #be123c;
+}
+
 .sidebar-scrollbar-hidden {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -34,10 +178,19 @@ body {
   display: none;
 }
 
+.pagibig-account-form-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pagibig-account-form-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Print only the per-employee attendance report when it is open. */
 @media print {
   @page {
-    margin: 1in;
+    margin: 0.5in 0.25in;
   }
 
   body:has(#attendance-print-overlay) > *:not(#attendance-print-overlay) {
@@ -99,6 +252,96 @@ body {
   .sss-loan-report-table tr {
     break-inside: avoid;
   }
+
+  .sss-loan-report-table,
+  .sss-loan-report-table table,
+  .sss-loan-report-table th,
+  .sss-loan-report-table td {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .sss-loan-report-table tbody {
+    border: 0 !important;
+  }
+
+  .sss-loan-report-table th,
+  .sss-loan-report-table td {
+    border-bottom: 0 !important;
+  }
+
+  .sss-loan-report-table a,
+  .sss-loan-report-table a:hover {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
+
+@media print {
+  body:has(#pagibig-report-print-overlay) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#pagibig-report-print-overlay) #pagibig-report-print-overlay,
+  body:has(#pagibig-report-print-overlay) #pagibig-report-print-overlay * {
+    visibility: visible !important;
+  }
+
+  #pagibig-report-print-overlay {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  #pagibig-report-print-overlay > .pagibig-report-print-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .pagibig-report-interactive {
+    display: none !important;
+  }
+
+  .pagibig-report-print-content {
+    flex: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .pagibig-report-card,
+  .pagibig-report-print-table {
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  .pagibig-report-print-table table {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 7pt !important;
+  }
+
+  .pagibig-report-print-table th,
+  .pagibig-report-print-table td {
+    padding: 3px 2px !important;
+  }
+
+  .pagibig-report-print-table thead {
+    display: table-header-group;
+  }
+
+  .pagibig-report-print-table tr {
+    break-inside: avoid;
+  }
 }
 
 /* Subtle lift used to cascade cards in on the Employees and Tasks pages.
@@ -121,6 +364,24 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .card-lift {
+    animation: none;
+  }
+}
+
+/* Subtle entrance fade used by the Pag-IBIG Drafts dropdown list items.
+   Opt in with the `animate-fade-in` class plus an inline `animationDelay`.
+   Disabled under `prefers-reduced-motion: reduce`. */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
     animation: none;
   }
 }
