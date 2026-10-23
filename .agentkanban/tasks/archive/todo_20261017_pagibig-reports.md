@@ -47,8 +47,48 @@ description: Actionable implementation checklist for Pag-IBIG employee accounts 
 - [x] Replace the native employee selector with a searchable listbox whose options scroll independently.
 - [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
 
-# Iteration 7 — Refine Pag-IBIG Account Editor
-- [x] Remove the Account Year field while retaining selected-year context for account saves.
-- [x] Redesign the account editor into Name/MID, Member Savings, MP2, and Loans cards with shared savings/MP2 and loan color groups.
-- [x] Replace always-visible loan forms with an add/edit loan flow and saved-loan type/amount list.
-- [x] Add Active/Inactive loan list toggles and validate the updated editor with focused checks.
+# Iteration 7 — Professional Pag-IBIG Account Editor
+- [x] Remove the Account Year field from the editor while retaining the selected account year for saves.
+- [x] Organize identity, Member Savings, MP2, and Loans into clear cards with shared color groups for savings/MP2 and loans.
+- [x] Replace always-visible loan forms with an Add/Edit loan flow, a type/amount list, and Active/Inactive filters.
+- [x] Validate TypeScript, focused lint, relevant tests, and whitespace.
+
+# Iteration 8 — Refine Pag-IBIG List Colors, Scrolling, and Totals
+- [x] Use consistent color groups for savings/MP2 and all loan columns.
+- [x] Keep the loan list height bounded with scrolling confined to the list.
+- [x] Show combined EE+ER, MP2, per-loan-type, and Grand Total footer amounts.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 9 — Compact Employee List and Account Form Layout
+- [x] Limit employee results to eight per page with compact rows and no vertical scrolling.
+- [x] Keep the totals footer at the bottom of the results card and remove the EE+ER label while preserving its combined total.
+- [x] Simplify Member Information to Name and MID Number without employee code/account helper text.
+- [x] Place Member Savings beside Loans and MP2 Savings below.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 10 — Pag-IBIG Account Status and Member Identity
+- [x] Replace the Employee List account-year filter with an Active/Inactive status filter while keeping the current account year implicit.
+- [x] Replace the report-exclusion checkbox with an Active/Inactive toggle; map Inactive to the existing excluded-from-reports flag without a schema change.
+- [x] Present Name and MID Number in one card, with the name prominent and MID Number below.
+- [x] Update technical documentation and project memory.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 11 — Nine Employee Rows
+- [x] Show nine employees on each Employee List page and update the documented page size.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 12 — Refine Account Editor Layout
+- [x] Remove the identity card box while retaining the unboxed Name and MID Number fields and account-status control.
+- [x] Align Member Savings and MP2 Savings side-by-side, with Loans below MP2 on desktop.
+- [x] Update technical documentation and project memory.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 13 — Move Employee List Add Action
+- [x] Relocate Add beside the Employee List filters and keep its primary-button styling consistent.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.
+
+# Iteration 14 — Display Member Information Without Input Boxes
+- [x] In Edit Account, show Name and MID Number as prominent plain text rather than boxed input controls.
+- [x] Keep editable member selection and MID entry for Add Account.
+- [x] Update technical documentation and project memory.
+- [x] Validate TypeScript, focused lint, Pag-IBIG tests, and whitespace.

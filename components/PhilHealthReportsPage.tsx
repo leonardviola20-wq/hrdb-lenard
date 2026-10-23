@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { getPhilHealthShares } from "@/lib/philHealthReportTotals";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowPathIcon, ChevronLeftIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ChevronLeftIcon, EyeIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -100,6 +101,8 @@ function PhilHealthReportsContent() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeOptions, setEmployeeOptions] = useState<Employee[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [canEditPayments, setCanEditPayments] = useState(false);
+  const [deleteReportTarget, setDeleteReportTarget] = useState<Report | null>(null);
   const [loadedContext, setLoadedContext] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
@@ -114,9 +117,11 @@ function PhilHealthReportsContent() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState(String(new Date().getMonth() + 1));
   const [reportYear, setReportYear] = useState(String(new Date().getFullYear()));
-  const [amounts, setAmounts] = useState<Record<number, string>>({});
+  const [psAmounts, setPsAmounts] = useState<Record<number, string>>({});
+  const [esAmounts, setEsAmounts] = useState<Record<number, string>>({});
   const [paymentReport, setPaymentReport] = useState<Report | null>(null);
   const [paymentForm, setPaymentForm] = useState<PaymentForm | null>(null);
+  const [viewReport, setViewReport] = useState<Report | null>(null);
 
   useEffect(() => {
     if (!employerId) return;
@@ -139,6 +144,7 @@ function PhilHealthReportsContent() {
         } else {
           setEmployer(data.employer as Employer);
           setReports(data.reports as Report[]);
+          setCanEditPayments(data.canEditPayments === true);
         }
         setLoadedContext(context);
       })
@@ -146,6 +152,7 @@ function PhilHealthReportsContent() {
         if (controller.signal.aborted) return;
         setEmployees([]);
         setReports([]);
+        setCanEditPayments(false);
         setLoadedContext(context);
         setError(loadError instanceof Error ? loadError.message : "Unable to load PhilHealth records");
       })
@@ -166,9 +173,20 @@ function PhilHealthReportsContent() {
     });
   }, [employees, search, statusFilter]);
   const activeEmployees = employees.filter((employee) => employee.philHealthAccount?.active);
+
+  // Render-side PS/ES defaults so year change auto-fills without a state effect
+  const year = Number(reportYear);
+  const shares = getPhilHealthShares(year);
+  const defaultPs = shares ? (shares.psCents / 100).toFixed(2) : "0.00";
+  const defaultEs = shares ? (shares.esCents / 100).toFixed(2) : "0.00";
+
   const activeCount = employees.filter((employee) => employee.philHealthAccount?.active).length;
   const inactiveCount = employees.filter((employee) => employee.philHealthAccount && !employee.philHealthAccount.active).length;
-  const reportAmountDue = Object.values(amounts).reduce((sum, value) => sum + (value.trim() ? Number(value) || 0 : 0), 0);
+  const reportAmountDue = activeEmployees.reduce((sum, employee) => {
+    const ps = Number(psAmounts[employee.id] ?? defaultPs);
+    const es = Number(esAmounts[employee.id] ?? defaultEs);
+    return sum + ps + es;
+  }, 0);
   const employeePageCount = Math.max(1, Math.ceil(filteredEmployees.length / employeePageSize));
   const currentEmployeePage = Math.min(employeePage, employeePageCount);
   const visibleEmployees = filteredEmployees.slice((currentEmployeePage - 1) * employeePageSize, currentEmployeePage * employeePageSize);
@@ -235,17 +253,28 @@ function PhilHealthReportsContent() {
     }
   };
 
+  const openPaymentForm = (report: Report) => {
+    setPaymentReport(report);
+    setPaymentForm(emptyPaymentForm(report, employer));
+  };
+
   const openReportForm = () => {
-    setAmounts({});
+    setPsAmounts({});
+    setEsAmounts({});
     setError("");
     setReportOpen(true);
   };
 
   const createReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const entries = Object.entries(amounts)
-      .filter(([, amount]) => amount.trim() !== "")
-      .map(([employeeId, amount]) => ({ employeeId: Number(employeeId), amount }));
+    const entries = activeEmployees
+      .map((employee) => {
+        const ps = Number(psAmounts[employee.id] ?? defaultPs);
+        const es = Number(esAmounts[employee.id] ?? defaultEs);
+        const total = ps + es;
+        return { employeeId: employee.id, amount: total > 0 ? total.toFixed(2) : "" };
+      })
+      .filter((entry) => entry.amount.trim() !== "");
     if (!entries.length) {
       setError("Enter an amount for at least one active employee.");
       return;
@@ -290,11 +319,41 @@ function PhilHealthReportsContent() {
       if (!response.ok) throw new Error(data.error || "Unable to save payment details");
       setPaymentReport(null);
       setPaymentForm(null);
+      setViewReport((current) => (current && current.id === paymentReport.id
+        ? { ...current, payment: data.payment as Payment }
+        : current));
       setNotice("PhilHealth payment details saved.");
       setLoading(true);
       setRefreshKey((current) => current + 1);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save payment details");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteReport = async () => {
+    if (!deleteReportTarget) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/reports/philhealth/reports/${deleteReportTarget.id}?employerId=${encodeURIComponent(employerId)}`, { method: "DELETE" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Unable to delete PhilHealth report");
+      }
+      const deletedId = deleteReportTarget.id;
+      setDeleteReportTarget(null);
+      setViewReport((current) => (current?.id === deletedId ? null : current));
+      if (paymentReport?.id === deletedId) {
+        setPaymentReport(null);
+        setPaymentForm(null);
+      }
+      setNotice("PhilHealth report deleted.");
+      setLoading(true);
+      setRefreshKey((current) => current + 1);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete PhilHealth report");
     } finally {
       setSaving(false);
     }
@@ -381,7 +440,7 @@ function PhilHealthReportsContent() {
                     <td className="px-3 py-1 text-right font-bold tabular-nums">{money(report.amountDue)}</td>
                     <td className="px-3 py-1 text-right font-semibold tabular-nums">{report.payment ? money(report.payment.amountPaid) : "—"}</td>
                     <td className="px-3 py-1 text-xs text-slate-600">{report.payment ? <>{report.payment.transactionDate}<div>{report.payment.eparNumber || report.payment.transactionConfirmationNumber || "Payment recorded"}</div></> : "Unpaid"}</td>
-                    <td className="px-3 py-1 text-right">{report.payment ? <button type="button" onClick={() => { setPaymentReport(report); setPaymentForm(emptyPaymentForm(report, employer)); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">View / Edit</button> : isPaymentView ? <span className="text-xs text-slate-500">No payment</span> : <button type="button" onClick={() => { setPaymentReport(report); setPaymentForm(emptyPaymentForm(report, employer)); }} className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800">Record Payment</button>}</td>
+                    <td className="px-3 py-1 text-right"><div className="inline-flex items-center gap-1"><button type="button" onClick={() => setViewReport(report)} aria-label={`View ${period(report)} report`} title="View report and payment details" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-700 hover:bg-emerald-50"><EyeIcon className="h-4 w-4" /></button>{report.payment ? <button type="button" onClick={() => openPaymentForm(report)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">View / Edit</button> : isPaymentView ? <span className="text-xs text-slate-500">No payment</span> : <button type="button" onClick={() => openPaymentForm(report)} className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800">Record Payment</button>}{canEditPayments && <button type="button" onClick={() => setDeleteReportTarget(report)} className="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">Delete</button>}</div></td>
                   </tr>)}
                   {!reports.length && <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-600">{isPaymentView ? "No PhilHealth payments have been recorded yet." : "No monthly contribution reports have been created yet."}</td></tr>}
                 </tbody>
@@ -403,13 +462,14 @@ function PhilHealthReportsContent() {
 
       {reportOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setReportOpen(false); }}>
         <form onSubmit={createReport} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><div><h2 className="text-lg font-bold">Create Monthly Contribution Report</h2><p className="text-sm text-slate-600">{employer?.name} · Amount Due is calculated from the entered amounts.</p></div><button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
-          <div className="flex gap-3 border-b border-slate-200 p-4"><label className="flex-1"><span className={labelClass}>Month</span><select value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} className={inputClass}>{months.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}</select></label><label className="w-32"><span className={labelClass}>Year</span><input type="number" min="2020" max="2200" value={reportYear} onChange={(event) => setReportYear(event.target.value)} className={inputClass} /></label></div>
-          <div className="min-h-0 flex-1 overflow-auto p-4"><table className="w-full text-sm"><thead><tr><th className="bg-slate-100 px-3 py-2 text-left">Employee</th><th className="bg-slate-100 px-3 py-2 text-left">PhilHealth No.</th><th className="bg-slate-100 px-3 py-2 text-right">Contribution</th></tr></thead><tbody className="divide-y divide-slate-100">{activeEmployees.map((employee) => <tr key={employee.id}><td className="px-3 py-2 font-medium">{fullName(employee)}</td><td className="px-3 py-2">{employee.philHealth || "—"}</td><td className="px-3 py-2"><input aria-label={`Contribution for ${fullName(employee)}`} type="number" min="0" max="999999999.99" step="0.01" value={amounts[employee.id] ?? ""} onChange={(event) => setAmounts((current) => ({ ...current, [employee.id]: event.target.value }))} className={`${inputClass} text-right`} placeholder="Leave blank to omit" /></td></tr>)}{!activeEmployees.length && <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-slate-500">No active PhilHealth accounts are available.</td></tr>}</tbody></table></div>
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><div><h2 className="text-lg font-bold">Create Monthly Contribution Report</h2><p className="text-sm text-slate-600">{employer?.name} · {employer?.phic || "—"}</p></div><button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
+          <div className="flex gap-3 border-b border-slate-200 p-4"><label className="min-w-[9rem] sm:max-w-[14rem]"><span className={labelClass}>Month</span><select value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} className={inputClass}>{months.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}</select></label><label className="w-32"><span className={labelClass}>Year</span><input type="number" min="2019" max="2200" value={reportYear} onChange={(event) => setReportYear(event.target.value)} className={inputClass} /></label></div>
+          <div className="min-h-0 flex-1 overflow-auto p-4"><table className="w-full text-sm"><thead><tr><th className="bg-slate-100 px-3 py-2 text-left">Employee</th><th className="bg-slate-100 px-3 py-2 text-right">PS</th><th className="bg-slate-100 px-3 py-2 text-right">ES</th><th className="bg-slate-100 px-3 py-2 text-right">Total</th></tr></thead><tbody className="divide-y divide-slate-100">{activeEmployees.map((employee) => <tr key={employee.id}><td className="px-3 py-2"><div className="font-medium">{fullName(employee)}</div><div className="text-xs text-slate-500">{employee.philHealth || "—"}</div></td><td className="px-3 py-2"><input aria-label={`PS for ${fullName(employee)}`} type="number" min="0" max="999999999.99" step="0.01" value={psAmounts[employee.id] ?? defaultPs} onChange={(event) => setPsAmounts((current) => ({ ...current, [employee.id]: event.target.value }))} className={`${inputClass} text-right`} placeholder="0.00" /></td><td className="px-3 py-2"><input aria-label={`ES for ${fullName(employee)}`} type="number" min="0" max="999999999.99" step="0.01" value={esAmounts[employee.id] ?? defaultEs} onChange={(event) => setEsAmounts((current) => ({ ...current, [employee.id]: event.target.value }))} className={`${inputClass} text-right`} placeholder="0.00" /></td><td className="px-3 py-2 text-right font-medium tabular-nums">{((Number(psAmounts[employee.id] ?? defaultPs) + Number(esAmounts[employee.id] ?? defaultEs)) || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>)}{!activeEmployees.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">No active PhilHealth accounts are available.</td></tr>}</tbody></table></div>
           <div className="flex items-center justify-between border-t border-slate-200 p-4"><p className="text-sm font-semibold">Amount Due: {money(reportAmountDue)}</p><div className="flex gap-2"><button type="button" onClick={() => setReportOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button type="submit" disabled={saving || activeEmployees.length === 0} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Create Report"}</button></div></div>
         </form>
       </div>}
 
+      {viewReport && <PhilHealthReportDetails report={viewReport} canEditPayments={canEditPayments} onClose={() => setViewReport(null)} onPayment={(target) => { setViewReport(null); openPaymentForm(target); }} />}
       {paymentReport && paymentForm && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) { setPaymentReport(null); setPaymentForm(null); } }}>
         <form onSubmit={savePayment} className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4"><div><h2 className="text-lg font-bold">{paymentReport.payment ? "PhilHealth Payment Details" : "Record PhilHealth Payment"}</h2><p className="text-sm text-slate-600">{period(paymentReport)} · Amount Due {money(paymentReport.amountDue)}</p></div><button type="button" onClick={() => { setPaymentReport(null); setPaymentForm(null); }} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
@@ -423,6 +483,113 @@ function PhilHealthReportsContent() {
           <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4"><button type="button" onClick={() => { setPaymentReport(null); setPaymentForm(null); }} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button type="submit" disabled={saving} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save Payment"}</button></div>
         </form>
       </div>}
+      {deleteReportTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setDeleteReportTarget(null); }}>
+        <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+          <h2 className="text-lg font-bold text-slate-900">Delete PhilHealth report?</h2>
+          <p className="mt-2 text-sm text-slate-600">This will permanently delete the {period(deleteReportTarget)} report and its payment details. This action cannot be undone.</p>
+          <div className="mt-4 flex justify-end gap-2">
+            <button type="button" onClick={() => setDeleteReportTarget(null)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button>
+            <button type="button" onClick={deleteReport} disabled={saving} className="h-10 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Deleting..." : "Delete"}</button>
+          </div>
+        </div>
+      </div>}
     </main>
   );
+}
+
+function PhilHealthReportDetails({ report, canEditPayments, onClose, onPayment }: { report: Report; canEditPayments: boolean; onClose: () => void; onPayment: (report: Report) => void }) {
+  const payment = report.payment;
+  const paid = payment !== null;
+  const amountPaid = Number(payment?.amountPaid ?? 0);
+  const amountDue = Number(report.amountDue);
+  const status = !paid ? "Unpaid" : amountPaid >= amountDue ? "Paid" : "Partial";
+  const statusClass = !paid
+    ? "bg-slate-100 text-slate-700"
+    : amountPaid >= amountDue
+      ? "bg-emerald-100 text-emerald-800"
+      : "bg-amber-100 text-amber-800";
+  const entryTotal = report.entries.reduce((sum, entry) => sum + Number(entry.amount), 0);
+  return <div id="philhealth-report-print-overlay" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-2 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section role="dialog" aria-modal="true" aria-labelledby="philhealth-report-title" className="philhealth-report-print-dialog flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
+        <div className="min-w-0">
+          <h2 id="philhealth-report-title" className="text-lg font-bold text-slate-900">PhilHealth Monthly Contribution Report</h2>
+          <p className="text-sm text-slate-600">{period(report)} · {report.employerName}</p>
+        </div>
+        <div className="philhealth-report-interactive flex shrink-0 items-center gap-2">
+          <button type="button" onClick={() => window.print()} className="h-9 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Print</button>
+          <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-slate-600 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button>
+        </div>
+      </header>
+      <div className="philhealth-report-print-content min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+        <article className="philhealth-report-card overflow-hidden rounded-xl border border-slate-200">
+          <div className="border-b border-slate-200 bg-white p-4">
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-slate-950">{report.employerName}</h3>
+              <p className="text-sm font-medium text-slate-600">PhilHealth Employer Number (PHIC): {report.employerPhicNumber || "—"}</p>
+            </div>
+            <div className="grid gap-3 text-sm sm:grid-cols-4">
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Applicable Period</p><p className="mt-0.5 text-base font-bold text-slate-950">{period(report)}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Amount Due</p><p className="mt-0.5 text-base font-bold tabular-nums text-slate-950">{money(report.amountDue)}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Amount Paid</p><p className="mt-0.5 text-base font-bold tabular-nums text-slate-950">{paid ? money(payment.amountPaid) : "—"}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payment Status</p><p className="mt-1"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass}`}>{status}</span></p></div>
+            </div>
+          </div>
+          <div className="philhealth-report-print-table overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm text-slate-900">
+              <thead className="text-sm font-bold text-slate-800"><tr>
+                <th className="bg-slate-100 px-3 py-3 text-left text-sm font-bold text-slate-800">Employee Name</th>
+                <th className="bg-slate-100 px-3 py-3 text-left text-sm font-bold text-slate-800">PhilHealth No.</th>
+                <th className="bg-slate-100 px-3 py-3 text-right text-sm font-bold text-slate-800">PS</th>
+                <th className="bg-slate-100 px-3 py-3 text-right text-sm font-bold text-slate-800">ES</th>
+                <th className="bg-slate-100 px-3 py-3 text-right text-sm font-bold text-slate-800">Contribution</th>
+              </tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {report.entries.map((entry) => <tr key={entry.id}>
+                  <td className="px-3 py-3 font-medium text-slate-900">{entry.employeeName}</td>
+                  <td className="px-3 py-3 tabular-nums text-slate-900">{entry.employeePhilHealthNumber || "—"}</td>
+                  <td className="px-3 py-3 text-right tabular-nums text-slate-950">{money(Number(entry.amount) / 2)}</td>
+                  <td className="px-3 py-3 text-right tabular-nums text-slate-950">{money(Number(entry.amount) / 2)}</td>
+                  <td className="px-3 py-3 text-right font-semibold tabular-nums text-slate-950">{money(entry.amount)}</td>
+                </tr>)}
+                {!report.entries.length && <tr><td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-600">This report has no employee entries.</td></tr>}
+              </tbody>
+              <tfoot className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-950"><tr>
+                <td colSpan={4} className="px-3 py-3">Total ({report.entries.length} {report.entries.length === 1 ? "employee" : "employees"})</td>
+                <td className="px-3 py-3 text-right tabular-nums">{money(entryTotal)}</td>
+              </tr></tfoot>
+            </table>
+          </div>
+          <div className="border-t border-slate-200 p-4">
+            <h4 className="text-sm font-bold text-slate-900">Payment Details</h4>
+            {paid && payment ? (
+              <dl className="mt-3 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
+                {([
+                  ["Payor Name", payment.payorName],
+                  ["PEN (PhilHealth Employer Number)", payment.pen],
+                  ["SPA", payment.spa || "—"],
+                  ["Applicable Period", payment.applicablePeriod || "—"],
+                  ["Amount Paid", money(payment.amountPaid)],
+                  ["Accredited Collecting Agent", payment.accreditedCollectingAgent || "—"],
+                  ["Transaction Confirmation No.", payment.transactionConfirmationNumber || "—"],
+                  ["Transaction Date", payment.transactionDate || "—"],
+                  ["ePAR No.", payment.eparNumber || "—"],
+                  ["ePAR Date", payment.eparDate || "—"],
+                ] as const).map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt><dd className="mt-0.5 break-words font-medium text-slate-900">{value}</dd></div>)}
+              </dl>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">No payment has been recorded for this report yet.</p>
+            )}
+          </div>
+        </article>
+      </div>
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-4 py-3 sm:px-5">
+        <p className="text-sm font-bold text-slate-900">Overall Amount Due: {money(report.amountDue)}</p>
+        <div className="philhealth-report-interactive flex gap-2">
+          {(!paid || canEditPayments) && <button type="button" onClick={() => onPayment(report)} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">{paid ? "Update Payment" : "Record Payment"}</button>}
+          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>
+        </div>
+      </footer>
+    </section>
+  </div>;
 }

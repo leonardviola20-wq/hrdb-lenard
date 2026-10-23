@@ -344,6 +344,71 @@ body {
   }
 }
 
+@media print {
+  body:has(#philhealth-report-print-overlay) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#philhealth-report-print-overlay) #philhealth-report-print-overlay,
+  body:has(#philhealth-report-print-overlay) #philhealth-report-print-overlay * {
+    visibility: visible !important;
+  }
+
+  #philhealth-report-print-overlay {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  #philhealth-report-print-overlay > .philhealth-report-print-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .philhealth-report-interactive {
+    display: none !important;
+  }
+
+  .philhealth-report-print-content {
+    flex: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .philhealth-report-card,
+  .philhealth-report-print-table {
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  .philhealth-report-print-table table {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 8pt !important;
+  }
+
+  .philhealth-report-print-table th,
+  .philhealth-report-print-table td {
+    padding: 3px 2px !important;
+  }
+
+  .philhealth-report-print-table thead {
+    display: table-header-group;
+  }
+
+  .philhealth-report-print-table tr {
+    break-inside: avoid;
+  }
+}
+
 /* Subtle lift used to cascade cards in on the Employees and Tasks pages.
    Cards opt in with the `card-lift` class plus a per-index `animationDelay`
    so each card enters in its own sequential step (no skipped/gapped cadence). */

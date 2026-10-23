@@ -30,13 +30,14 @@ export async function GET(request: NextRequest) {
     if (request.nextUrl.searchParams.get("view") === "payments") {
       const payments = await prisma.philHealthReport.findMany({
         where: { employerId, payment: { isNot: null } },
-        include: { entries: false, payment: true },
+        include: { entries: { orderBy: { employeeName: "asc" } }, payment: true },
         orderBy: [{ payment: { transactionDate: "desc" } }, { id: "desc" }],
         take: 8,
       });
       return NextResponse.json({
         employer,
         reports: payments.map(serializeReport),
+        canEditPayments: access.session?.role === "ADMIN",
       }, { headers: { "Cache-Control": "private, no-store" } });
     }
     const reports = await prisma.philHealthReport.findMany({
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
       orderBy: [{ applicableYear: "desc" }, { applicableMonth: "desc" }, { id: "desc" }],
     });
     const serialized = reports.map(serializeReport);
-    return NextResponse.json({ employer, reports: serialized }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ employer, reports: serialized, canEditPayments: access.session?.role === "ADMIN" }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Load PhilHealth reports error:", error);
     return NextResponse.json({ error: "Unable to load PhilHealth reports" }, { status: 500 });
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
   const year = Number(body.applicableYear);
   const rawEntries = body.entries;
   if (!Number.isSafeInteger(employerId) || employerId <= 0 || !Number.isInteger(month) || month < 1 || month > 12
-    || !Number.isInteger(year) || year < 2020 || year > 2200 || !Array.isArray(rawEntries) || rawEntries.length === 0) {
+    || !Number.isInteger(year) || year < 2019 || year > 2200 || !Array.isArray(rawEntries) || rawEntries.length === 0) {
     return NextResponse.json({ error: "Select a valid employer, period, and at least one employee contribution" }, { status: 400 });
   }
 

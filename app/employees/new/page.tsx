@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { JOB_LEVELS } from "@/lib/employeePayload";
+import { getPagibigAccountSetupHref, getPagibigReturnContext, type PagibigReturnContext } from "@/lib/pagibigEmployeeWorkflow";
 
 type Employer = { id: number; name: string; company: string | null };
 type SupervisorOption = { id: number; firstName: string; middleName: string | null; lastName: string; position: string | null };
@@ -112,10 +113,14 @@ export default function NewEmployeePage() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [loadedEmployeeId, setLoadedEmployeeId] = useState<string | null>(null);
+  const [pagibigReturnContext] = useState<PagibigReturnContext | null>(() =>
+    typeof window === "undefined" ? null : getPagibigReturnContext(window.location.search, !employeeId),
+  );
   const loadingEmployee = Boolean(employeeId && loadedEmployeeId !== employeeId);
 
   useEffect(() => {
     let active = true;
+    const returnContext = getPagibigReturnContext(window.location.search, !employeeId);
     const employerRequest = fetch("/api/employers").then(async (response) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load employers");
@@ -181,7 +186,7 @@ export default function NewEmployeePage() {
           });
         })
       : Promise.resolve().then(() => {
-          if (active) setForm(emptyForm);
+          if (active) setForm({ ...emptyForm, employerId: returnContext ? String(returnContext.employerId) : "" });
         });
     Promise.all([employerRequest, supervisorRequest, categoryRequest, employeeRequest])
       .then(() => { if (active) setMessage(""); })
@@ -219,7 +224,19 @@ export default function NewEmployeePage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || (employeeId ? "Unable to update employee" : "Unable to create employee"));
-      router.push("/employees");
+      if (!employeeId && pagibigReturnContext) {
+        const accountSetupHref = getPagibigAccountSetupHref(
+          pagibigReturnContext.employerId,
+          pagibigReturnContext.year,
+          data.employee?.id,
+        );
+        if (!accountSetupHref) {
+          throw new Error("Employee was created, but Pag-IBIG setup could not be opened. Find the employee in the directory and continue from Pag-IBIG.");
+        }
+        router.push(accountSetupHref);
+      } else {
+        router.push("/employees");
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : (employeeId ? "Unable to update employee" : "Unable to create employee"));
     } finally {

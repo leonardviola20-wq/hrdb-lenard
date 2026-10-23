@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 type Contact = {
   id: number;
@@ -51,6 +51,10 @@ export default function ContactsPage() {
   const [adding, setAdding] = useState(false);
   const [editingContactId, setEditingContactId] = useState<number | null>(null);
   const [viewingContact, setViewingContact] = useState<Contact | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [canManageContacts, setCanManageContacts] = useState(false);
+  const [deletingContact, setDeletingContact] = useState<Contact | null>(null);
+  const [deleteSaving, setDeleteSaving] = useState(false);
   const [updatingEmployee, setUpdatingEmployee] = useState<Contact | null>(null);
   const [employeePhoneDraft, setEmployeePhoneDraft] = useState("");
   const [phones, setPhones] = useState<string[]>([""]);
@@ -85,6 +89,16 @@ export default function ContactsPage() {
   };
 
   useEffect(() => {
+    fetch("/api/me", { cache: "no-store" })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const user = (data as { user?: { role?: string; accessiblePages?: string[] } }).user;
+          setIsAdmin(user?.role === "ADMIN");
+          setCanManageContacts(user?.role === "ADMIN" || Boolean(user?.accessiblePages?.includes("/contacts")));
+        }
+      })
+      .catch(() => undefined);
     fetch("/api/contacts")
       .then(async (res) => {
         const responseText = await res.text();
@@ -177,6 +191,26 @@ export default function ContactsPage() {
     setAddOpen(true);
   };
 
+  const deleteContact = async () => {
+    if (!deletingContact || deletingContact.employeeId !== null) return;
+    setDeleteSaving(true);
+    setMessage("");
+    setNotice("");
+    try {
+      const response = await fetch(`/api/contacts/${deletingContact.id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error((data as { error?: string }).error || "Unable to delete contact");
+      setContacts((current) => current.filter((contact) => contact.id !== deletingContact.id));
+      if (viewingContact?.id === deletingContact.id) setViewingContact(null);
+      setDeletingContact(null);
+      setNotice("Contact deleted successfully.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to delete contact");
+    } finally {
+      setDeleteSaving(false);
+    }
+  };
+
   const updateEmployeePhone = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!updatingEmployee?.employeeId) return;
@@ -213,9 +247,11 @@ export default function ContactsPage() {
     <main className="min-h-screen w-full bg-gray-50 p-4 sm:p-6 [&>div]:!max-w-none">
       <div className="w-full max-w-6xl">
         <section aria-label="Contact directory tools" className="mb-4 flex flex-wrap items-center gap-2">
+          {canManageContacts && (
           <button type="button" onClick={() => { setMessage(""); setNotice(""); setEditingContactId(null); setDraft(emptyContactDraft); setPhones([""]); setAddOpen(true); }} className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
             <PlusIcon className="h-4 w-4" /> Add contact
           </button>
+          )}
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search contacts..." aria-label="Search contacts" className="h-10 min-w-[180px] flex-1 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 placeholder:text-gray-500 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
           <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} aria-label="Filter contacts by category" className="h-10 w-[190px] shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
             <option value="">All categories</option>
@@ -240,12 +276,21 @@ export default function ContactsPage() {
                       <EyeIcon className="h-5 w-5" />
                     </button>
                     {contact.employeeId !== null ? (
+                      canManageContacts && (
                       <button type="button" onClick={() => { setEmployeePhoneDraft(contact.phone || ""); setUpdatingEmployee(contact); }} title={`Update phone for ${contact.contactName}`} aria-label={`Update phone for ${contact.contactName}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <PencilSquareIcon className="h-5 w-5" />
                       </button>
+                      )
                     ) : (
+                      canManageContacts && (
                       <button type="button" onClick={() => editContact(contact)} title={`Update ${contact.contactName}`} aria-label={`Update ${contact.contactName}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <PencilSquareIcon className="h-5 w-5" />
+                      </button>
+                      )
+                    )}
+                    {isAdmin && contact.employeeId === null && (
+                      <button type="button" onClick={() => setDeletingContact(contact)} title={`Delete ${contact.contactName}`} aria-label={`Delete ${contact.contactName}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                        <TrashIcon className="h-5 w-5" />
                       </button>
                     )}
                   </div>
@@ -376,6 +421,18 @@ export default function ContactsPage() {
                 <button type="submit" disabled={adding} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-50">{adding ? (editingContactId === null ? "Adding..." : "Updating...") : (editingContactId === null ? "Add contact" : "Update contact")}</button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+      {deletingContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={() => { if (!deleteSaving) setDeletingContact(null); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="delete-contact-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl sm:p-6">
+            <h2 id="delete-contact-title" className="text-lg font-bold text-slate-900">Delete contact?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">Delete <strong>{deletingContact.contactName}</strong> ({deletingContact.companyName})? This action cannot be undone.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setDeletingContact(null)} disabled={deleteSaving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+              <button type="button" onClick={() => void deleteContact()} disabled={deleteSaving} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50">{deleteSaving ? "Deleting..." : "Delete contact"}</button>
+            </div>
           </section>
         </div>
       )}

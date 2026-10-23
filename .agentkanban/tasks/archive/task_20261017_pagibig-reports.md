@@ -10,6 +10,49 @@ description: Build Pag-IBIG employee account views and monthly savings/loan repo
 
 ### user
 
+Check the task and TODO in Agent Kanban, remove the completed task, then ask for the next plan.
+
+### agent
+
+Confirmed this task is complete: all 14 iterations in `todo_20261017_pagibig-reports.md` are fully checked off, and the latest requested Pag-IBIG Employee List action was implemented and validated. Archived this task and its matching completed TODO so they no longer appear as active board work.
+
+### user
+
+Display Name and MID Number as plain text in Edit Account instead of boxed controls, while preserving editable selection and MID entry for Add Account.
+
+### agent
+
+In Edit Account, Name and MID Number now display as plain text above the account cards instead of input boxes. Add Account continues to use the employee picker and editable MID field. Updated the technical notes and project memory.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests using `tsx --test`, and `git diff --check`.
+
+### user
+
+Redesign the Edit Pag-IBIG Account employee information according to the attached screenshot and display Name and MID Number without input boxes.
+
+### agent
+
+Updated Edit Account to show the employee Name and MID Number as plain text above the savings/loan cards, with no input boxes. Add Account still has an employee picker and editable MID field. Updated project notes.
+
+Validation passed: TypeScript, focused ESLint, all five Pag-IBIG tests, and `git diff --check`.
+
+### user
+
+Redesign the UI in the attached screenshot; remove the employee information (Name and MID Number) from the boxes.
+
+### agent
+
+The account fields are already outside the bordered cards, but each editable control still has an input border/background. I interpret this request as removing those control boxes while preserving functionality: keep the employee name as a prominent borderless picker and the MID as a borderless editable field, with the status control below. If you instead want the values to be display-only, please specify. Waiting for the `implement` command before making the next design change.
+
+### user
+
+See the attached image and fix the design layout; remove Name and MID Number from the box.
+
+### agent
+
+The screenshot shows the identity area and savings/loan cards. To preserve account editing, I interpret “remove Name and MID Number from the box” as removing the bordered card wrapper while keeping the Name and MID inputs as unboxed fields above the savings cards. Confirm if you mean removing those inputs entirely instead. The task workflow requires an explicit `implement` instruction before changing code.
+
+### user
 Are there any pending items?
 
 ### agent
@@ -124,34 +167,92 @@ The merge has conflicts across shared SSS/reporting, contacts, task-history, tec
 
 Make the Edit Pag-IBIG Account UI professional. Remove Account Year from the form. Organize it into Name and MID Number, a Member Savings card (EE and ER), an MP2 card (Account No. and Amount), and a Loans card. Replace the four always-visible loan forms with an Add button; the user selects a loan type, fills in its details, and saves it. Show saved loans as a list with loan type and amount, and add an Active/Inactive toggle bar.
 
-### user
+### agent
 
-Use one shared color for EE, ER, and MP2, and a different shared color for all four loan types.
+Implementing the account editor refinement while keeping account-year context from the Employee List, so the year is no longer shown in the form but remains part of the existing save flow. Loans will be staged in the account form and persisted by its Save Account action; the Add Loan subform will select an unused loan type, collect the required details, and add it to the visible list. Active/Inactive toggles will filter that list.
 
 ### agent
 
-Plan for the Employee List account editor: retain the existing modal and its save/API flow, remove the visible Account Year field while keeping the selected list year as the account's context, and reorganize the editor into a clear identity section plus distinct Member Savings, MP2, and Loans cards. Group EE/ER/MP2 under one shared tint and CAL/MPL/EMER/SAFE under another. Replace the four expanded loan forms with a focused Add Loan flow that selects a loan type and collects the existing required details; show saved loans in a compact type-and-amount list with an Active/Inactive status filter. Existing loan entries remain editable. The existing schema permits only one loan of each type per employee/year, so already-used types should be edited rather than offered as duplicates. No code has been changed for this request yet.
-
-Please say `implement` (or `todo implement`) to proceed.
-
-### user
-
-implement
-
-### agent
-
-Refined the Add/Edit Pag-IBIG Account editor into a professional card layout: Name and MID Number, Member Savings (EE/ER), MP2 (Account No./Amount), and Loans. Removed the Account Year field from the dialog while continuing to save using the year selected on the Employee List. Savings and MP2 share a blue color treatment; all four loan types use amber.
-
-Loans are no longer displayed as four open forms. Add Loan opens a type selector and focused detail editor; saving stages the entry in the account form, and Save Account persists the employee-year account and loan details together. Existing loans can be edited, the list shows loan type and amount, and Active/Inactive toggle buttons filter saved loans. Updated technical notes and project memory.
+Completed the Add/Edit Pag-IBIG Account redesign with Name/MID, Member Savings, MP2, and Loans cards. Removed the visible Account Year while retaining its Employee List value in the API payload. EE/ER and MP2 share blue styling; loans share amber. Added an Add/Edit Loan subform, loan type/amount list, and Active/Inactive filters with counts. Loan form changes are staged until the account-level Save Account action persists them.
 
 Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests, and `git diff --check`.
 
 ### user
 
-implement
+Refine the Pag-IBIG list colors so EE, ER, and MP2 share one color, and all four loan columns share another. Keep the loan card/list fixed in the form with scrolling confined to the list. Add footer totals for EE+ER, MP2, each loan type, and Grand Total.
 
 ### agent
 
-Completed the requested Git workflow with the agreed preserve-both resolution policy. The refined feature branch contains commits `6768727` and `7933724`, and was pushed to `origin/feature/10-07-2026`. Merged it with current `origin/main` (`ce62066`) in a clean worktree as `a9b661d`. Kept main's updated tests where the feature branch had deleted them, reconciled the overlapping SSS employee page, and validated the combined branch: all 74 unit tests passed, TypeScript and Prisma validation passed, and focused ESLint passed with only three existing `<img>` warnings in Contacts. The new `10-17-2026` branch is to remain local per the user's choice.
+Updating the Employee List category colors and totals, and bounding the Loans card list with its own vertical scroll region and sticky header so its contents scroll without making the list/card grow.
+
+### agent
+
+Updated the Employee List so EE/ER/MP2 share blue and CAL/MPL/EMER/SAFE share amber. The footer now shows combined EE+ER, MP2, each loan-type total, and Grand Total for the currently filtered employees. The Loans card list is height-bounded with its own vertical scroll and a sticky header. Updated technical notes and memory.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests, and `git diff --check`.
+
+### user
+
+Refine the Employee List to avoid a vertically scrollable result list and show a maximum of eight employees at a time with compact rows. Keep the totals footer at the bottom and remove the EE+ER text label while retaining the combined amount. In the Edit Pag-IBIG Account form, remove the extra employee code/account text from Member Information; arrange Member Savings beside Loans, with MP2 Savings below.
+
+### agent
+
+Implementing the Employee List as eight-row pages with compact rows and no vertical scrolling, while keeping category and overall totals for all filtered employees in the card footer. Simplifying member information to Name and MID Number, showing employee names without employee codes in the picker, and arranging Member Savings beside Loans with MP2 below.
+
+### user
+
+### agent
+
+Implemented Iteration 9. Employee results now use compact eight-row pages without vertical scrolling; filtered totals remain calculated across all matching employees and the bottom footer shows the combined EE+ER amount without that label. The account form now displays Name and MID Number without employee-code/account helper text, places Member Savings beside Loans and MP2 below, and retains the report-exclusion setting separately.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests using `tsx --test`, and `git diff --check`. The optional test runner did not detect these Node test files; the repository's `tsx --test` runner executed all five tests successfully.
+
+### user
+
+Inactive should use the existing report-exclusion behavior, and implement now.
+
+### agent
+
+Implemented the Active/Inactive Pag-IBIG account status without a schema change: Active maps to included in reports and Inactive maps to the existing `excludedFromReport` flag. The Employee List year selector is replaced by an All/Active/Inactive filter and uses the current calendar year implicitly. Name and MID Number now appear in one card, with a prominent name above the MID input.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests using `tsx --test`, and `git diff --check`.
+
+### user
+
+Adjust the Employee List to 9 rows.
+
+### agent
+
+Changed Employee List pagination to nine compact rows per page and updated the technical documentation and project memory accordingly.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests using `tsx --test`, and `git diff --check`.
+
+### user
+
+See the attached image and fix the design layout; remove Name and MID Number from the box.
+
+### agent
+
+Removed the bordered identity-card wrapper while retaining the editable Name and MID Number fields as unboxed fields above the cards. Reworked the desktop card layout to place Member Savings and MP2 Savings side-by-side, with Loans below MP2, matching the attached screenshot. Account Status remains outside a card.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests using `tsx --test`, and `git diff --check`.
+
+### user
+
+Relocate the +Add button in the Employee List page along the filter box and color it the same way all the buttons are colored.
+
+### agent
+
+Noted as the next Employee List refinement: move Add into the filter toolbar and retain the existing violet primary-button styling. The previous account-editor layout is being validated; waiting for the `implement` command before changing the toolbar.
+
+### user
+
+Implement the Add button relocation now.
+
+### agent
+
+Moved the Employee List Add button from the page heading into the search/status filter toolbar, immediately before Refresh, retaining the violet primary-action styling. Payments view still shows Generate Report in the page heading.
+
+Validation passed: TypeScript, focused ESLint, five Pag-IBIG tests using `tsx --test`, and `git diff --check`.
 
 ### user

@@ -5,16 +5,13 @@ import { authorizeReports } from "@/lib/sssReportAccess";
 import { PAGIBIG_LOAN_TYPES, normalizePagibigLoanType, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
 import { serializePagibigReport } from "@/lib/pagibigReportSerialization";
 import { calculatePagIbigReportTotals } from "@/lib/pagibigReportTotals";
+import { validPagibigYear } from "@/lib/pagibigYear";
 import { prisma } from "@/lib/prisma";
 
 const centsToDecimal = (cents: number) => new Prisma.Decimal((cents / 100).toFixed(2));
 const displayName = (employee: { firstName: string; middleName: string | null; lastName: string }) => {
   const middleInitial = employee.middleName?.trim().charAt(0);
   return `${employee.lastName}, ${employee.firstName}${middleInitial ? ` ${middleInitial.toLocaleUpperCase()}.` : ""}`;
-};
-const validYear = (value: unknown) => {
-  const year = Number(value);
-  return Number.isInteger(year) && year >= 2020 && year <= 2200 ? year : null;
 };
 export async function GET(request: NextRequest) {
   const access = await authorizeReports(request);
@@ -76,7 +73,7 @@ export async function POST(request: NextRequest) {
   const body = payload as Record<string, unknown>;
   const employerId = Number(body.employerId);
   const month = Number(body.applicableMonth);
-  const year = validYear(body.applicableYear);
+  const year = validPagibigYear(body.applicableYear);
   const pin = typeof body.pin === "string" ? body.pin.trim() : "";
   const draftId = body.draftId === undefined || body.draftId === null ? null : Number(body.draftId);
   if (!Number.isSafeInteger(employerId) || employerId <= 0 || !Number.isInteger(month) || month < 1 || month > 12

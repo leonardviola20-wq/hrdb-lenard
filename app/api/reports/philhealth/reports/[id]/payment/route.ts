@@ -48,6 +48,10 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
     const report = await prisma.philHealthReport.findFirst({ where: { id, employerId }, select: { id: true } });
     if (!report) return NextResponse.json({ error: "PhilHealth report not found for the selected employer" }, { status: 404 });
+    const existingPayment = await prisma.philHealthPayment.findUnique({ where: { reportId: id }, select: { id: true } });
+    if (existingPayment && access.session?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Admin access is required to edit recorded payment details" }, { status: 403 });
+    }
     const payment = await prisma.philHealthPayment.upsert({
       where: { reportId: id },
       create: {

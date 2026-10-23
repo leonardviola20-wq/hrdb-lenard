@@ -1,10 +1,19 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowPathIcon, BanknotesIcon, ChevronDownIcon, ChevronLeftIcon, EllipsisVerticalIcon, EyeIcon, PencilSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { getPagibigCreateEmployeeHref } from "@/lib/pagibigEmployeeWorkflow";
 import { PAGIBIG_LOAN_TYPES, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
+import {
+  filterPagibigPreviewEmployees,
+  getPagibigPreviewCount,
+  isPagibigPreviewReady,
+  mergePagibigPreviewMembers,
+  type PagibigPreviewFilter,
+} from "@/lib/pagibigReportPreview";
+import { getPagibigAccountYears, validPagibigYear } from "@/lib/pagibigYear";
 
 type LoanDetail = {
   applicationNo: string;
@@ -37,6 +46,7 @@ type Member = {
   status: string | null;
   pagIbigNumber: string | null;
   pagIbigAccount: Account | null;
+  employerId?: number | null;
 };
 type ReportEntry = {
   id: number;
@@ -106,6 +116,7 @@ type ReportEmployer = { id: number; name: string; pagibigNumber: string | null }
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const paymentTypes = ["Cash", "Check", "Bank", "GCash", "Others"];
 const memberPageSize = 8;
+const memberAccountYears = getPagibigAccountYears();
 const memberAccountYear = String(new Date().getFullYear());
 const inputClass = "h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100";
 const labelClass = "mb-1.5 block text-xs font-semibold text-slate-700";
@@ -146,11 +157,14 @@ export default function PagIbigReportsPage() {
 }
 
 function PagIbigReportsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedEmployerId = searchParams.get("employerId") ?? "";
   const employerIdValue = Number(requestedEmployerId);
   const selectedEmployerId = Number.isSafeInteger(employerIdValue) && employerIdValue > 0 ? String(employerIdValue) : "";
   const paymentsView = searchParams.get("view") === "payments";
+  const requestedAccountYear = validPagibigYear(searchParams.get("year"));
+  const requestedNewEmployeeId = Number(searchParams.get("addEmployeeId"));
   const [members, setMembers] = useState<Member[]>([]);
   const [allEmployees, setAllEmployees] = useState<Member[]>([]);
   const [allEmployeesError, setAllEmployeesError] = useState("");
@@ -164,7 +178,7 @@ function PagIbigReportsContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const accountYear = memberAccountYear;
+  const [accountYear, setAccountYear] = useState(String(requestedAccountYear ?? memberAccountYear));
   const [memberPage, setMemberPage] = useState(1);
   const [memberStatusFilter, setMemberStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ACTIVE");
   const [yearFilter, setYearFilter] = useState("");
@@ -182,8 +196,12 @@ function PagIbigReportsContent() {
   const [accountError, setAccountError] = useState("");
   const [reportFormOpen, setReportFormOpen] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
   const [previewYear, setPreviewYear] = useState("");
-  const [previewFilter, setPreviewFilter] = useState<"READY" | "EXCLUDED" | "MISSING_MID">("READY");
+  const [previewFilter, setPreviewFilter] = useState<PagibigPreviewFilter>("ALL");
+  const [selectedReportEmployees, setSelectedReportEmployees] = useState<Member[]>([]);
+  const [reportEmployeePickerOpen, setReportEmployeePickerOpen] = useState(false);
+  const [reportEmployeeId, setReportEmployeeId] = useState("");
   const [reportMonth, setReportMonth] = useState(String(new Date().getMonth() + 1));
   const [reportYear, setReportYear] = useState(String(new Date().getFullYear()));
   const [reportPin, setReportPin] = useState("");
@@ -195,6 +213,8 @@ function PagIbigReportsContent() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reportMenuOpen, setReportMenuOpen] = useState<number | null>(null);
   const reportMenuRef = useRef<HTMLDivElement | null>(null);
+  const previewRequestRef = useRef(0);
+  const autoAddEmployeeRef = useRef("");
   const [draftsOpen, setDraftsOpen] = useState(false);
   const draftsMenuRef = useRef<HTMLDivElement | null>(null);
   const [deleteReportTarget, setDeleteReportTarget] = useState<Report | null>(null);
@@ -295,6 +315,15 @@ function PagIbigReportsContent() {
     setRefreshKey((value) => value + 1);
   };
 
+  const changeAccountYear = (year: string) => {
+    setAccountYear(year);
+    setMemberPage(1);
+    setSearch("");
+    setMemberStatusFilter("ACTIVE");
+    setError("");
+    setNotice("");
+  };
+
   const filteredMembers = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return members.filter((member) => {
@@ -326,10 +355,10 @@ function PagIbigReportsContent() {
   const currentReportPage = Math.min(reportPage, reportPageCount);
   const pagedReports = visibleReports.slice((currentReportPage - 1) * reportPageSize, currentReportPage * reportPageSize);
 
-  const openAddAccount = () => {
+  const openAddAccount = useCallback((employeeId = "") => {
     setReturnToReportPreview(false);
     setEditingMember(null);
-    setAccountForm({ ...emptyAccountForm(), year: accountYear });
+    setAccountForm({ ...emptyAccountForm(), employeeId, year: accountYear });
     setLoanEditorType(null);
     setLoanEditorDetail(emptyLoanDetail());
     setLoanStatusFilter("ACTIVE");
@@ -344,22 +373,41 @@ function PagIbigReportsContent() {
         if (!response.ok) throw new Error(data.error || "Unable to load employees");
         return data.employees as Member[];
       })
-      .then((employees) => setAllEmployees(employees))
+      .then((employees) => {
+        setAllEmployees(employees);
+        if (!employeeId) return;
+        const employee = employees.find((item) => String(item.id) === employeeId);
+        if (!employee) {
+          setAccountError("The new employee could not be found. Refresh the employee list and try again.");
+          return;
+        }
+        setAccountForm((current) => ({ ...current, employeeId, midNumber: employee.pagIbigNumber ?? "" }));
+      })
       .catch((loadError: unknown) => {
         setAllEmployeesError(loadError instanceof Error ? loadError.message : "Unable to load employees");
       })
       .finally(() => setAllEmployeesLoading(false));
-  };
+  }, [accountYear]);
+
+  useEffect(() => {
+    if (paymentsView || !selectedEmployerId || !Number.isSafeInteger(requestedNewEmployeeId) || requestedNewEmployeeId <= 0
+      || loading || loadedContext !== `${selectedEmployerId}:members:${accountYear}`) return;
+    const key = `${selectedEmployerId}:${accountYear}:${requestedNewEmployeeId}`;
+    if (autoAddEmployeeRef.current === key) return;
+    autoAddEmployeeRef.current = key;
+    router.replace(`/reports/pagibig?view=members&employerId=${encodeURIComponent(selectedEmployerId)}&year=${encodeURIComponent(accountYear)}`, { scroll: false });
+    openAddAccount(String(requestedNewEmployeeId));
+  }, [accountYear, loadedContext, loading, openAddAccount, paymentsView, requestedNewEmployeeId, router, selectedEmployerId]);
 
   const openEditAccount = (member: Member, fromReportPreview = false) => {
     setReturnToReportPreview(fromReportPreview);
     if (fromReportPreview) setReportFormOpen(false);
     const account = member.pagIbigAccount;
-    setEditingMember(member);
+    setEditingMember(account ? member : null);
     setAccountError("");
     setAccountForm({
       employeeId: String(member.id),
-      year: String(account?.year ?? accountYear),
+      year: String(account?.year ?? (fromReportPreview ? reportYear : accountYear)),
       midNumber: member.pagIbigNumber ?? "",
       employeeSavings: account?.employeeSavings ?? "200",
       employerSavings: account?.employerSavings ?? "200",
@@ -422,18 +470,52 @@ function PagIbigReportsContent() {
     INACTIVE: PAGIBIG_LOAN_TYPES.filter((type) => accountForm.loanDetails[type].applicationNo.trim() && accountForm.loanDetails[type].status === "INACTIVE").length,
   };
 
-  const loadReportYearAccounts = async (year: string) => {
-    setPreviewLoading(true);
+  const loadReportEmployeeOptions = async () => {
+    setAllEmployeesLoading(true);
+    setAllEmployeesError("");
     try {
-      const response = await fetch(`/api/reports/pagibig/members?employerId=${encodeURIComponent(selectedEmployerId)}&year=${encodeURIComponent(year)}`, { cache: "no-store" });
+      const response = await fetch("/api/reports/pagibig/employees", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load employees");
+      setAllEmployees(data.employees as Member[]);
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : "Unable to load employees";
+      setAllEmployeesError(message);
+      setError(message);
+    } finally {
+      setAllEmployeesLoading(false);
+    }
+  };
+
+  const loadReportYearAccounts = async (
+    year: string,
+    retainedMembers = mergePagibigPreviewMembers(
+      previewMembers.map((member) => ({ ...member, pagIbigAccount: null })),
+      selectedReportEmployees,
+    ),
+  ) => {
+    const requestId = ++previewRequestRef.current;
+    const employerId = selectedEmployerId;
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewYear("");
+    setPreviewMembers(retainedMembers.map((member) => ({ ...member, pagIbigAccount: null })));
+    try {
+      const response = await fetch(`/api/reports/pagibig/members?employerId=${encodeURIComponent(employerId)}&year=${encodeURIComponent(year)}`, { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load employee Pag-IBIG accounts");
-      setPreviewMembers(data.employees as Member[]);
-      setPreviewYear(year);
+      if (requestId === previewRequestRef.current) {
+        setPreviewMembers(mergePagibigPreviewMembers(data.employees as Member[], retainedMembers));
+        setPreviewYear(year);
+      }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load employee Pag-IBIG accounts");
+      if (requestId === previewRequestRef.current) {
+        const message = loadError instanceof Error ? loadError.message : "Unable to load employee Pag-IBIG accounts";
+        setPreviewError(message);
+        setError(message);
+      }
     } finally {
-      setPreviewLoading(false);
+      if (requestId === previewRequestRef.current) setPreviewLoading(false);
     }
   };
 
@@ -443,6 +525,10 @@ function PagIbigReportsContent() {
     setReportDraftId(null);
     setReportFormOpen(true);
     setReportPin("");
+    setPreviewError("");
+    setSelectedReportEmployees([]);
+    setReportEmployeeId("");
+    setReportEmployeePickerOpen(false);
     // When in Payments view, seed the report year from the active year filter
     // so the employee preview loads for the selected year (e.g. 2025).
     const initialYear = paymentsView && yearFilter ? yearFilter : reportYear;
@@ -454,7 +540,18 @@ function PagIbigReportsContent() {
         if (!monthsWithReports.has(m)) { setReportMonth(String(m)); break; }
       }
     }
-    await loadReportYearAccounts(initialYear);
+    await Promise.all([loadReportYearAccounts(initialYear, []), loadReportEmployeeOptions()]);
+  };
+
+  const addReportEmployee = () => {
+    const employee = allEmployees.find((item) => String(item.id) === reportEmployeeId);
+    if (!employee || previewMembers.some((member) => member.id === employee.id)) return;
+    const selectedEmployee: Member = { ...employee, pagIbigAccount: null };
+    setSelectedReportEmployees((current) => mergePagibigPreviewMembers(current, [selectedEmployee]));
+    setPreviewMembers((current) => mergePagibigPreviewMembers(current, [selectedEmployee]));
+    setPreviewFilter("ALL");
+    setReportEmployeeId("");
+    setReportEmployeePickerOpen(false);
   };
 
   const saveReportDraft = async () => {
@@ -483,7 +580,10 @@ function PagIbigReportsContent() {
     setReportYear(String(draft.applicableYear));
     setReportPin(draft.pin);
     setReportFormOpen(true);
-    await loadReportYearAccounts(String(draft.applicableYear));
+    setSelectedReportEmployees([]);
+    setReportEmployeeId("");
+    setReportEmployeePickerOpen(false);
+    await Promise.all([loadReportYearAccounts(String(draft.applicableYear), []), loadReportEmployeeOptions()]);
   };
 
   const deleteReportDraft = async (draft: ReportDraft) => {
@@ -641,23 +741,18 @@ function PagIbigReportsContent() {
   const memberTotals = memberAmountColumns.map(({ field }) => filteredMembers.reduce((total, member) => total + Number(member.pagIbigAccount?.[field] ?? 0), 0));
   const memberSavingsTotal = memberTotals[0] + memberTotals[1];
   const memberOverallTotal = memberTotals.reduce((total, amount) => total + amount, 0);
-  const previewEntries = previewMembers.filter((member) => member.pagIbigAccount && member.pagIbigNumber && !member.pagIbigAccount.excludedFromReport);
-  const excludedPreviewCount = previewMembers.filter((member) => member.pagIbigAccount && member.pagIbigNumber && member.pagIbigAccount.excludedFromReport).length;
-  const missingMidPreviewCount = previewMembers.filter((member) => member.pagIbigAccount && !member.pagIbigNumber).length;
+  const previewEntries = previewMembers.filter(isPagibigPreviewReady);
+  const excludedPreviewCount = getPagibigPreviewCount(previewMembers, "EXCLUDED");
+  const missingMidPreviewCount = getPagibigPreviewCount(previewMembers, "MISSING_MID");
+  const noAccountPreviewCount = getPagibigPreviewCount(previewMembers, "NO_ACCOUNT");
   const readyPreviewCount = previewEntries.length;
   const previewTotal = (field: keyof Account) => previewEntries.reduce((total, member) => total + Number(member.pagIbigAccount?.[field] ?? 0), 0);
   const previewOverall = ["employeeSavings", "employerSavings", "mp2Amount", "calamityLoanAmount", "mplLoanAmount", "emergencyLoanAmount", "safeLoanAmount"]
     .reduce((sum, field) => sum + previewTotal(field as keyof Account), 0);
 
-  const filteredPreviewMembers = previewFilter === "READY"
-    ? previewEntries
-    : previewMembers.filter((member) => {
-      const account = member.pagIbigAccount;
-      if (!account) return false;
-      if (previewFilter === "EXCLUDED") return Boolean(member.pagIbigNumber && account.excludedFromReport);
-      if (previewFilter === "MISSING_MID") return Boolean(account && !member.pagIbigNumber);
-      return false;
-    });
+  const filteredPreviewMembers = filterPagibigPreviewEmployees(previewMembers, previewFilter);
+  const reportEmployeeOptions = allEmployees.filter((employee) => !previewMembers.some((member) => member.id === employee.id));
+  const createEmployeeHref = getPagibigCreateEmployeeHref(selectedEmployerId, accountYear);
 
   return (
     <main className="benefit-report-page flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden p-4 sm:p-6 lg:p-8 md:h-[calc(100dvh-7.75rem)]">
@@ -693,19 +788,24 @@ function PagIbigReportsContent() {
           {selectedEmployerId && (paymentsView ? (
             <button type="button" onClick={() => void openReportForm()} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />Generate Report</button>
           ) : (
-            <button type="button" onClick={openAddAccount} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />Add</button>
+            <button type="button" onClick={() => openAddAccount()} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />Add</button>
           ))}
           <input id="pagibig-search" aria-label="Search Pag-IBIG records" value={search} onChange={(event) => { setSearch(event.target.value); if (!paymentsView) setMemberPage(1); }} placeholder={paymentsView ? "Search period or employee" : "Search employee, code, or MID"} className={`${inputClass} min-w-[14rem] flex-[2_1_16rem]`} />
           {!paymentsView ? (
-            <select id="pagibig-member-status" aria-label="Filter employee accounts by status" value={memberStatusFilter} onChange={(event) => {
-              const status = event.target.value;
-              if (status === "ALL" || status === "ACTIVE" || status === "INACTIVE") setMemberStatusFilter(status);
-              setMemberPage(1);
-            }} className={`${inputClass} flex-[0_0_10rem]`}>
-              <option value="ALL">All statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
+            <>
+              <select id="pagibig-account-year" aria-label="Select Pag-IBIG account year" value={accountYear} onChange={(event) => changeAccountYear(event.target.value)} className={`${inputClass} flex-[0_0_8rem]`}>
+                {memberAccountYears.map((year) => <option key={year} value={year}>{year}</option>)}
+              </select>
+              <select id="pagibig-member-status" aria-label="Filter employee accounts by status" value={memberStatusFilter} onChange={(event) => {
+                const status = event.target.value;
+                if (status === "ALL" || status === "ACTIVE" || status === "INACTIVE") setMemberStatusFilter(status);
+                setMemberPage(1);
+              }} className={`${inputClass} flex-[0_0_10rem]`}>
+                <option value="ALL">All statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+            </>
           ) : <>
             <select id="pagibig-year" aria-label="Filter reports by year" value={yearFilter} onChange={(event) => { setYearFilter(event.target.value); setReportPage(1); }} className={`${inputClass} flex-[0_0_10rem]`}>
               <option value="">All years</option>{years.map((year) => <option key={year} value={year}>{year}</option>)}
@@ -772,7 +872,7 @@ function PagIbigReportsContent() {
         ) : (
           <>
             <div className="benefit-report-section-heading">
-              <h2 className="text-sm font-semibold text-slate-900">Employee Accounts</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Employee Accounts · {accountYear}</h2>
               <p className="text-xs text-slate-500">{filteredMembers.length} employees · {memberStatusFilter === "ALL" ? "All statuses" : memberStatusFilter === "ACTIVE" ? "Active" : "Inactive"}</p>
             </div>
             <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
@@ -837,14 +937,19 @@ function PagIbigReportsContent() {
                     ...current,
                     employeeId,
                     midNumber: picked?.pagIbigNumber ?? current.midNumber,
-                    year: picked?.pagIbigAccount?.year ? String(picked.pagIbigAccount.year) : accountYear,
+                    year: accountYear,
                   }));
                   setAccountError("");
                 }} disabled={allEmployeesLoading || Boolean(allEmployeesError)} prominent /></div>
                 <label><span className={labelClass}>MID Number</span><input required maxLength={40} value={accountForm.midNumber} onChange={(event) => setAccountForm((current) => ({ ...current, midNumber: event.target.value }))} className={`${inputClass} text-base font-semibold`} placeholder="Enter Pag-IBIG MID number" /></label>
               </div>
+              {createEmployeeHref && <Link
+                href={createEmployeeHref}
+                className="inline-flex text-sm font-semibold text-violet-700 underline-offset-2 hover:text-violet-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+              >Create new employee</Link>}
             </>)}
             <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+              <div><span className={labelClass}>Account Year</span><p className="text-sm font-semibold tabular-nums text-slate-900">{accountForm.year}</p></div>
               <span className="text-sm font-semibold text-slate-700">Account Status</span>
               <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1" role="group" aria-label="Pag-IBIG account status">
                 {(["ACTIVE", "INACTIVE"] as const).map((status) => {
@@ -921,12 +1026,28 @@ function PagIbigReportsContent() {
       {reportFormOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6">
         <form onSubmit={generateReport} className="max-h-[94vh] w-full max-w-7xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4"><div className="min-w-0"><h2 className="text-lg font-bold text-slate-900">Generate Pag-IBIG Report</h2><p className="mt-0.5 truncate text-sm font-semibold text-slate-700">{reportEmployer?.id === Number(selectedEmployerId) ? `${reportEmployer.name} · ${reportEmployer.pagibigNumber || "—"}` : " "}</p><p className="text-xs text-slate-600">Review the current account data before creating an immutable snapshot.</p></div><button type="button" onClick={() => setReportFormOpen(false)} aria-label="Close" className="ml-3 shrink-0 rounded-full p-2 text-slate-600 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
-          <div className="grid grid-cols-2 gap-4 p-5"><label className="col-span-2"><span className={labelClass}>Payment Identification Number (PIN)</span><input required maxLength={120} value={reportPin} onChange={(event) => setReportPin(event.target.value)} className={inputClass} /></label><label><span className={labelClass}>Applicable Month</span><select value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} className={inputClass}>{monthNames.map((month, index) => <option key={month} value={index + 1} disabled={reports.some((report) => report.applicableMonth === index + 1 && report.applicableYear === Number(reportYear))}>{month}</option>)}</select></label><label><span className={labelClass}>Year</span><input required type="number" min="2020" max="2200" value={reportYear} onChange={(event) => { setReportYear(event.target.value); if (/^\d{4}$/.test(event.target.value)) void loadReportYearAccounts(event.target.value); }} className={inputClass} /></label><p className="col-span-2 text-xs text-slate-600">The report snapshots saved monthly amounts from employee Pag-IBIG accounts for the selected year.</p></div>
-          {previewLoading ? <div className="px-5 pb-5 text-center text-sm text-slate-600">Loading employee accounts...</div> : <div className="px-5 pb-5">
+          <div className="grid grid-cols-2 gap-4 p-5"><label className="col-span-2"><span className={labelClass}>Payment Identification Number (PIN)</span><input required maxLength={120} value={reportPin} onChange={(event) => setReportPin(event.target.value)} className={inputClass} /></label><label><span className={labelClass}>Applicable Month</span><select value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} className={inputClass}>{monthNames.map((month, index) => <option key={month} value={index + 1} disabled={reports.some((report) => report.applicableMonth === index + 1 && report.applicableYear === Number(reportYear))}>{month}</option>)}</select></label><label><span className={labelClass}>Year</span><input required type="number" min="2020" max="2200" value={reportYear} onChange={(event) => { const year = event.target.value; setReportYear(year); if (validPagibigYear(year)) void loadReportYearAccounts(year); else { previewRequestRef.current += 1; setPreviewLoading(false); setPreviewError(""); setPreviewYear(""); setPreviewMembers((current) => current.map((member) => ({ ...member, pagIbigAccount: null }))); } }} className={inputClass} /></label><p className="col-span-2 text-xs text-slate-600">The report snapshots saved monthly amounts from employee Pag-IBIG accounts for the selected year.</p></div>
+          <div className="px-5 pb-5">
+            {previewError && <p role="alert" className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{previewError}</p>}
+            {previewLoading && <p role="status" className="mb-3 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-800">Loading account data for {reportYear}; employee list retained.</p>}
+            <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div><p className="text-sm font-semibold text-slate-900">Employee list</p><p className="text-xs text-slate-600">Employees without an account for {reportYear} stay visible and can be set up for this year.</p></div>
+                <button type="button" onClick={() => setReportEmployeePickerOpen((current) => !current)} disabled={allEmployeesLoading || Boolean(allEmployeesError)} className="inline-flex h-9 items-center gap-2 rounded-lg border border-violet-300 bg-white px-3 text-sm font-semibold text-violet-800 hover:bg-violet-50 disabled:opacity-50"><PlusIcon className="h-4 w-4" />Add Employee</button>
+              </div>
+              {allEmployeesLoading && <p role="status" className="mt-2 text-sm text-slate-600">Loading employee roster...</p>}
+              {allEmployeesError && <p role="alert" className="mt-2 text-sm text-rose-700">{allEmployeesError}</p>}
+              {reportEmployeePickerOpen && <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <div><span id="pagibig-report-employee-picker-label" className={labelClass}>Select an employee to add to this report form</span><EmployeePicker options={reportEmployeeOptions} value={reportEmployeeId} onChange={setReportEmployeeId} disabled={allEmployeesLoading || previewLoading} labelId="pagibig-report-employee-picker-label" /></div>
+                <button type="button" onClick={addReportEmployee} disabled={!reportEmployeeId || previewLoading} className="mt-6 h-10 rounded-lg bg-violet-700 px-4 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-50">Add to List</button>
+              </div>}
+            </div>
             <div className="mb-3 flex flex-wrap gap-2 text-sm sm:grid-cols-3">
+              <button type="button" onClick={() => setPreviewFilter("ALL")} className={`flex-1 rounded-lg border px-3 py-2 text-left font-semibold transition ${previewFilter === "ALL" ? "bg-violet-100 text-violet-800 border-violet-200 shadow-sm" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}><span className="font-bold">{previewMembers.length}</span> All Employees</button>
               <button type="button" onClick={() => setPreviewFilter("READY")} className={`flex-1 rounded-lg border px-3 py-2 text-left font-semibold transition ${previewFilter === "READY" ? "bg-emerald-100 text-emerald-800 border-emerald-200 shadow-sm" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}><span className="font-bold">{readyPreviewCount}</span> Ready</button>
               <button type="button" onClick={() => setPreviewFilter("EXCLUDED")} className={`flex-1 rounded-lg border px-3 py-2 text-left font-semibold transition ${previewFilter === "EXCLUDED" ? "bg-amber-100 text-amber-800 border-amber-200 shadow-sm" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}><span className="font-bold">{excludedPreviewCount}</span> Excluded</button>
               <button type="button" onClick={() => setPreviewFilter("MISSING_MID")} className={`flex-1 rounded-lg border px-3 py-2 text-left font-semibold transition ${previewFilter === "MISSING_MID" ? "bg-rose-100 text-rose-800 border-rose-200 shadow-sm" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}><span className="font-bold">{missingMidPreviewCount}</span> Missing MID</button>
+              <button type="button" onClick={() => setPreviewFilter("NO_ACCOUNT")} className={`flex-1 rounded-lg border px-3 py-2 text-left font-semibold transition ${previewFilter === "NO_ACCOUNT" ? "bg-slate-200 text-slate-900 border-slate-300 shadow-sm" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}><span className="font-bold">{noAccountPreviewCount}</span> No Account for Year</button>
             </div>
             <div className="overflow-x-auto rounded-lg border border-slate-200"><table className="w-full min-w-[1120px] text-sm text-slate-900">
               <thead className="text-sm font-bold"><tr><th className="bg-slate-100 px-3 py-3 text-left text-sm font-bold text-slate-800">Member / MID Number</th><th className="bg-sky-100 px-3 py-3 text-right text-sm font-bold text-sky-900">EE</th><th className="bg-sky-100 px-3 py-3 text-right text-sm font-bold text-sky-900">ER</th><th className="bg-sky-100 px-3 py-3 text-right text-sm font-bold text-sky-900">MP2</th><th className="bg-amber-100 px-3 py-3 text-right text-sm font-bold text-amber-900">CAL</th><th className="bg-amber-100 px-3 py-3 text-right text-sm font-bold text-amber-900">MPL</th><th className="bg-amber-100 px-3 py-3 text-right text-sm font-bold text-amber-900">EMER</th><th className="bg-amber-100 px-3 py-3 text-right text-sm font-bold text-amber-900">SAFE</th><th className="bg-slate-100 px-3 py-3 text-right text-sm font-bold text-slate-800">Total</th><th className="bg-slate-100 px-3 py-3 text-right text-sm font-bold text-slate-800">Action</th></tr></thead>
@@ -934,14 +1055,14 @@ function PagIbigReportsContent() {
                 const account = member.pagIbigAccount;
                 const rowTotal = account ? ["employeeSavings", "employerSavings", "mp2Amount", "calamityLoanAmount", "mplLoanAmount", "emergencyLoanAmount", "safeLoanAmount"].reduce((sum, field) => sum + Number(account[field as keyof Account] ?? 0), 0) : 0;
                 const mid = member.pagIbigNumber || "Not set";
-                return <tr key={member.id}><td className="px-3 py-3 font-medium text-slate-900">{formatEmployeeName(member)}<div className="text-xs font-normal text-slate-600">{mid}</div></td>
+                return <tr key={member.id}><td className="px-3 py-3 font-medium text-slate-900">{formatEmployeeName(member)}<div className="text-xs font-normal text-slate-600">{account ? mid : `No account for ${reportYear}`}</div></td>
                   {[account?.employeeSavings, account?.employerSavings, account?.mp2Amount].map((amount, index) => <td key={index} className="bg-sky-50 px-3 py-3 text-right font-medium tabular-nums text-sky-950">{account ? formatMoney(amount) : "—"}</td>)}
                   {[account?.calamityLoanAmount, account?.mplLoanAmount, account?.emergencyLoanAmount, account?.safeLoanAmount].map((amount, index) => <td key={index} className="bg-amber-50 px-3 py-3 text-right font-medium tabular-nums text-amber-950">{account ? formatMoney(amount) : "—"}</td>)}
-                  <td className="px-3 py-3 text-right font-bold tabular-nums text-slate-950">{account ? formatMoney(rowTotal) : "—"}</td><td className="px-3 py-3 text-right"><button type="button" onClick={() => openEditAccount(member, true)} className="text-xs font-semibold text-violet-700 hover:underline">Edit Account</button></td></tr>;
-              })}{filteredPreviewMembers.length === 0 && <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-600">{previewFilter === "READY" ? "No employee accounts with a MID number are ready for this report." : previewFilter === "EXCLUDED" ? "No excluded accounts." : "No employees missing a MID number."}</td></tr>}</tbody>
+                  <td className="px-3 py-3 text-right font-bold tabular-nums text-slate-950">{account ? formatMoney(rowTotal) : "—"}</td><td className="px-3 py-3 text-right"><button type="button" onClick={() => openEditAccount(member, true)} className="text-xs font-semibold text-violet-700 hover:underline">{account ? "Edit Account" : "Set Up Account"}</button></td></tr>;
+              })}{filteredPreviewMembers.length === 0 && <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-600">{previewFilter === "ALL" ? "No employees are in this report form yet. Use Add Employee to select one." : previewFilter === "READY" ? "No employee accounts with a MID number are ready for this report." : previewFilter === "EXCLUDED" ? "No excluded accounts." : previewFilter === "MISSING_MID" ? "No employees missing a MID number." : "No employees need account setup for this year."}</td></tr>}</tbody>
               <tfoot className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-950"><tr><td className="px-3 py-3">Total</td>{(["employeeSavings", "employerSavings", "mp2Amount"] as (keyof Account)[]).map((field) => <td key={field} className="bg-sky-50 px-3 py-3 text-right tabular-nums text-sky-950">{formatMoney(previewTotal(field))}</td>)}{(["calamityLoanAmount", "mplLoanAmount", "emergencyLoanAmount", "safeLoanAmount"] as (keyof Account)[]).map((field) => <td key={field} className="bg-amber-50 px-3 py-3 text-right tabular-nums text-amber-950">{formatMoney(previewTotal(field))}</td>)}<td className="px-3 py-3 text-right tabular-nums">{formatMoney(previewOverall)}</td><td /></tr></tfoot>
             </table></div>
-          </div>}
+          </div>
           <div className="sticky bottom-0 z-20 flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4"><button type="button" onClick={() => setReportFormOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button type="button" disabled={savingDraft || previewLoading} onClick={() => void saveReportDraft()} className="h-10 rounded-lg border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-60">{savingDraft ? "Saving draft..." : reportDraftId ? "Update Draft" : "Save Draft"}</button><button disabled={generating || previewLoading || previewYear !== reportYear || previewEntries.length === 0 || reports.some((report) => report.applicableMonth === Number(reportMonth) && report.applicableYear === Number(reportYear))} className="h-10 rounded-lg bg-violet-700 px-5 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-60">{generating ? "Saving..." : "Save Report"}</button></div>
         </form>
       </div>}
@@ -990,12 +1111,14 @@ function EmployeePicker({
   onChange,
   disabled,
   prominent = false,
+  labelId = "pagibig-employee-picker-label",
 }: {
   options: Member[];
   value: string;
   onChange: (employeeId: string) => void;
   disabled: boolean;
   prominent?: boolean;
+  labelId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -1022,7 +1145,7 @@ function EmployeePicker({
       disabled={disabled}
       aria-haspopup="listbox"
       aria-expanded={open}
-      aria-labelledby="pagibig-employee-picker-label"
+      aria-labelledby={labelId}
       className={`${inputClass} flex items-center justify-between gap-3 text-left ${prominent ? "h-12 text-base font-bold" : ""} disabled:cursor-not-allowed disabled:bg-slate-100`}
       onClick={() => {
         setQuery("");

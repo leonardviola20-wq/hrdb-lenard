@@ -6,14 +6,14 @@ import { contactImageError } from "@/lib/contactImage";
 
 const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
-async function isAdmin(req: NextRequest) {
+async function canManageContacts(req: NextRequest) {
   const userId = getAuthenticatedUserId(req);
   if (userId === null) return false;
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: { role: true, accessiblePages: true },
   });
-  return user?.role === "ADMIN";
+  return user?.role === "ADMIN" || Boolean(user?.accessiblePages.includes("/contacts"));
 }
 
 async function canViewContacts(req: NextRequest) {
@@ -102,8 +102,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdmin(req))) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  if (!(await canManageContacts(req))) {
+    return NextResponse.json({ error: "Contacts access required" }, { status: 403 });
   }
   const body = await req.json();
   const companyName = typeof body.companyName === "string" ? body.companyName.trim() : "";

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { authorizeReports } from "@/lib/sssReportAccess";
 import { PAGIBIG_LOAN_TYPES, getPagibigLoanTermEndDate, getPagibigLoanTypeAliases, normalizePagibigLoanType, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
 import { parsePagIbigMoneyCents } from "@/lib/pagibigReportTotals";
+import { validPagibigYear } from "@/lib/pagibigYear";
 import { prisma } from "@/lib/prisma";
 
 const moneyDecimal = (cents: number) => new Prisma.Decimal((cents / 100).toFixed(2));
@@ -12,11 +13,6 @@ const dateFromInput = (value: unknown) => {
   const date = new Date(`${value}T00:00:00.000Z`);
   return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
 };
-const validYear = (value: unknown) => {
-  const year = Number(value);
-  return Number.isInteger(year) && year >= 2020 && year <= 2200 ? year : null;
-};
-
 function accountResponse(record: {
   id: number;
   year: number;
@@ -79,7 +75,7 @@ export async function GET(request: NextRequest) {
   if (!Number.isSafeInteger(employerId) || employerId <= 0) {
     return NextResponse.json({ error: "Select an employer to load Pag-IBIG accounts" }, { status: 400 });
   }
-  const year = validYear(request.nextUrl.searchParams.get("year") ?? new Date().getFullYear());
+  const year = validPagibigYear(request.nextUrl.searchParams.get("year") ?? new Date().getFullYear());
   if (!year) return NextResponse.json({ error: "Select a valid account year" }, { status: 400 });
 
   try {
@@ -139,7 +135,7 @@ export async function POST(request: NextRequest) {
   const body = payload as Record<string, unknown>;
   const employerId = Number(body.employerId);
   const employeeId = Number(body.employeeId);
-  const year = validYear(body.year);
+  const year = validPagibigYear(body.year);
   const midNumber = typeof body.midNumber === "string" ? body.midNumber.trim() : "";
   const mp2AccountNo = typeof body.mp2AccountNumber === "string" ? body.mp2AccountNumber.trim() : "";
   const eeShare = parsePagIbigMoneyCents(body.employeeSavings);

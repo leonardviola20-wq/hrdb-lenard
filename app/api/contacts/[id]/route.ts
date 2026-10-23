@@ -8,6 +8,16 @@ const activeEmployeeStatuses = ["Regular", "Contractual", "Trainee", "Leave"];
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+async function canManageContacts(req: NextRequest) {
+  const userId = getAuthenticatedUserId(req);
+  if (userId === null) return false;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, accessiblePages: true },
+  });
+  return user?.role === "ADMIN" || Boolean(user?.accessiblePages.includes("/contacts"));
+}
+
 async function requireAdmin(req: NextRequest) {
   const userId = getAuthenticatedUserId(req);
   if (userId === null) return false;
@@ -19,8 +29,8 @@ async function requireAdmin(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
-  if (!(await requireAdmin(req))) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  if (!(await canManageContacts(req))) {
+    return NextResponse.json({ error: "Contacts access required" }, { status: 403 });
   }
   const id = Number((await params).id);
   if (!Number.isInteger(id)) {
