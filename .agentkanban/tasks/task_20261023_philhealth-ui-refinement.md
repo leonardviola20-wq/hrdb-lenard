@@ -69,3 +69,15 @@ Validation passed: `npx tsc --noEmit`, `npx eslint components/PhilHealthReportsP
 ### agent
 
 Additional refinement: removed biometric number, set employee list page size to 10, tightened Account Status column spacing, and removed Monthly Reports link. Validated tsc/eslint.
+
+
+### agent
+
+Implemented PhilHealth Add Account searchable employee picker in `components/PhilHealthReportsPage.tsx`:
+- Replaced the native employee select with a searchable dropdown.
+- Added search filtering across name, PhilHealth number, employer, biometric number, and status.
+- Kept current-employer employees listed first with separate section headings.
+- Bolded the employee first name in both the selected trigger and each option.
+- Retained hidden required field and Add Account validation.
+- Validation passed: `npx tsc --noEmit` and `npx eslint components/PhilHealthReportsPage.tsx`.
+- Backup snapshot: `backup/philhealth-add-account-picker-20261024` / commit `7ff986d`, merged into `feature/benefits-reports-20261021`.
