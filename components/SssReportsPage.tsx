@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowPathIcon, BanknotesIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, EllipsisVerticalIcon, EyeIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, PrinterIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { SSS_CONTRIBUTION_EFFECTIVE_DATE, SSS_CONTRIBUTION_TABLE, getSssContributionBracket } from "@/lib/sssContributionTable";
+import { SSS_CONTRIBUTION_EFFECTIVE_DATE, sssContributionTableForYear, getSssContributionBracket, getSssContributionBracketForYear } from "@/lib/sssContributionTable";
 import { getSssLoanFirstAmortizationDate, getSssLoanReportCategory, getSssLoanStartDate, parseSssLoanDateFromApi, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
 import { getSssLoanStatusLabel, isSssLoanStatus, type SssLoanStatus } from "@/lib/sssLoanStatus";
 import { getSssLoanTypeLabel, getSssLoanTypeListLabel, getSssLoanTypeShortLabel, isSssLoanType, sssLoanTypes, type SssLoanType } from "@/lib/sssLoanTypes";
@@ -130,6 +130,18 @@ export default function SssReportsPage() {
   const [preview, setPreview] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
+  const employeeDropdownRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!employeeDropdownOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (employeeDropdownRef.current && !employeeDropdownRef.current.contains(event.target as Node)) {
+        setEmployeeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [employeeDropdownOpen]);
   const [selectedLoanIds, setSelectedLoanIds] = useState<number[]>([]);
   const [loanEntrySearch, setLoanEntrySearch] = useState("");
   const [selectedMsc, setSelectedMsc] = useState("");
@@ -304,7 +316,7 @@ export default function SssReportsPage() {
       || Boolean(draft.employerId || draft.prn.trim() || draft.amountDue.trim() || entries.length)
       || Number(draft.month) !== currentMonth
       || Number(draft.year) !== currentYear;
-    if (!createOpen || editReport || saving || !hasDraftContent) return;
+    if (!createOpen || editReport || saving || !hasDraftContent || !draft.prn.trim()) return;
 
     let cancelled = false;
     const timeout = window.setTimeout(() => {
@@ -390,11 +402,11 @@ export default function SssReportsPage() {
     });
   }, [activeLoanReport, activeLoanReportFilter, currentMonth, currentYear]);
 
-  const employeeTotal = (entry: DraftEntry) => {
+  const employeeTotal = (entry: DraftEntry, year: number) => {
     if (kind === "LOAN") return Math.round((Number(entry.loanAmount) || 0) * 100) / 100;
-    return getSssContributionBracket(Number(entry.monthlySalaryCredit))?.total ?? 0;
+    return getSssContributionBracketForYear(year, Number(entry.monthlySalaryCredit))?.total ?? 0;
   };
-  const calculatedTotal = entries.reduce((sum, entry) => sum + employeeTotal(entry), 0);
+  const calculatedTotal = entries.reduce((sum, entry) => sum + employeeTotal(entry, Number(draft.year)), 0);
   const amountDue = Number(draft.amountDue);
   const hasLegacyLoanEntries = kind === "LOAN" && entries.some((entry) => !Number.isSafeInteger(entry.sssLoanId) || !entry.sssLoanId);
   const hasUnconfiguredEntries = entries.some((entry) => kind === "CONTRIBUTION"
@@ -405,6 +417,7 @@ export default function SssReportsPage() {
   const pickerEmployees = contributionEmployees;
   const employeeSearchQuery = employeeSssSearch.trim().toLocaleLowerCase();
   const employeeSearchDigits = employeeSssSearch.replace(/\D/g, "");
+  const selectedContributionEmployee = pickerEmployees.find((candidate) => String(candidate.id) === selectedEmployeeId) ?? pendingEmployee;
   const filteredContributionEmployees = pickerEmployees.filter((employee) => {
     if (!employeeSearchQuery) return true;
     const searchableName = [
@@ -798,12 +811,13 @@ export default function SssReportsPage() {
       || Number(draft.year) !== currentYear;
     try {
       await draftSaveQueueRef.current;
-      if (hasDraftContent) {
+      const shouldPersist = hasDraftContent && draft.prn.trim();
+      if (shouldPersist) {
         await persistReportDraft(true);
       }
       setCreateOpen(false);
       resetReportDraft();
-      if (hasDraftContent) await refreshSssRecords();
+      if (shouldPersist) await refreshSssRecords();
     } catch (closeError) {
       setError(closeError instanceof Error ? closeError.message : "Unable to return the draft to Saved Drafts");
     } finally {
@@ -815,6 +829,10 @@ export default function SssReportsPage() {
     setSaving(true);
     setError("");
     try {
+      if (!draft.prn.trim()) {
+        setError("PRN (Payment Reference Number) is required before saving the draft.");
+        return;
+      }
       await draftSaveQueueRef.current;
       await persistReportDraft(true);
       await refreshSssRecords();
@@ -835,6 +853,7 @@ export default function SssReportsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to delete SSS report draft");
       setReportDrafts((current) => current.filter((item) => item.id !== savedDraft.id));
+      await refreshSssRecords();
       setNotice("Draft deleted.");
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Unable to delete SSS report draft");
@@ -903,6 +922,7 @@ export default function SssReportsPage() {
 
   const openEmployeePicker = async () => {
     setSelectedEmployeeId("");
+    setEmployeeDropdownOpen(false);
     setSelectedLoanIds([]);
     setLoanEntrySearch("");
     setEmployeeSssSearch("");
@@ -1131,7 +1151,7 @@ export default function SssReportsPage() {
     try {
       if (!editReport) {
         await draftSaveQueueRef.current;
-        if (draftIdRef.current === null) await persistReportDraft(false);
+        if (draftIdRef.current === null && draft.prn.trim()) await persistReportDraft(false);
       }
       const response = await fetch(editReport ? `/api/reports/sss/${editReport.id}` : "/api/reports/sss", {
         method: editReport ? "PUT" : "POST",
@@ -1219,7 +1239,7 @@ export default function SssReportsPage() {
           <div className="benefit-report-section-heading gap-3 sm:px-5">
             <div className="flex-1">
               <h2 className="benefit-report-title">{kind === "CONTRIBUTION" ? "Contribution Reports" : "Loan Reports"}</h2>
-              {currentEmployer && <p className="text-xs text-slate-600">{currentEmployer.name} · {currentEmployer.sss || "—"}</p>}
+              {currentEmployer && <p className="text-xs text-slate-600">{currentEmployer.name} Â· {currentEmployer.sss || "—"}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div ref={draftMenuRef} className="relative">
@@ -1236,7 +1256,7 @@ export default function SssReportsPage() {
                   {visibleReportDrafts.length ? <ul className="divide-y divide-slate-100">{visibleReportDrafts.map((savedDraft) => <li key={savedDraft.id} className="flex items-start gap-3 px-4 py-3">
                     <button type="button" disabled={saving} onClick={() => void resumeReportDraft(savedDraft)} className="min-w-0 flex-1 rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
                       <span className="block truncate text-sm font-semibold text-slate-800">{reportEmployerLabel(savedDraft.entries, employers.find((employer) => employer.id === savedDraft.employerId)?.name || "Employer not selected")}</span>
-                      <span className="mt-1 block text-xs text-slate-600">{savedDraft.prn ? `PRN ${savedDraft.prn} · ` : ""}{monthNames[savedDraft.applicableMonth - 1]} {savedDraft.applicableYear} · {savedDraft.entries.length} {savedDraft.kind === "LOAN" ? `loan account${savedDraft.entries.length === 1 ? "" : "s"}` : `employee${savedDraft.entries.length === 1 ? "" : "s"}`}</span>
+                      <span className="mt-1 block text-xs text-slate-600">{savedDraft.prn ? `PRN ${savedDraft.prn} Â· ` : ""}{monthNames[savedDraft.applicableMonth - 1]} {savedDraft.applicableYear} Â· {savedDraft.entries.length} {savedDraft.kind === "LOAN" ? `loan account${savedDraft.entries.length === 1 ? "" : "s"}` : `employee${savedDraft.entries.length === 1 ? "" : "s"}`}</span>
                       <span className="mt-1 block text-[11px] text-slate-500">Updated {new Date(savedDraft.updatedAt).toLocaleString()}</span>
                     </button>
                     <button type="button" disabled={saving} onClick={() => void deleteReportDraft(savedDraft)} className="shrink-0 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50">Delete</button>
@@ -1304,8 +1324,8 @@ export default function SssReportsPage() {
 
       {createOpen && <Modal title={preview ? "Review SSS Report" : editReport ? "Edit SSS Report" : `Generate ${kind === "CONTRIBUTION" ? "Contribution" : "Loan"} Report`} subtitle={preview ? "Check the totals and employer details before saving." : editReport ? "Correct the report information and employee breakdown." : "Build the report first. Payment details are recorded after payment."} onClose={() => void closeCreate()} wide fullHeight footer={
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7">
-          <button type="button" onClick={() => setContributionTableOpen(true)} className="text-xs font-semibold text-blue-700 hover:underline">Contribution table · Effective Jan 2025</button>
-          <div className="ml-auto flex flex-wrap justify-end gap-2"><button type="button" onClick={() => void closeCreate()} className="h-10 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">Cancel</button>{!editReport && <button type="button" disabled={saving} onClick={() => void saveReportDraft()} className="h-10 rounded-lg border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-50">{draftId ? "Update Draft" : "Save Draft"}</button>}{preview ? <><button type="button" onClick={() => setPreview(false)} className="h-10 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">Back to edit</button><button type="button" disabled={!isTally || saving} onClick={() => void saveReport()} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? (editReport ? "Updating..." : "Saving...") : (editReport ? "Update Report" : "Save Report")}</button></> : <button type="button" disabled={!isTally} onClick={() => setPreview(true)} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{editReport ? "Review Changes" : "Generate Report"}</button>}</div>
+          <button type="button" onClick={() => setContributionTableOpen(true)} className="text-xs font-semibold text-blue-700 hover:underline">Contribution table Â· Effective Jan 2025</button>
+          <div className="ml-auto flex flex-wrap justify-end gap-2"><button type="button" onClick={() => void closeCreate()} className="h-10 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">Cancel</button>{!editReport && <button type="button" disabled={saving || !draft.prn.trim()} onClick={() => void saveReportDraft()} className="h-10 rounded-lg border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-50">{draftId ? "Update Draft" : "Save Draft"}</button>}{preview ? <><button type="button" onClick={() => setPreview(false)} className="h-10 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">Back to edit</button><button type="button" disabled={!isTally || saving} onClick={() => void saveReport()} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? (editReport ? "Updating..." : "Saving...") : (editReport ? "Update Report" : "Save Report")}</button></> : <button type="button" disabled={!isTally} onClick={() => setPreview(true)} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{editReport ? "Review Changes" : "Generate Report"}</button>}</div>
         </div>
       }>
         {error && <div role="alert" className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
@@ -1320,8 +1340,8 @@ export default function SssReportsPage() {
                 const alreadyExists = existingLoanReportMonths.has(monthNumber);
                 const unavailable = !editReport && alreadyExists;
                 return <option key={month} value={String(monthNumber)} disabled={unavailable}>{month}{unavailable ? " (Paid)" : ""}</option>;
-              })}</select>{kind === "LOAN" && !editReport && <p className="mt-1 text-xs text-slate-500">Months marked “Paid” are unavailable for this employer and year.</p>}</Field>
-              <Field label="Applicable Year" required><select value={draft.year} onChange={(event) => { setDraft((current) => ({ ...current, year: event.target.value })); setError(""); }} className={inputClass}>{Array.from({ length: Math.max(1, currentYear - 2025 + 2) }, (_, index) => String(currentYear + 1 - index)).filter((year) => Number(year) >= 2025).map((year) => <option key={year} value={year}>{year}</option>)}</select></Field>
+              })}</select>{kind === "LOAN" && !editReport && <p className="mt-1 text-xs text-slate-500">Months marked â€œPaidâ€ are unavailable for this employer and year.</p>}</Field>
+              <Field label="Applicable Year" required><select value={draft.year} onChange={(event) => { setDraft((current) => ({ ...current, year: event.target.value })); setError(""); }} className={inputClass}>{Array.from({ length: Math.max(1, currentYear - 2023 + 2) }, (_, index) => String(currentYear + 1 - index)).filter((year) => Number(year) >= 2023).map((year) => <option key={year} value={year}>{year}</option>)}</select></Field>
               <Field label="Amount Due" required><AmountDueInput value={draft.amountDue} onChange={(value) => setDraft((current) => ({ ...current, amountDue: value }))} /></Field>
             </div>
           </div>
@@ -1337,11 +1357,11 @@ export default function SssReportsPage() {
                 <thead className="sticky top-0 z-10 bg-white text-[10px] uppercase tracking-wide text-slate-500"><tr><th className="break-words w-[5%] px-1.5 py-3 text-center font-semibold">#</th><th className={`${kind === "CONTRIBUTION" ? "w-[25%]" : "w-[19%]"} break-words px-2 py-2 font-semibold`}>Name</th>{kind === "CONTRIBUTION" ? <><th className="break-words w-[14%] px-1.5 py-2 font-semibold">SS Number</th><th className="break-words w-[18%] px-1.5 py-2 font-semibold">MSC</th><th className="break-words w-[11%] px-1.5 py-2 text-right font-semibold">SS</th><th className="break-words w-[8%] px-1.5 py-2 text-right font-semibold">EC</th><th className="break-words w-[14%] px-1.5 py-2 text-right font-semibold">Total Contribution</th></> : <><th className="break-words w-[16%] px-1.5 py-2 font-semibold">SS Number</th><th className="break-words w-[23%] px-1.5 py-2 font-semibold">Loan Account Number</th><th className="break-words w-[23%] px-1.5 py-2 font-semibold">Loan Amount Due</th><th className="break-words w-[14%] px-1.5 py-2 text-right font-semibold">Total</th></>}<th className="break-words w-[4%] px-1 py-3"><span className="sr-only">Remove</span></th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {entries.map((entry, index) => {
-                    const bracket = entry.monthlySalaryCredit ? getSssContributionBracket(entry.monthlySalaryCredit) : null;
+                    const bracket = entry.monthlySalaryCredit ? getSssContributionBracketForYear(Number(draft.year), entry.monthlySalaryCredit) : null;
                     return <tr key={kind === "LOAN" ? entry.sssLoanId ?? `${entry.employeeId}-${index}` : entry.employeeId}>
                       <td className="px-1.5 py-2 text-center font-medium text-slate-600">{index + 1}</td>
                       <td className="px-2 py-2"><span className="font-semibold text-slate-800">{entry.employeeName}</span></td>
-                      {kind === "CONTRIBUTION" ? <><td className="px-1.5 py-2 font-mono text-slate-700">{entry.employeeSssNumber || "—"}</td><td className="px-3 py-2"><button type="button" aria-label={`Choose compensation range for ${entry.employeeName}`} onClick={() => setRangePickerTarget(entry.employeeId)} className="flex h-9 w-full min-w-0 items-center justify-between gap-1 rounded-md border border-slate-300 bg-white px-1.5 text-left text-xs font-semibold text-slate-900 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"><span className="min-w-0 break-words">{bracket ? formatMoney(bracket.monthlySalaryCredit) : "Select range"}</span><ChevronDownIcon className="h-3 w-3 shrink-0 text-slate-600" /></button></td><td className="px-1.5 py-2 text-right font-semibold text-slate-900">{bracket ? formatMoney(bracket.employerSs + bracket.employerMpf + bracket.employeeSs + bracket.employeeMpf) : "—"}</td><td className="px-1.5 py-2 text-right font-medium text-slate-900">{bracket ? formatMoney(bracket.ec) : "—"}</td><td className="px-1.5 py-2 text-right font-bold text-slate-950">{bracket ? formatMoney(bracket.total) : "—"}</td></> : <><td className="px-1.5 py-2 font-mono text-slate-700">{entry.employeeSssNumber || "—"}</td><td className="px-1.5 py-2 font-mono text-slate-700">{entry.loanAccountNumber || "—"}</td><td className="px-1.5 py-2"><MoneyInput value={entry.loanAmount} disabled={!entry.sssLoanId} onChange={(value) => entry.sssLoanId !== null && entry.sssLoanId !== undefined && updateLoanEntry(entry.sssLoanId, { loanAmount: value })} /></td><td className="px-1.5 py-2 text-right font-bold text-slate-800">{employeeTotal(entry) ? formatMoney(employeeTotal(entry)) : "—"}</td></>}
+                      {kind === "CONTRIBUTION" ? <><td className="px-1.5 py-2 font-mono text-slate-700">{entry.employeeSssNumber || "—"}</td><td className="px-3 py-2"><button type="button" aria-label={`Choose compensation range for ${entry.employeeName}`} onClick={() => setRangePickerTarget(entry.employeeId)} className="flex h-9 w-full min-w-0 items-center justify-between gap-1 rounded-md border border-slate-300 bg-white px-1.5 text-left text-xs font-semibold text-slate-900 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"><span className="min-w-0 break-words">{bracket ? formatMoney(bracket.monthlySalaryCredit) : "Select range"}</span><ChevronDownIcon className="h-3 w-3 shrink-0 text-slate-600" /></button></td><td className="px-1.5 py-2 text-right font-semibold text-slate-900">{bracket ? formatMoney(bracket.employerSs + bracket.employerMpf + bracket.employeeSs + bracket.employeeMpf) : "—"}</td><td className="px-1.5 py-2 text-right font-medium text-slate-900">{bracket ? formatMoney(bracket.ec) : "—"}</td><td className="px-1.5 py-2 text-right font-bold text-slate-950">{bracket ? formatMoney(bracket.total) : "—"}</td></> : <><td className="px-1.5 py-2 font-mono text-slate-700">{entry.employeeSssNumber || "—"}</td><td className="px-1.5 py-2 font-mono text-slate-700">{entry.loanAccountNumber || "—"}</td><td className="px-1.5 py-2"><MoneyInput value={entry.loanAmount} disabled={!entry.sssLoanId} onChange={(value) => entry.sssLoanId !== null && entry.sssLoanId !== undefined && updateLoanEntry(entry.sssLoanId, { loanAmount: value })} /></td><td className="px-1.5 py-2 text-right font-bold text-slate-800">{employeeTotal(entry, Number(draft.year)) ? formatMoney(employeeTotal(entry, Number(draft.year))) : "—"}</td></>}
                       <td className="px-2 py-2"><button type="button" onClick={() => setEntries((current) => current.filter((row, rowIndex) => kind === "LOAN" ? rowIndex !== index : row.employeeId !== entry.employeeId))} aria-label={`Remove ${entry.employeeName}${kind === "LOAN" ? ` loan ${entry.loanAccountNumber ?? ""}` : ""}`} className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"><XMarkIcon className="h-4 w-4" /></button></td>
                     </tr>;
                   })}
@@ -1354,7 +1374,7 @@ export default function SssReportsPage() {
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-slate-700"><span>{kind === "LOAN" ? "Loan Accounts" : "Employees"}: <strong className="text-slate-950">{entries.length}</strong></span><span>Calculated total: <strong className="text-slate-950">{formatMoney(calculatedTotal)}</strong></span><span>Amount Due: <strong className="text-slate-950">{formatMoney(amountDue)}</strong></span><span className={`font-bold ${isTally ? "text-emerald-700" : "text-amber-700"}`}>{isTally ? "Totals tally" : hasUnconfiguredEntries ? "Complete every employee entry" : "Totals do not tally"}</span></div>
             </div>
           </section>
-        </> : <ReportPreview kind={kind} employer={selectedEmployer} draft={draft} entries={entries} />}
+</> : <ReportPreview kind={kind} employer={selectedEmployer} draft={draft} entries={entries} year={Number(draft.year)} />}
 
         {pickerOpen && <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-slate-950/50 px-4 pb-4 pt-[8vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerOpen(false); }}>
           <section role="dialog" aria-modal="true" aria-labelledby="employee-entry-title" className="flex h-[min(80dvh,42rem)] w-full max-w-xl flex-col rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
@@ -1364,17 +1384,17 @@ export default function SssReportsPage() {
               {kind === "LOAN" && <Field label="Search by name or SS Number"><input type="search" value={loanEntrySearch} onChange={(event) => setLoanEntrySearch(event.target.value)} className={inputClass} placeholder="Type a name or SS Number" autoComplete="off" /></Field>}
               {kind === "CONTRIBUTION" && employeeSearchQuery && <div className="-mt-2 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white" role="listbox" aria-label="Matching employees">
                 {filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id)).length === 0 && <p className="px-3 py-2 text-sm text-slate-500">No employees match this name or SS Number.</p>}
-                {filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id)).map((employee) => <button key={employee.id} type="button" role="option" aria-selected={selectedEmployeeId === String(employee.id)} onClick={() => selectEmployeeForContribution(employee)} className={`block w-full border-b border-slate-100 px-3 py-2 text-left last:border-b-0 hover:bg-blue-50 ${selectedEmployeeId === String(employee.id) ? "bg-blue-50" : "bg-white"}`}><span className="block text-sm font-semibold text-slate-900">{employeeName(employee)} <span className="font-mono font-medium">· {employee.sssNumber || "No SS Number"}</span></span><span className="mt-0.5 block text-xs text-slate-600">{employee.employerName || "No employer assigned"}{employee.status ? ` · ${employee.status}` : ""}</span></button>)}
+                {filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id)).map((employee) => <button key={employee.id} type="button" role="option" aria-selected={selectedEmployeeId === String(employee.id)} onClick={() => selectEmployeeForContribution(employee)} className={`block w-full border-b border-slate-100 px-3 py-2 text-left last:border-b-0 hover:bg-blue-50 ${selectedEmployeeId === String(employee.id) ? "bg-blue-50" : "bg-white"}`}><span className="block text-sm font-bold text-slate-900">{employeeName(employee)} <span className="font-mono font-medium">· {employee.sssNumber || "No SS Number"}</span></span></button>)}
               </div>}
               {kind === "CONTRIBUTION"
-                ? <Field label="Employee from database" required><select value={selectedEmployeeId} onChange={(event) => { const employee = pickerEmployees.find((candidate) => String(candidate.id) === event.target.value) ?? null; setSelectedEmployeeId(event.target.value); setPendingEmployee(employee); }} disabled={loadingEmployerEmployees} className={inputClass}><option value="">{loadingEmployerEmployees ? "Loading employees..." : "Select employee"}</option>{filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id) || String(employee.id) === selectedEmployeeId).map((employee) => <option key={employee.id} value={String(employee.id)}>{employeeName(employee)} · SS Number: {employee.sssNumber || "Not set"}{employee.employerName ? ` · ${employee.employerName}` : " · No employer assigned"}{employee.status && employee.status !== "Active" ? ` · ${employee.status}` : ""}</option>)}</select></Field>
+                ? <Field label="Employee from database" required><div ref={employeeDropdownRef} className="relative"><button type="button" disabled={loadingEmployerEmployees} onClick={() => setEmployeeDropdownOpen((open) => !open)} className={`${inputClass} flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500`} aria-haspopup="listbox" aria-expanded={employeeDropdownOpen}><span className="min-w-0 truncate">{loadingEmployerEmployees ? "Loading employees..." : selectedContributionEmployee ? <><span className="font-bold text-slate-900">{employeeName(selectedContributionEmployee)}</span> <span className="font-mono font-medium text-slate-600">· {selectedContributionEmployee.sssNumber || "Not set"}</span></> : "Select employee"}</span><ChevronDownIcon className="h-4 w-4 shrink-0 text-slate-600" /></button>{employeeDropdownOpen && !loadingEmployerEmployees && <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg" role="listbox" aria-label="Employees from database">{filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id) || String(employee.id) === selectedEmployeeId).length === 0 ? <p className="px-3 py-2 text-sm text-slate-500">No employees available.</p> : filteredContributionEmployees.filter((employee) => !chosenEmployeeIds.has(employee.id) || String(employee.id) === selectedEmployeeId).map((employee) => <button key={employee.id} type="button" role="option" aria-selected={selectedEmployeeId === String(employee.id)} onClick={() => { setSelectedEmployeeId(String(employee.id)); setPendingEmployee(employee); setEmployeeDropdownOpen(false); }} className={`block w-full border-b border-slate-100 px-3 py-2 text-left last:border-b-0 hover:bg-blue-50 ${selectedEmployeeId === String(employee.id) ? "bg-blue-50" : "bg-white"}`}><span className="block text-sm font-bold text-slate-900">{employeeName(employee)} <span className="font-mono font-medium text-slate-600">· {employee.sssNumber || "Not set"}</span></span></button>)}</div>}</div></Field>
                 : <Field label="Loan Account" required><div className="overflow-hidden rounded-lg border border-slate-300" role="group" aria-label="Loan accounts"><div className="grid grid-cols-[minmax(0,1fr)_minmax(8rem,0.8fr)_minmax(6rem,auto)] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600"><span>Name</span><span>Loan Account Number</span><span className="text-right">Loan Amount</span></div><div className="max-h-60 overflow-y-auto">{loadingLoans ? <p className="px-3 py-4 text-center text-sm text-slate-500">Loading loan accounts...</p> : availableLoanEntries.map((loan) => <label key={loan.id} className={`grid cursor-pointer grid-cols-[minmax(0,1fr)_minmax(8rem,0.8fr)_minmax(6rem,auto)] items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0 hover:bg-blue-50 ${selectedLoanIds.includes(loan.id) ? "bg-blue-50" : "bg-white"}`}><span className="flex min-w-0 items-center gap-2 font-medium text-slate-900"><input type="checkbox" name="loan-account" value={loan.id} checked={selectedLoanIds.includes(loan.id)} onChange={() => setSelectedLoanIds((current) => current.includes(loan.id) ? current.filter((id) => id !== loan.id) : [...current, loan.id])} className="shrink-0 rounded accent-blue-600" /><span className="truncate">{loan.employeeName}</span></span><span className="truncate font-mono text-xs text-slate-700">{loan.loanAccountNumber}</span><span className="text-right font-semibold tabular-nums text-slate-900">{formatMoney(Number(loan.monthlyPayment) > 0 ? loan.monthlyPayment : loan.monthlyAmortization)}</span></label>)}{!loadingLoans && availableLoanEntries.length === 0 && <p className="px-3 py-4 text-center text-sm text-slate-500">{loanEntrySearch.trim() ? "No loan accounts match this name or SS Number." : "No unselected saved loan accounts are available."}</p>}</div></div></Field>}
               {kind === "CONTRIBUTION" && <Field label="MSC"><button type="button" disabled={!selectedEmployeeId} onClick={() => setRangePickerTarget("new")} className={`${inputClass} flex items-center justify-between text-left disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500`}><span>{selectedMsc ? formatMoney(Number(selectedMsc)) : selectedEmployeeId ? "Select range" : "Select an employee first"}</span><ChevronDownIcon className="h-4 w-4 shrink-0 text-slate-600" /></button></Field>}
             </div>
             <div className="mt-4 flex shrink-0 justify-end gap-2"><button type="button" onClick={() => setPickerOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>{kind === "LOAN" && <button type="button" disabled={loadingLoans || selectedLoanIds.length === 0} onClick={addSelectedEmployee} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"><CheckIcon className="h-4 w-4" /> Add {selectedLoanIds.length} Account{selectedLoanIds.length === 1 ? "" : "s"}</button>}</div>
           </section>
         </div>}
-        {rangePickerTarget !== null && <CompensationRangePicker employeeName={compensationEmployeeName} onClose={() => setRangePickerTarget(null)} onSelect={selectContributionRange} />}
+{ rangePickerTarget !== null && <CompensationRangePicker employeeName={compensationEmployeeName} onClose={() => setRangePickerTarget(null)} onSelect={selectContributionRange} year={Number(draft.year)} /> }
 
       </Modal>}
 
@@ -1386,7 +1406,7 @@ export default function SssReportsPage() {
         wide
         fullWidth
         printOnly
-        footer={<div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7 print:hidden"><p className="text-xs font-medium text-slate-500">Read-only report · This report has not been saved.</p><button type="button" onClick={() => { setActiveLoanReport(null); setLoansOpen(true); }} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Back to SSS Loans</button></div>}
+        footer={<div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7 print:hidden"><p className="text-xs font-medium text-slate-500">Read-only report Â· This report has not been saved.</p><button type="button" onClick={() => { setActiveLoanReport(null); setLoansOpen(true); }} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Back to SSS Loans</button></div>}
       >
         <div className="mb-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Employer</p><p className="mt-1 font-semibold text-slate-900">{activeLoanReport.employerName}</p></div>
@@ -1520,7 +1540,7 @@ export default function SssReportsPage() {
         )}
       </Modal>}
 
-      {loanEditTarget && <Modal title="Update SSS Loan" subtitle={`${loanEditTarget.employeeName} · ${loanEditTarget.employerName}`} onClose={() => { if (!loanEditSaving) { setLoanEditTarget(null); setLoansOpen(true); } }}>
+      {loanEditTarget && <Modal title="Update SSS Loan" subtitle={`${loanEditTarget.employeeName} Â· ${loanEditTarget.employerName}`} onClose={() => { if (!loanEditSaving) { setLoanEditTarget(null); setLoansOpen(true); } }}>
         {loanEditError && <div role="alert" className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{loanEditError}</div>}
         <form onSubmit={(event) => void saveLoanEdit(event)} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1562,7 +1582,7 @@ export default function SssReportsPage() {
           <Field label="Employer" required><select required value={loanForm.employerId} onChange={(event) => setLoanForm((current) => ({ ...current, employerId: event.target.value, employeeId: "" }))} className={inputClass}><option value="">Select employer</option>{employers.map((employer) => <option key={employer.id} value={String(employer.id)}>{employer.name}</option>)}</select></Field>
           <Field label="Select Employee" required><select required value={loanForm.employeeId} onChange={(event) => {
             setLoanForm((current) => ({ ...current, employeeId: event.target.value }));
-          }} disabled={!loanEmployer || loadingLoanEmployees} className={inputClass}><option value="">{loadingLoanEmployees ? "Loading employees..." : loanEmployer ? "Select employee from all employers" : "Select employer first"}</option>{loanEmployees.map((employee) => <option key={employee.id} value={String(employee.id)}>{employeeName(employee)} · {employee.employerName || "No employer"}{employee.biometricNo?.trim() ? "" : " · Biometric Number required"}</option>)}</select><span className="mt-1 block text-xs text-slate-500">Employees from all employers are available. The loan will be recorded under the selected loan Employer. A Biometric Number is required to save.</span>{selectedLoanEmployee && !selectedLoanEmployee.biometricNo?.trim() && <span className="mt-1 block text-xs text-amber-700">Add a Biometric Number to this employee profile before saving the loan.</span>}</Field>
+          }} disabled={!loanEmployer || loadingLoanEmployees} className={inputClass}><option value="">{loadingLoanEmployees ? "Loading employees..." : loanEmployer ? "Select employee from all employers" : "Select employer first"}</option>{loanEmployees.map((employee) => <option key={employee.id} value={String(employee.id)}>{employeeName(employee)} Â· {employee.employerName || "No employer"}{employee.biometricNo?.trim() ? "" : " Â· Biometric Number required"}</option>)}</select><span className="mt-1 block text-xs text-slate-500">Employees from all employers are available. The loan will be recorded under the selected loan Employer. A Biometric Number is required to save.</span>{selectedLoanEmployee && !selectedLoanEmployee.biometricNo?.trim() && <span className="mt-1 block text-xs text-amber-700">Add a Biometric Number to this employee profile before saving the loan.</span>}</Field>
           <Field label="Loan Account Number" required><input required maxLength={80} value={loanForm.loanAccountNumber} onChange={(event) => setLoanForm((current) => ({ ...current, loanAccountNumber: event.target.value }))} className={inputClass} /></Field>
           <Field label="Transaction Number"><input maxLength={80} value={loanForm.transactionNumber} onChange={(event) => setLoanForm((current) => ({ ...current, transactionNumber: event.target.value }))} className={inputClass} /></Field>
           <Field label="Loan Type" required><select required value={loanForm.loanType} onChange={(event) => {
@@ -1580,7 +1600,7 @@ export default function SssReportsPage() {
         </form>
       </Modal>}
 
-      {viewReport && <Modal title={`${viewReport.kind === "CONTRIBUTION" ? "Contribution" : "Loan"} Report`} subtitle={`${monthNames[viewReport.applicableMonth - 1]} ${viewReport.applicableYear} · PRN ${viewReport.prn}`} meta={<p>Added by {creatorLabel(viewReport)} · {formatReportCreatedAt(viewReport.createdAt)}</p>} onClose={() => setViewReport(null)} wide fullWidth footer={
+      {viewReport && <Modal title={`${viewReport.kind === "CONTRIBUTION" ? "Contribution" : "Loan"} Report`} subtitle={`${monthNames[viewReport.applicableMonth - 1]} ${viewReport.applicableYear} Â· PRN ${viewReport.prn}`} meta={<p>Added by {creatorLabel(viewReport)} Â· {formatReportCreatedAt(viewReport.createdAt)}</p>} onClose={() => setViewReport(null)} wide fullWidth footer={
         <div className="flex shrink-0 justify-end border-t border-slate-200 bg-white px-5 py-3 sm:px-7">
           <button type="button" onClick={() => setViewReport(null)} className="h-10 rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>
         </div>
@@ -1590,7 +1610,7 @@ export default function SssReportsPage() {
 
       {paymentReport && <Modal title="Record Payment" subtitle="Enter these details after the SSS payment has been made." onClose={() => setPaymentReport(null)}>
         {error && <div role="alert" className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
-        <div className="mb-4 rounded-lg bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-800">{paymentReport.employerName}</p><p className="mt-1 text-slate-500">Amount Due: {formatMoney(paymentReport.amountDue)} · {monthNames[paymentReport.applicableMonth - 1]} {paymentReport.applicableYear}</p></div>
+        <div className="mb-4 rounded-lg bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-800">{paymentReport.employerName}</p><p className="mt-1 text-slate-500">Amount Due: {formatMoney(paymentReport.amountDue)} Â· {monthNames[paymentReport.applicableMonth - 1]} {paymentReport.applicableYear}</p></div>
         <form onSubmit={(event) => void savePayment(event)} className="space-y-4">
           <Field label="Amount Paid" required><AmountPaidInput value={paymentForm.amountPaid} onChange={(value) => setPaymentForm((current) => ({ ...current, amountPaid: value }))} /></Field>
           <Field label="Payment Type" required><select required value={paymentForm.paymentType} onChange={(event) => setPaymentForm((current) => ({ ...current, paymentType: event.target.value }))} className={inputClass}><option value="">Select payment type</option>{paymentTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></Field>
@@ -1601,7 +1621,7 @@ export default function SssReportsPage() {
         </form>
       </Modal>}
 
-      {contributionTableOpen && <ContributionTableDialog onClose={() => setContributionTableOpen(false)} />}
+{ contributionTableOpen && <ContributionTableDialog onClose={() => setContributionTableOpen(false)} year={currentYear} /> }
       {notice && <div className="benefit-report-notice benefit-report-notice-success fixed inset-x-4 bottom-5 z-[100] mx-auto max-w-lg bg-white font-medium shadow-xl" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Dismiss confirmation" className="shrink-0 font-semibold text-emerald-800 underline underline-offset-2">Dismiss</button></div>}
     </main>
   );
@@ -1629,23 +1649,23 @@ function AmountDueInput({ value, onChange }: { value: string; onChange: (value: 
   return <div className="flex h-10 overflow-hidden rounded-lg border border-slate-300 bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100"><span className="inline-flex items-center border-r border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">₱</span><input aria-label="Amount Due in pesos" type="text" inputMode="decimal" value={focused ? value : formatAmountDue(value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(event) => { const clean = event.target.value.replace(/,/g, "").replace(/[^\d.]/g, ""); const dot = clean.indexOf("."); onChange(dot < 0 ? clean : `${clean.slice(0, dot)}.${clean.slice(dot + 1).replace(/\./g, "").slice(0, 2)}`); }} className="min-w-0 flex-1 px-3 text-sm text-slate-900 outline-none" placeholder="0.00" /></div>;
 }
 
-function CompensationRangePicker({ employeeName, onClose, onSelect }: { employeeName: string; onClose: () => void; onSelect: (monthlySalaryCredit: number) => void }) {
+function CompensationRangePicker({ employeeName, onClose, onSelect, year }: { employeeName: string; onClose: () => void; onSelect: (monthlySalaryCredit: number) => void; year: number }) {
   const [search, setSearch] = useState("");
-  const filteredRows = SSS_CONTRIBUTION_TABLE.filter((row) => `${row.range} ${row.monthlySalaryCredit} ${formatMoney(row.monthlySalaryCredit)}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
+  const filteredRows = sssContributionTableForYear(year).filter((row) => `${row.range} ${row.monthlySalaryCredit} ${formatMoney(row.monthlySalaryCredit)}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   return <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/45 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section role="dialog" aria-modal="true" aria-labelledby="compensation-range-title" className="flex max-h-[86dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-      <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4"><div><h3 id="compensation-range-title" className="text-lg font-bold text-slate-900">Select Compensation Range</h3><p className="mt-1 text-sm text-slate-600">Choose the employee’s compensation range.</p></div><button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
+      <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4"><div><h3 id="compensation-range-title" className="text-lg font-bold text-slate-900">Select Compensation Range</h3><p className="mt-1 text-sm text-slate-600">Choose the employeeâ€™s compensation range.</p></div><button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
       <div className="space-y-3 border-b border-slate-200 px-5 py-4"><div className="rounded-lg bg-blue-50 px-3 py-2"><p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">Applying range to</p><p className="mt-0.5 text-sm font-semibold text-slate-900">{employeeName}</p></div><label className="block"><span className="sr-only">Search compensation ranges</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} className={inputClass} placeholder="Search compensation range or MSC..." /></label></div>
-      <div className="h-60 overflow-y-auto p-3 overscroll-contain" role="listbox" aria-label="Compensation ranges">{filteredRows.slice(0, 100).map((row) => <button type="button" role="option" aria-selected="false" key={row.key} onClick={() => onSelect(row.monthlySalaryCredit)} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-900 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"><span>{row.range}</span><span className="ml-2 text-slate-600">· {formatMoney(row.total)}</span></button>)}{filteredRows.length === 0 && <p className="px-3 py-8 text-center text-sm text-slate-500">No compensation ranges match your search.</p>}</div>
+      <div className="h-60 overflow-y-auto p-3 overscroll-contain" role="listbox" aria-label="Compensation ranges">{filteredRows.slice(0, 100).map((row) => <button type="button" role="option" aria-selected="false" key={row.key} onClick={() => onSelect(row.monthlySalaryCredit)} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-900 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"><span>{row.range}</span><span className="ml-2 text-slate-600">{formatMoney(row.total)}</span></button>)}{filteredRows.length === 0 && <p className="px-3 py-8 text-center text-sm text-slate-500">No compensation ranges match your search.</p>}</div>
     </section>
   </div>;
 }
 
-function ReportPreview({ kind, employer, draft, entries }: { kind: PaymentKind; employer: Employer | null; draft: { prn: string; month: string; year: string; amountDue: string }; entries: DraftEntry[] }) {
+function ReportPreview({ kind, employer, draft, entries, year }: { kind: PaymentKind; employer: Employer | null; draft: { prn: string; month: string; year: string; amountDue: string }; entries: DraftEntry[]; year: number }) {
   const employerLabel = reportEmployerLabel(entries, employer?.name || "Employer not selected");
   return <div className="space-y-5 rounded-xl border border-slate-200 p-4 sm:p-6">
     <div className="flex flex-wrap justify-between gap-4 border-b border-slate-200 pb-4"><div><p className="text-xs font-bold uppercase tracking-wide text-blue-700">SSS {kind === "CONTRIBUTION" ? "Contribution" : "Loan"} Report</p><h3 className="mt-1 text-xl font-bold text-slate-900">{employerLabel}</h3><p className="mt-1 text-sm text-slate-600">{employer?.longAddress || employer?.shortAddress || "Address not set"}</p><p className="text-sm text-slate-600">Employer SSS Number: {employer?.sss || "Not set"}</p></div><div className="text-sm text-slate-700 sm:text-right"><p><span className="text-slate-500">PRN:</span> <span className="font-mono font-semibold text-slate-900">{draft.prn}</span></p><p className="mt-1"><span className="text-slate-500">Applicable Period:</span> <strong className="text-slate-900">{monthNames[Number(draft.month) - 1]} {draft.year}</strong></p><p className="mt-1 text-slate-600">Applicable date: {monthEnd(Number(draft.month), Number(draft.year))}</p></div></div>
-    <div className="overflow-x-auto"><table className="min-w-[940px] w-full text-left text-xs"><thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="w-12 px-3 py-2.5 text-center">#</th><th className="px-3 py-2.5">Name</th>{kind === "CONTRIBUTION" ? <><th className="px-3 py-2.5">SS Number</th><th className="px-3 py-2.5">MSC</th><th className="px-3 py-2.5 text-right">SS</th><th className="px-3 py-2.5 text-right">EC</th><th className="px-3 py-2.5 text-right">Total Contribution</th></> : <><th className="px-3 py-2.5">SS Number</th><th className="px-3 py-2.5 text-right">Loan Amount Due</th><th className="px-3 py-2.5 text-right">Total</th></>}</tr></thead><tbody className="divide-y divide-slate-100">{entries.map((entry, index) => { const bracket = getSssContributionBracket(Number(entry.monthlySalaryCredit)); const ss = bracket ? bracket.employerSs + bracket.employerMpf + bracket.employeeSs + bracket.employeeMpf : 0; return <tr key={kind === "LOAN" ? entry.sssLoanId ?? `${entry.employeeId}-${index}` : entry.employeeId}><td className="px-3 py-2.5 text-center text-slate-600">{index + 1}</td><td className="px-3 py-2.5 font-medium text-slate-800">{entry.employeeName}</td>{kind === "CONTRIBUTION" ? <><td className="px-3 py-2.5 font-mono text-slate-800">{entry.employeeSssNumber || "—"}</td><td className="px-3 py-2.5 text-sm font-semibold text-slate-900">{bracket ? formatMoney(bracket.monthlySalaryCredit) : "—"}</td><td className="px-3 py-2.5 text-right font-medium text-slate-900">{bracket ? formatMoney(ss) : "—"}</td><td className="px-3 py-2.5 text-right font-medium text-slate-900">{bracket ? formatMoney(bracket.ec) : "—"}</td><td className="px-3 py-2.5 text-right font-bold text-slate-950">{bracket ? formatMoney(ss + bracket.ec) : "—"}</td></> : <><td className="px-3 py-2.5 font-mono text-slate-800">{entry.employeeSssNumber || "—"}</td><td className="px-3 py-2.5 text-right font-medium text-slate-800">{formatMoney(entry.loanAmount)}</td><td className="px-3 py-2.5 text-right font-semibold text-slate-900">{formatMoney(entry.loanAmount)}</td></>}</tr>; })}</tbody></table></div>
+    <div className="overflow-x-auto"><table className="min-w-[940px] w-full text-left text-xs"><thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="w-12 px-3 py-2.5 text-center">#</th><th className="px-3 py-2.5">Name</th>{kind === "CONTRIBUTION" ? <><th className="px-3 py-2.5">SS Number</th><th className="px-3 py-2.5">MSC</th><th className="px-3 py-2.5 text-right">SS</th><th className="px-3 py-2.5 text-right">EC</th><th className="px-3 py-2.5 text-right">Total Contribution</th></> : <><th className="px-3 py-2.5">SS Number</th><th className="px-3 py-2.5 text-right">Loan Amount Due</th><th className="px-3 py-2.5 text-right">Total</th></>}</tr></thead><tbody className="divide-y divide-slate-100">{entries.map((entry, index) => { const bracket = getSssContributionBracketForYear(year, Number(entry.monthlySalaryCredit)); const ss = bracket ? bracket.employerSs + bracket.employerMpf + bracket.employeeSs + bracket.employeeMpf : 0; return <tr key={kind === "LOAN" ? entry.sssLoanId ?? `${entry.employeeId}-${index}` : entry.employeeId}><td className="px-3 py-2.5 text-center text-slate-600">{index + 1}</td><td className="px-3 py-2.5 font-medium text-slate-800">{entry.employeeName}</td>{kind === "CONTRIBUTION" ? <><td className="px-3 py-2.5 font-mono text-slate-800">{entry.employeeSssNumber || "—"}</td><td className="px-3 py-2.5 text-sm font-semibold text-slate-900">{bracket ? formatMoney(bracket.monthlySalaryCredit) : "—"}</td><td className="px-3 py-2.5 text-right font-medium text-slate-900">{bracket ? formatMoney(ss) : "—"}</td><td className="px-3 py-2.5 text-right font-medium text-slate-900">{bracket ? formatMoney(bracket.ec) : "—"}</td><td className="px-3 py-2.5 text-right font-bold text-slate-950">{bracket ? formatMoney(ss + bracket.ec) : "—"}</td></> : <><td className="px-3 py-2.5 font-mono text-slate-800">{entry.employeeSssNumber || "—"}</td><td className="px-3 py-2.5 text-right font-medium text-slate-800">{formatMoney(entry.loanAmount)}</td><td className="px-3 py-2.5 text-right font-semibold text-slate-900">{formatMoney(entry.loanAmount)}</td></>}</tr>; })}</tbody></table></div>
     <div className="sticky bottom-0 z-20 -mx-4 -mb-4 flex flex-wrap justify-between gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-700 shadow-[0_-8px_16px_-12px_rgba(15,23,42,0.35)] backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6"><span>Employee Count: <strong className="text-slate-950">{entries.length}</strong></span><span>Generated Amount Due: <strong className="text-slate-950">{formatMoney(draft.amountDue)}</strong></span></div>
   </div>;
 }
@@ -1687,11 +1707,19 @@ function Info({ label, value }: { label: string; value: string | null }) {
   return <div><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-1 font-medium text-slate-900">{value || "—"}</p></div>;
 }
 
-function ContributionTableDialog({ onClose }: { onClose: () => void }) {
-  return <Modal title="SSS Contribution Table" subtitle="Business employers and employees · Effective January 1, 2025" onClose={onClose} wide>
+function ContributionTableDialog({ onClose, year }: { onClose: () => void; year: number }) {
+  const table = sssContributionTableForYear(year);
+  const caption = year >= 2025
+    ? "Business employers and employees — Effective January 1, 2025"
+    : "Business employers and employees — Effective January 1, 2023";
+  const sourceYear = year >= 2025 ? "2024-006" : "2022-02";
+  const sourceUrl = year >= 2025
+    ? "https://www.sss.gov.ph/wp-content/uploads/2024/12/CI-2024-006-Publication.pdf"
+    : "https://www.sss.gov.ph/wp-content/uploads/2022/12/CI-2022-02-Publication.pdf";
+  return <Modal title="SSS Contribution Table" subtitle={caption} onClose={onClose} wide>
     <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><strong>Official schedule for review.</strong> Regular SS is 10% employer and 5% employee up to ₱20,000 MSC. Above ₱20,000, MPF applies at 10% employer and 5% employee. EC is employer-paid: ₱10 for MSC through ₱14,500; ₱30 from ₱15,000.</div>
-    <div className="overflow-auto rounded-xl border border-slate-200"><table className="min-w-[1050px] w-full text-right text-xs text-slate-800"><thead className="sticky top-0 bg-slate-100 text-[10px] uppercase tracking-wide text-slate-600"><tr><th className="px-3 py-2.5 text-left">Compensation Range</th><th className="px-3 py-2.5">MSC</th><th className="px-3 py-2.5">SS ER</th><th className="px-3 py-2.5">MPF ER</th><th className="px-3 py-2.5">EC ER</th><th className="px-3 py-2.5">ER Total</th><th className="px-3 py-2.5">SS EE</th><th className="px-3 py-2.5">MPF EE</th><th className="px-3 py-2.5">EE Total</th><th className="px-3 py-2.5">Combined</th></tr></thead><tbody className="divide-y divide-slate-100">{SSS_CONTRIBUTION_TABLE.map((row) => <tr key={row.key} className={row.monthlySalaryCredit > 20_000 ? "bg-blue-50/50" : "bg-white"}><td className="px-3 py-2 text-left">{row.range}</td><td className="px-3 py-2">{formatMoney(row.monthlySalaryCredit)}</td><td className="px-3 py-2">{formatMoney(row.employerSs)}</td><td className="px-3 py-2">{formatMoney(row.employerMpf)}</td><td className="px-3 py-2">{formatMoney(row.ec)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employerSs + row.employerMpf + row.ec)}</td><td className="px-3 py-2">{formatMoney(row.employeeSs)}</td><td className="px-3 py-2">{formatMoney(row.employeeMpf)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employeeSs + row.employeeMpf)}</td><td className="px-3 py-2 font-bold text-slate-900">{formatMoney(row.total)}</td></tr>)}</tbody></table></div>
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-slate-500">Source: <a href="https://www.sss.gov.ph/wp-content/uploads/2024/12/CI-2024-006-Publication.pdf" target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline">SSS Circular 2024-006</a>. The table applies MPF where MSC is above ₱20,000.</p><button type="button" onClick={onClose} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Done reviewing</button></div>
+    <div className="overflow-auto rounded-xl border border-slate-200"><table className="min-w-[1050px] w-full text-right text-xs text-slate-800"><thead className="sticky top-0 bg-slate-100 text-[10px] uppercase tracking-wide text-slate-600"><tr><th className="px-3 py-2.5 text-left">Compensation Range</th><th className="px-3 py-2.5">MSC</th><th className="px-3 py-2.5">SS ER</th><th className="px-3 py-2.5">MPF ER</th><th className="px-3 py-2.5">EC ER</th><th className="px-3 py-2.5">ER Total</th><th className="px-3 py-2.5">SS EE</th><th className="px-3 py-2.5">MPF EE</th><th className="px-3 py-2.5">EE Total</th><th className="px-3 py-2.5">Combined</th></tr></thead><tbody className="divide-y divide-slate-100">{table.map((row) => <tr key={row.key} className={row.monthlySalaryCredit > 20_000 ? "bg-blue-50/50" : "bg-white"}><td className="px-3 py-2 text-left">{row.range}</td><td className="px-3 py-2">{formatMoney(row.monthlySalaryCredit)}</td><td className="px-3 py-2">{formatMoney(row.employerSs)}</td><td className="px-3 py-2">{formatMoney(row.employerMpf)}</td><td className="px-3 py-2">{formatMoney(row.ec)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employerSs + row.employerMpf + row.ec)}</td><td className="px-3 py-2">{formatMoney(row.employeeSs)}</td><td className="px-3 py-2">{formatMoney(row.employeeMpf)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employeeSs + row.employeeMpf)}</td><td className="px-3 py-2 font-bold text-slate-900">{formatMoney(row.total)}</td></tr>)}</tbody></table></div>
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-slate-500">Source: <a href={sourceUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline">SSS Circular {sourceYear}</a>. The table applies MPF where MSC is above ₱20,000.</p><button type="button" onClick={onClose} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Done reviewing</button></div>
     <p className="sr-only">Contribution table effective {SSS_CONTRIBUTION_EFFECTIVE_DATE}.</p>
   </Modal>;
 }

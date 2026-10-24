@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
-import { getSssContributionBracket, toSssMoney } from "@/lib/sssContributionTable";
+import { getSssContributionBracketForYear, toSssMoney } from "@/lib/sssContributionTable";
 import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
 
@@ -26,8 +26,8 @@ function validEntries(value: unknown): value is ReportEntryInput[] {
   );
 }
 
-function contributionData(entry: ReportEntryInput) {
-  const bracket = getSssContributionBracket(Number(entry.monthlySalaryCredit));
+function contributionData(year: number, entry: ReportEntryInput) {
+  const bracket = getSssContributionBracketForYear(year, Number(entry.monthlySalaryCredit));
   if (!bracket) return null;
   return {
     salaryRange: bracket.range,
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     || (draftId !== null && (!Number.isSafeInteger(draftId) || draftId <= 0 || !Number.isSafeInteger(creatorId)))
     || !Number.isSafeInteger(employerId) || employerId <= 0
     || !Number.isInteger(month) || month < 1 || month > 12
-    || !Number.isInteger(year) || year < 2025 || year > 2200
+    || !Number.isInteger(year) || year < 2023 || year > 2200
     || !prn || prn.length > 80 || amountDueCents === null
     || !validEntries(body.entries)) {
     return NextResponse.json({ error: "Complete the report details and add at least one valid employee entry" }, { status: 400 });
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
     const entryData = body.entries.map((entry) => {
       const employee = employeeById.get(entry.employeeId)!;
       if (kind === "CONTRIBUTION") {
-        const values = contributionData(entry);
+        const values = contributionData(year, entry);
         if (!values) throw new Error("Each employee must have a valid SSS compensation range");
         const { totalCents: contributionTotalCents, ...data } = values;
         totalCents += contributionTotalCents;

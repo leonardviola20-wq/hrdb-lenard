@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
-import { getSssContributionBracket } from "@/lib/sssContributionTable";
+import { getSssContributionBracketForYear } from "@/lib/sssContributionTable";
 import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
 
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
   if (!kind || (draftId !== null && (!Number.isSafeInteger(draftId) || draftId <= 0))
     || (employerId !== null && (!Number.isSafeInteger(employerId) || employerId <= 0))
     || !Number.isInteger(month) || month < 1 || month > 12
-    || !Number.isInteger(year) || year < 2025 || year > 2200
-    || prn.length > 80 || rawEntries.length > 3000) {
+    || !Number.isInteger(year) || year < 2023 || year > 2200
+    || !prn || prn.length > 80 || rawEntries.length > 3000) {
     return NextResponse.json({ error: "Invalid SSS report draft details" }, { status: 400 });
   }
 
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     const normalizedEntries = parsedEntries.map((entry, index) => {
       const employee = employeeById.get(employeeIds[index])!;
       const selectedMsc = Number(entry.monthlySalaryCredit);
-      const monthlySalaryCredit = kind === "CONTRIBUTION" && Number.isFinite(selectedMsc) && getSssContributionBracket(selectedMsc)
+      const monthlySalaryCredit = kind === "CONTRIBUTION" && Number.isFinite(selectedMsc) && getSssContributionBracketForYear(year, selectedMsc)
         ? selectedMsc
         : null;
       const loanAmount = typeof entry.loanAmount === "string" && /^[\d.]{0,32}$/.test(entry.loanAmount) ? entry.loanAmount : "";

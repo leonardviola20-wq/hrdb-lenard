@@ -61,10 +61,11 @@ type PaymentForm = {
   transactionDate: string;
   eparNumber: string;
   eparDate: string;
+  adjustments: string;
 };
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const employeePageSize = 8;
+const employeePageSize = 10;
 const inputClass = "h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
 const labelClass = "mb-1 block text-xs font-semibold text-slate-700";
 const fullName = (employee: Pick<Employee, "firstName" | "middleName" | "lastName">) => {
@@ -84,6 +85,7 @@ const emptyPaymentForm = (report: Report, employer: Employer | null): PaymentFor
   transactionDate: report.payment?.transactionDate ?? "",
   eparNumber: report.payment?.eparNumber ?? "",
   eparDate: report.payment?.eparDate ?? "",
+  adjustments: "",
 });
 
 export default function PhilHealthReportsPage() {
@@ -117,8 +119,6 @@ function PhilHealthReportsContent() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState(String(new Date().getMonth() + 1));
   const [reportYear, setReportYear] = useState(String(new Date().getFullYear()));
-  const [psAmounts, setPsAmounts] = useState<Record<number, string>>({});
-  const [esAmounts, setEsAmounts] = useState<Record<number, string>>({});
   const [paymentReport, setPaymentReport] = useState<Report | null>(null);
   const [paymentForm, setPaymentForm] = useState<PaymentForm | null>(null);
   const [viewReport, setViewReport] = useState<Report | null>(null);
@@ -182,11 +182,7 @@ function PhilHealthReportsContent() {
 
   const activeCount = employees.filter((employee) => employee.philHealthAccount?.active).length;
   const inactiveCount = employees.filter((employee) => employee.philHealthAccount && !employee.philHealthAccount.active).length;
-  const reportAmountDue = activeEmployees.reduce((sum, employee) => {
-    const ps = Number(psAmounts[employee.id] ?? defaultPs);
-    const es = Number(esAmounts[employee.id] ?? defaultEs);
-    return sum + ps + es;
-  }, 0);
+  const reportAmountDue = activeEmployees.reduce((sum) => sum + Number(defaultPs) + Number(defaultEs), 0);
   const employeePageCount = Math.max(1, Math.ceil(filteredEmployees.length / employeePageSize));
   const currentEmployeePage = Math.min(employeePage, employeePageCount);
   const visibleEmployees = filteredEmployees.slice((currentEmployeePage - 1) * employeePageSize, currentEmployeePage * employeePageSize);
@@ -259,8 +255,6 @@ function PhilHealthReportsContent() {
   };
 
   const openReportForm = () => {
-    setPsAmounts({});
-    setEsAmounts({});
     setError("");
     setReportOpen(true);
   };
@@ -269,8 +263,8 @@ function PhilHealthReportsContent() {
     event.preventDefault();
     const entries = activeEmployees
       .map((employee) => {
-        const ps = Number(psAmounts[employee.id] ?? defaultPs);
-        const es = Number(esAmounts[employee.id] ?? defaultEs);
+        const ps = Number(defaultPs);
+        const es = Number(defaultEs);
         const total = ps + es;
         return { employeeId: employee.id, amount: total > 0 ? total.toFixed(2) : "" };
       })
@@ -310,10 +304,11 @@ function PhilHealthReportsContent() {
     setSaving(true);
     setError("");
     try {
+      const amountPaid = Number(paymentForm.amountPaid || 0) + Number(paymentForm.adjustments || 0);
       const response = await fetch(`/api/reports/philhealth/reports/${paymentReport.id}/payment?employerId=${encodeURIComponent(employerId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentForm),
+        body: JSON.stringify({ ...paymentForm, amountPaid: amountPaid.toFixed(2) }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to save payment details");
@@ -407,44 +402,47 @@ function PhilHealthReportsContent() {
             <div className="benefit-report-section-heading"><h2 className="text-sm font-semibold text-slate-900">Employee Accounts</h2><p className="text-xs text-slate-500">{filteredEmployees.length} shown · {activeCount} active · {inactiveCount} inactive</p></div>
             <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
               <table className="benefit-report-table w-full min-w-[850px] text-left text-sm text-slate-900">
-                <thead className="sticky top-0 z-10"><tr><th className="px-3 py-2">Employee Name</th><th className="px-3 py-2">PhilHealth No.</th><th className="px-3 py-2">Current Employer</th><th className="px-3 py-2">Account Status</th><th className="px-3 py-2 text-right">Action</th></tr></thead>
+                <thead className="sticky top-0 z-10"><tr><th className="px-3 py-2">Employee Name</th><th className="px-3 py-2">PhilHealth No.</th><th className="px-3 py-2 text-right">PS</th><th className="px-3 py-2 text-right">ES</th><th className="px-3 py-2 text-right">Total</th><th className="px-3 py-2 whitespace-nowrap text-center">Account Status</th><th className="px-3 py-2 text-center">Action</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {visibleEmployees.map((employee) => {
                     const account = employee.philHealthAccount;
-                    return <tr key={employee.id} className="hover:bg-slate-50">
-                      <td className="px-3 py-1 font-semibold">{fullName(employee)}<span className="mt-0.5 block text-xs font-medium text-slate-500">Biometric No.: {employee.biometricNo?.trim() || "—"}</span></td>
+                    return <tr key={employee.id} className="hover:bg-slate-50 h-8">
+                      <td className="px-3 py-1 font-semibold">{fullName(employee)}</td>
                       <td className="px-3 py-1 tabular-nums">{employee.philHealth || "—"}</td>
-                      <td className="px-3 py-1">{employee.employerName || "—"}</td>
-                      <td className="px-3 py-1">{account ? <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${account.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{account.active ? "Active" : "Inactive"}</span> : <span className="text-xs text-slate-500">Not added</span>}</td>
-                      <td className="px-3 py-1 text-right">{account ? <button type="button" onClick={() => void setAccountActive(account.id, !account.active)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">{account.active ? "Set inactive" : "Set active"}</button> : <span className="text-xs text-slate-400">Add account</span>}</td>
+                      <td className="px-3 py-1 text-right tabular-nums">{account?.active ? money(defaultPs) : "—"}</td>
+                      <td className="px-3 py-1 text-right tabular-nums">{account?.active ? money(defaultEs) : "—"}</td>
+                      <td className="px-3 py-1 text-right font-semibold tabular-nums">{account?.active ? money(Number(defaultPs) + Number(defaultEs)) : "—"}</td>
+                      <td className="px-3 py-1 text-center">{account ? <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${account.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{account.active ? "Active" : "Inactive"}</span> : <span className="text-xs text-slate-500">Not added</span>}</td>
+                      <td className="px-3 py-1 text-center">{account ? <button type="button" onClick={() => void setAccountActive(account.id, !account.active)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">{account.active ? "Set inactive" : "Set active"}</button> : <span className="text-xs text-slate-400">Add account</span>}</td>
                     </tr>;
                   })}
-                  {!visibleEmployees.length && <tr><td colSpan={5} className="h-11 px-4 text-center text-sm text-slate-600">No employees match your search.</td></tr>}
-                  {Array.from({ length: employeePageSize - Math.max(visibleEmployees.length, 1) }, (_, index) => <tr key={`empty-${index}`} aria-hidden="true"><td colSpan={5} className="h-11 p-0" /></tr>)}
+                  {!visibleEmployees.length && <tr><td colSpan={7} className="h-11 px-4 text-center text-sm text-slate-600">No employees match your search.</td></tr>}
+                  {Array.from({ length: employeePageSize - Math.max(visibleEmployees.length, 1) }, (_, index) => <tr key={`empty-${index}`} aria-hidden="true" className="h-8"><td colSpan={7} className="h-8 p-0" /></tr>)}
                 </tbody>
-                <tfoot className="border-t-2 border-slate-300 bg-slate-100 font-bold"><tr><td colSpan={2} className="px-3 py-2 text-slate-800">Employer Employee List</td><td className="px-3 py-2 text-right tabular-nums text-slate-900">{employees.length} employees</td><td className="px-3 py-2 text-right text-emerald-800">{activeCount} active</td><td className="px-3 py-2 text-right text-slate-700">{inactiveCount} inactive</td></tr></tfoot>
+                <tfoot className="border-t-2 border-slate-300 bg-slate-100 font-bold"><tr><td colSpan={2} className="px-3 py-2 text-slate-800">Employer Employee List</td><td className="px-3 py-2 text-right tabular-nums">{money(activeCount * Number(defaultPs))}</td><td className="px-3 py-2 text-right tabular-nums">{money(activeCount * Number(defaultEs))}</td><td className="px-3 py-2 text-right tabular-nums">{money(activeCount * (Number(defaultPs) + Number(defaultEs)))}</td><td className="px-3 py-2 text-center text-emerald-800">{activeCount} active</td><td /></tr></tfoot>
               </table>
             </div>
-            <footer className="benefit-report-footer"><span>Showing {firstEmployeeResult}-{lastEmployeeResult} of {filteredEmployees.length} employees</span><div className="flex items-center gap-2"><button type="button" onClick={() => setEmployeePage(currentEmployeePage - 1)} disabled={currentEmployeePage === 1} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Previous</button><span className="tabular-nums">Page {currentEmployeePage} of {employeePageCount}</span><button type="button" onClick={() => setEmployeePage(currentEmployeePage + 1)} disabled={currentEmployeePage >= employeePageCount} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Next</button></div><Link href={`/reports/philhealth?view=reports&employerId=${encodeURIComponent(employerId)}`} className="font-semibold text-emerald-800 hover:underline">Monthly Reports</Link></footer>
+            <footer className="benefit-report-footer"><span>Showing {firstEmployeeResult}-{lastEmployeeResult} of {filteredEmployees.length} employees</span><div className="flex items-center gap-2"><button type="button" onClick={() => setEmployeePage(currentEmployeePage - 1)} disabled={currentEmployeePage === 1} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Previous</button><span className="tabular-nums">Page {currentEmployeePage} of {employeePageCount}</span><button type="button" onClick={() => setEmployeePage(currentEmployeePage + 1)} disabled={currentEmployeePage >= employeePageCount} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Next</button></div></footer>
           </>
         ) : (
           <>
             <div className="benefit-report-section-heading"><h2 className="text-sm font-semibold text-slate-900">{isPaymentView ? "Payment History" : "Monthly Contribution Reports"}</h2><p className="text-xs text-slate-600">{reports.length} {isPaymentView ? "payments recorded" : "reports"} · Amount Due {money(reports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</p></div>
             <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
               <table className="benefit-report-table w-full min-w-[920px] text-left text-sm text-slate-900">
-                <thead className="sticky top-0 z-10"><tr><th className="bg-slate-100 px-3 py-2 font-bold">Applicable Period</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Employees</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Due</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Paid</th><th className="bg-slate-100 px-3 py-2 font-bold">Transaction / ePAR</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Action</th></tr></thead>
+                <thead className="sticky top-0 z-10"><tr><th className="bg-slate-100 px-3 py-2 font-bold">Applicable Period</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Employees</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Due</th><th className="bg-slate-100 px-3 py-2 font-bold">Transaction</th><th className="bg-slate-100 px-3 py-2 font-bold">ePAR</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Paid</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Action</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {reports.map((report) => <tr key={report.id} className="hover:bg-slate-50">
                     <td className="px-3 py-1 font-semibold">{period(report)}<div className="text-xs font-medium text-slate-500">{report.employerName}</div></td>
                     <td className="px-3 py-1 text-right tabular-nums">{report.entries.length}</td>
                     <td className="px-3 py-1 text-right font-bold tabular-nums">{money(report.amountDue)}</td>
+                    <td className="px-3 py-1 text-xs text-slate-600">{report.payment ? (report.payment.transactionDate || "—") : "Unpaid"}</td>
+                    <td className="px-3 py-1 text-xs text-slate-600">{report.payment ? (report.payment.eparNumber || report.payment.transactionConfirmationNumber || "—") : "—"}</td>
                     <td className="px-3 py-1 text-right font-semibold tabular-nums">{report.payment ? money(report.payment.amountPaid) : "—"}</td>
-                    <td className="px-3 py-1 text-xs text-slate-600">{report.payment ? <>{report.payment.transactionDate}<div>{report.payment.eparNumber || report.payment.transactionConfirmationNumber || "Payment recorded"}</div></> : "Unpaid"}</td>
                     <td className="px-3 py-1 text-right"><div className="inline-flex items-center gap-1"><button type="button" onClick={() => setViewReport(report)} aria-label={`View ${period(report)} report`} title="View report and payment details" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-700 hover:bg-emerald-50"><EyeIcon className="h-4 w-4" /></button>{report.payment ? <button type="button" onClick={() => openPaymentForm(report)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">View / Edit</button> : isPaymentView ? <span className="text-xs text-slate-500">No payment</span> : <button type="button" onClick={() => openPaymentForm(report)} className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800">Record Payment</button>}{canEditPayments && <button type="button" onClick={() => setDeleteReportTarget(report)} className="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">Delete</button>}</div></td>
                   </tr>)}
-                  {!reports.length && <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-600">{isPaymentView ? "No PhilHealth payments have been recorded yet." : "No monthly contribution reports have been created yet."}</td></tr>}
+                  {!reports.length && <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-600">{isPaymentView ? "No PhilHealth payments have been recorded yet." : "No monthly contribution reports have been created yet."}</td></tr>}
                 </tbody>
-                <tfoot className="border-t-2 border-slate-300 bg-slate-100 font-bold"><tr><td className="px-3 py-2">Totals</td><td className="px-3 py-2 text-right tabular-nums">{reports.reduce((sum, report) => sum + report.entries.length, 0)}</td><td className="px-3 py-2 text-right tabular-nums">{money(reports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</td><td className="px-3 py-2 text-right tabular-nums">{money(reports.reduce((sum, report) => sum + Number(report.payment?.amountPaid ?? 0), 0))}</td><td colSpan={2} /></tr></tfoot>
+                <tfoot className="border-t-2 border-slate-300 bg-slate-100 font-bold"><tr><td className="px-3 py-2">Totals</td><td className="px-3 py-2 text-right tabular-nums">{reports.reduce((sum, report) => sum + report.entries.length, 0)}</td><td className="px-3 py-2 text-right tabular-nums">{money(reports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</td><td /><td /><td className="px-3 py-2 text-right tabular-nums">{money(reports.reduce((sum, report) => sum + Number(report.payment?.amountPaid ?? 0), 0))}</td><td /></tr></tfoot>
               </table>
             </div>
             <footer className="flex shrink-0 items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-700"><span>{reports.length} records</span><Link href={`/reports/philhealth?view=employees&employerId=${encodeURIComponent(employerId)}`} className="font-semibold text-emerald-800 hover:underline">Employee List</Link></footer>
@@ -464,26 +462,126 @@ function PhilHealthReportsContent() {
         <form onSubmit={createReport} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><div><h2 className="text-lg font-bold">Create Monthly Contribution Report</h2><p className="text-sm text-slate-600">{employer?.name} · {employer?.phic || "—"}</p></div><button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
           <div className="flex gap-3 border-b border-slate-200 p-4"><label className="min-w-[9rem] sm:max-w-[14rem]"><span className={labelClass}>Month</span><select value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} className={inputClass}>{months.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}</select></label><label className="w-32"><span className={labelClass}>Year</span><input type="number" min="2019" max="2200" value={reportYear} onChange={(event) => setReportYear(event.target.value)} className={inputClass} /></label></div>
-          <div className="min-h-0 flex-1 overflow-auto p-4"><table className="w-full text-sm"><thead><tr><th className="bg-slate-100 px-3 py-2 text-left">Employee</th><th className="bg-slate-100 px-3 py-2 text-right">PS</th><th className="bg-slate-100 px-3 py-2 text-right">ES</th><th className="bg-slate-100 px-3 py-2 text-right">Total</th></tr></thead><tbody className="divide-y divide-slate-100">{activeEmployees.map((employee) => <tr key={employee.id}><td className="px-3 py-2"><div className="font-medium">{fullName(employee)}</div><div className="text-xs text-slate-500">{employee.philHealth || "—"}</div></td><td className="px-3 py-2"><input aria-label={`PS for ${fullName(employee)}`} type="number" min="0" max="999999999.99" step="0.01" value={psAmounts[employee.id] ?? defaultPs} onChange={(event) => setPsAmounts((current) => ({ ...current, [employee.id]: event.target.value }))} className={`${inputClass} text-right`} placeholder="0.00" /></td><td className="px-3 py-2"><input aria-label={`ES for ${fullName(employee)}`} type="number" min="0" max="999999999.99" step="0.01" value={esAmounts[employee.id] ?? defaultEs} onChange={(event) => setEsAmounts((current) => ({ ...current, [employee.id]: event.target.value }))} className={`${inputClass} text-right`} placeholder="0.00" /></td><td className="px-3 py-2 text-right font-medium tabular-nums">{((Number(psAmounts[employee.id] ?? defaultPs) + Number(esAmounts[employee.id] ?? defaultEs)) || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>)}{!activeEmployees.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">No active PhilHealth accounts are available.</td></tr>}</tbody></table></div>
+          <div className="min-h-0 flex-1 overflow-auto p-4"><table className="w-full text-sm"><thead><tr><th className="bg-slate-100 px-3 py-2 text-left">Employee</th><th className="bg-slate-100 px-3 py-2 text-right">PS</th><th className="bg-slate-100 px-3 py-2 text-right">ES</th><th className="bg-slate-100 px-3 py-2 text-right">Total</th></tr></thead><tbody className="divide-y divide-slate-100">{activeEmployees.map((employee) => <tr key={employee.id}><td className="px-3 py-2"><div className="font-medium">{fullName(employee)}</div><div className="text-xs text-slate-500">{employee.philHealth || "—"}</div></td><td className="px-3 py-2 text-right tabular-nums">{money(defaultPs)}</td><td className="px-3 py-2 text-right tabular-nums">{money(defaultEs)}</td><td className="px-3 py-2 text-right font-medium tabular-nums">{money(Number(defaultPs) + Number(defaultEs))}</td></tr>)}{!activeEmployees.length && <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">No active PhilHealth accounts are available.</td></tr>}</tbody></table></div>
           <div className="flex items-center justify-between border-t border-slate-200 p-4"><p className="text-sm font-semibold">Amount Due: {money(reportAmountDue)}</p><div className="flex gap-2"><button type="button" onClick={() => setReportOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button type="submit" disabled={saving || activeEmployees.length === 0} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Create Report"}</button></div></div>
         </form>
       </div>}
 
       {viewReport && <PhilHealthReportDetails report={viewReport} canEditPayments={canEditPayments} onClose={() => setViewReport(null)} onPayment={(target) => { setViewReport(null); openPaymentForm(target); }} />}
-      {paymentReport && paymentForm && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) { setPaymentReport(null); setPaymentForm(null); } }}>
-        <form onSubmit={savePayment} className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4"><div><h2 className="text-lg font-bold">{paymentReport.payment ? "PhilHealth Payment Details" : "Record PhilHealth Payment"}</h2><p className="text-sm text-slate-600">{period(paymentReport)} · Amount Due {money(paymentReport.amountDue)}</p></div><button type="button" onClick={() => { setPaymentReport(null); setPaymentForm(null); }} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
-          <div className="grid gap-3 p-5 sm:grid-cols-2">
-            {([
-              ["payorName", "Payor Name", true], ["pen", "PEN (PhilHealth Employer Number)", true], ["spa", "SPA", false],
-              ["applicablePeriod", "Applicable Period", true], ["amountPaid", "Amount Paid", true], ["accreditedCollectingAgent", "Accredited Collecting Agent", false],
-              ["transactionConfirmationNumber", "Transaction Confirmation No.", false], ["transactionDate", "Transaction Date", true], ["eparNumber", "ePAR No.", false], ["eparDate", "ePAR Date", false],
-            ] as const).map(([key, label, required]) => <label key={key} className="block"><span className={labelClass}>{label}</span><input required={required} type={key === "transactionDate" || key === "eparDate" ? "date" : key === "amountPaid" ? "number" : "text"} min={key === "amountPaid" ? "0.01" : undefined} max={key === "amountPaid" ? "999999999.99" : undefined} step={key === "amountPaid" ? "0.01" : undefined} value={paymentForm[key]} onChange={(event) => setPaymentForm((current) => current ? { ...current, [key]: event.target.value } : current)} className={inputClass} /></label>)}
+      {paymentReport && paymentForm && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) { setPaymentReport(null); setPaymentForm(null); } }}>
+        <form onSubmit={savePayment} className="flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold text-slate-900">{paymentReport.payment ? "PhilHealth Payment Details" : "Record PhilHealth Payment"}</h2>
+              <p className="text-sm text-slate-600">{period(paymentReport)} · Amount Due {money(paymentReport.amountDue)}</p>
+            </div>
+            <button type="button" onClick={() => { setPaymentReport(null); setPaymentForm(null); }} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100">
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            <div className="grid gap-6">
+              <section>
+                <h3 className="mb-3 text-sm font-bold text-slate-900">Employer & Period</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Employer Name</label>
+                    <input readOnly type="text" value={paymentForm.payorName} className={`${inputClass} bg-slate-100 text-slate-600`} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>PhilHealth Number</label>
+                    <input readOnly type="text" value={paymentForm.pen} className={`${inputClass} bg-slate-100 text-slate-600`} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>SPA</label>
+                    <input type="text" value={paymentForm.spa} onChange={(event) => setPaymentForm((current) => current ? { ...current, spa: event.target.value } : current)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Applicable Period</label>
+                    <input readOnly type="text" value={paymentForm.applicablePeriod} className={`${inputClass} bg-slate-100 text-slate-600`} />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-sm font-bold text-slate-900">Payment Details</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Amount Paid</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">₱</span>
+                      <input readOnly type="text" value={paymentForm.amountPaid} className={`${inputClass} bg-slate-100 pl-8 text-slate-600`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Accredited Collecting Agent</label>
+                    <input type="text" value={paymentForm.accreditedCollectingAgent} onChange={(event) => setPaymentForm((current) => current ? { ...current, accreditedCollectingAgent: event.target.value } : current)} className={inputClass} />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Transaction Confirmation No.</label>
+                    <input type="text" value={paymentForm.transactionConfirmationNumber} onChange={(event) => setPaymentForm((current) => current ? { ...current, transactionConfirmationNumber: event.target.value } : current)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-1">
+                      <span className={labelClass}>Transaction Date</span>
+                      <span className="text-xs text-rose-500" aria-hidden="true">*</span>
+                    </label>
+                    <input required type="date" value={paymentForm.transactionDate} onChange={(event) => setPaymentForm((current) => current ? { ...current, transactionDate: event.target.value } : current)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>ePAR No.</label>
+                    <input type="text" value={paymentForm.eparNumber} onChange={(event) => setPaymentForm((current) => current ? { ...current, eparNumber: event.target.value } : current)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>ePAR Date</label>
+                    <input type="date" value={paymentForm.eparDate} onChange={(event) => setPaymentForm((current) => current ? { ...current, eparDate: event.target.value } : current)} className={inputClass} />
+                  </div>
+                </div>
+              </section>
+
+              <section className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="mb-3 text-sm font-bold text-slate-900">Adjustments</h3>
+                  <label className={labelClass}>Penalties and adjustments</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">₱</span>
+                    <input type="number" min="0" max="999999999.99" step="0.01" value={paymentForm.adjustments} onChange={(event) => setPaymentForm((current) => current ? { ...current, adjustments: event.target.value } : current)} className={`${inputClass} pl-8`} placeholder="0.00" />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="mb-3 text-sm font-bold text-slate-900">Totals</h3>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Amount Paid</span>
+                    <span className="tabular-nums">{money(paymentForm.amountPaid)}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Penalties and adjustments</span>
+                    <span className="tabular-nums">{money(paymentForm.adjustments || 0)}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-sm font-bold">
+                    <span>Total</span>
+                    <span className="tabular-nums">{money(Number(paymentForm.amountPaid || 0) + Number(paymentForm.adjustments || 0))}</span>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
-          <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4"><button type="button" onClick={() => { setPaymentReport(null); setPaymentForm(null); }} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button type="submit" disabled={saving} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Save Payment"}</button></div>
+
+          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-5 py-4">
+            <span className="text-xs text-slate-500">* Required field</span>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => { setPaymentReport(null); setPaymentForm(null); }} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+              <button type="submit" disabled={saving} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50 hover:bg-emerald-800">{saving ? "Saving..." : "Save Payment"}</button>
+            </div>
+          </footer>
         </form>
-      </div>}
-      {deleteReportTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setDeleteReportTarget(null); }}>
+      </div>
+    )}
+{deleteReportTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setDeleteReportTarget(null); }}>
         <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
           <h2 className="text-lg font-bold text-slate-900">Delete PhilHealth report?</h2>
           <p className="mt-2 text-sm text-slate-600">This will permanently delete the {period(deleteReportTarget)} report and its payment details. This action cannot be undone.</p>
@@ -552,7 +650,7 @@ function PhilHealthReportDetails({ report, canEditPayments, onClose, onPayment }
                   <td className="px-3 py-3 text-right tabular-nums text-slate-950">{money(Number(entry.amount) / 2)}</td>
                   <td className="px-3 py-3 text-right font-semibold tabular-nums text-slate-950">{money(entry.amount)}</td>
                 </tr>)}
-                {!report.entries.length && <tr><td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-600">This report has no employee entries.</td></tr>}
+                {!report.entries.length && <tr><td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-600">This report has no employee entries.</td></tr>}
               </tbody>
               <tfoot className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-950"><tr>
                 <td colSpan={4} className="px-3 py-3">Total ({report.entries.length} {report.entries.length === 1 ? "employee" : "employees"})</td>
@@ -584,7 +682,11 @@ function PhilHealthReportDetails({ report, canEditPayments, onClose, onPayment }
         </article>
       </div>
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-4 py-3 sm:px-5">
-        <p className="text-sm font-bold text-slate-900">Overall Amount Due: {money(report.amountDue)}</p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-bold text-slate-900">
+        <span>Overall Amount Due: {money(report.amountDue)}</span>
+        {paid && <span>Adjustments: {money(Math.max(0, amountPaid - amountDue))}</span>}
+        {paid && <span>Total Paid: {money(amountPaid)}</span>}
+      </div>
         <div className="philhealth-report-interactive flex gap-2">
           {(!paid || canEditPayments) && <button type="button" onClick={() => onPayment(report)} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">{paid ? "Update Payment" : "Record Payment"}</button>}
           <button type="button" onClick={onClose} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>

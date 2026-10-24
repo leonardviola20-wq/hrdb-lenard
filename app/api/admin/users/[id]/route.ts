@@ -110,13 +110,19 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
     return NextResponse.json({ user: result });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+  } catch (error: unknown) {
+    // 1. Intercept standard Prisma error exceptions securely
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError && 
+      error.code === "P2034"
+    ) {
       return NextResponse.json(
         { error: "User or administrator records changed during deletion. Reload and try again." },
         { status: 409 },
       );
     }
+    
+    // 2. Safely throw any unexpected runtime errors back to the server boundaries
     throw error;
   }
 }

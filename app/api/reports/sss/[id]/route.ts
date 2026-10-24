@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
-import { getSssContributionBracket, toSssMoney } from "@/lib/sssContributionTable";
+import { getSssContributionBracketForYear, toSssMoney } from "@/lib/sssContributionTable";
 import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
 
@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   const entries = body.entries;
   if (!kind || !Number.isSafeInteger(employerId) || employerId <= 0
     || !Number.isInteger(applicableMonth) || applicableMonth < 1 || applicableMonth > 12
-    || !Number.isInteger(applicableYear) || applicableYear < 2025 || applicableYear > 2200
+    || !Number.isInteger(applicableYear) || applicableYear < 2023 || applicableYear > 2200
     || !prn || prn.length > 80 || amountDueCents === null
     || !Array.isArray(entries) || entries.length === 0 || entries.length > 3000
     || !entries.every((entry) => entry && typeof entry === "object" && Number.isSafeInteger(entry.employeeId) && entry.employeeId > 0)) {
@@ -98,7 +98,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     const entryData = reportEntries.map((entry) => {
       const employee = employeeById.get(entry.employeeId)!;
       if (kind === "CONTRIBUTION") {
-        const bracket = getSssContributionBracket(Number(entry.monthlySalaryCredit));
+        const bracket = getSssContributionBracketForYear(applicableYear, Number(entry.monthlySalaryCredit));
         if (!bracket) throw new Error("Each employee must have a valid SSS compensation range");
         totalCents += Math.round(bracket.total * 100);
         return {

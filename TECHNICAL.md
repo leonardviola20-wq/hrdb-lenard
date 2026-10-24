@@ -209,3 +209,69 @@ The Prisma migration is `prisma/migrations/20261021120000_add_philhealth_reports
 The PhilHealth Reports and Payments tables expose a borderless eye "View report" action for every user with Reports access. It opens a report-details modal that renders the employer name and PHIC number, the applicable period, Amount Due, Amount Paid, a Paid/Partial/Unpaid status badge, every saved `PhilHealthReportEntry` (employee name, employee code, PhilHealth number, contribution) with an entry-count and total footer, and the full `PhilHealthPayment` metadata grid. The entries shown are the employee snapshot stored when the report was created; no live employee re-query is performed. The modal's "Record Payment"/"Update Payment" button hands off to the existing payment form, and it is hidden for non-admins on reports that already have a saved payment. Printing uses the Pag-IBIG `window.print()` pattern with a dedicated `@media print` block keyed on `#philhealth-report-print-overlay` in `app/globals.css` that isolates the modal and hides its interactive controls. Report deletion stays admin-only in both the UI (`canEditPayments` from the reports GET response) and the API (`DELETE /api/reports/philhealth/reports/[id]` returns 403 for non-admins), and deleting a report also clears any open report-details or payment modal for that report.
 
 SSS, Pag-IBIG, and PhilHealth report pages share the `benefit-report-*` visual primitives in `app/globals.css` for page surfaces, headings, toolbars, primary actions, table headers, footers, and notices. The three Reports Dashboard cards use the same `Reports` subheader. Provider-specific workflows, navigation accents, and data colors remain intact. PhilHealth employee rows show Biometric Number below the employee name, and account-save success confirmations are dismissible.
+
+## SSS contribution tables
+
+Reference schedule for the SSS Contribution/Loan Payments workflow. Only the 2025 table exists in `lib/sssContributionTable.ts` (`SSS_CONTRIBUTION_TABLE_2025`, effective `2025-01-01`); this section documents the 2023/2024 schedule (2024-and-below) for reference. The 2023 schedule also applies to 2024 unchanged.
+
+**2023–2024 SSS Contribution Schedule** (effective January 2023; SSS Circulars 2022-033 to 2022-037, SSC Resolution No. 751-S-2022)
+- Contribution rate: 14% of Monthly Salary Credit (MSC) — Employer 9.5%, Employee 4.5%
+- Minimum MSC: ₱4,000; Maximum MSC: ₱30,000
+- Regular SS is computed on MSC up to ₱20,000; WISP (Worker's Investment and Savings Program, mandatory provident fund) is computed on MSC above ₱20,000 up to ₱30,000 at the same 9.5%/4.5% split
+- Employees' Compensation (EC), employer-paid: ₱10 for MSC ≤ ₱14,500; ₱30 for MSC ≥ ₱15,000
+
+| Compensation Range | MSC | Employer SSS (9.5%) | Employee SSS (4.5%) | EC | Employer WISP (9.5%) | Employee WISP (4.5%) | Total |
+|---|---|---|---|---|---|---|---|
+| Below ₱4,250.00 | ₱4,000.00 | ₱380.00 | ₱180.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱570.00 |
+| ₱4,250.00 – ₱4,749.99 | ₱4,500.00 | ₱427.50 | ₱202.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱640.00 |
+| ₱4,750.00 – ₱5,249.99 | ₱5,000.00 | ₱475.00 | ₱225.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱710.00 |
+| ₱5,250.00 – ₱5,749.99 | ₱5,500.00 | ₱522.50 | ₱247.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱780.00 |
+| ₱5,750.00 – ₱6,249.99 | ₱6,000.00 | ₱570.00 | ₱270.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱850.00 |
+| ₱6,250.00 – ₱6,749.99 | ₱6,500.00 | ₱617.50 | ₱292.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱920.00 |
+| ₱6,750.00 – ₱7,249.99 | ₱7,000.00 | ₱665.00 | ₱315.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱990.00 |
+| ₱7,250.00 – ₱7,749.99 | ₱7,500.00 | ₱712.50 | ₱337.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,060.00 |
+| ₱7,750.00 – ₱8,249.99 | ₱8,000.00 | ₱760.00 | ₱360.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,130.00 |
+| ₱8,250.00 – ₱8,749.99 | ₱8,500.00 | ₱807.50 | ₱382.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,200.00 |
+| ₱8,750.00 – ₱9,249.99 | ₱9,000.00 | ₱855.00 | ₱405.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,270.00 |
+| ₱9,250.00 – ₱9,749.99 | ₱9,500.00 | ₱902.50 | ₱427.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,340.00 |
+| ₱9,750.00 – ₱10,249.99 | ₱10,000.00 | ₱950.00 | ₱450.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,410.00 |
+| ₱10,250.00 – ₱10,749.99 | ₱10,500.00 | ₱997.50 | ₱472.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,480.00 |
+| ₱10,750.00 – ₱11,249.99 | ₱11,000.00 | ₱1,045.00 | ₱495.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,550.00 |
+| ₱11,250.00 – ₱11,749.99 | ₱11,500.00 | ₱1,092.50 | ₱517.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,620.00 |
+| ₱11,750.00 – ₱12,249.99 | ₱12,000.00 | ₱1,140.00 | ₱540.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,690.00 |
+| ₱12,250.00 – ₱12,749.99 | ₱12,500.00 | ₱1,187.50 | ₱562.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,760.00 |
+| ₱12,750.00 – ₱13,249.99 | ₱13,000.00 | ₱1,235.00 | ₱585.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,830.00 |
+| ₱13,250.00 – ₱13,749.99 | ₱13,500.00 | ₱1,282.50 | ₱607.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,900.00 |
+| ₱13,750.00 – ₱14,249.99 | ₱14,000.00 | ₱1,330.00 | ₱630.00 | ₱10.00 | ₱0.00 | ₱0.00 | ₱1,970.00 |
+| ₱14,250.00 – ₱14,749.99 | ₱14,500.00 | ₱1,377.50 | ₱652.50 | ₱10.00 | ₱0.00 | ₱0.00 | ₱2,040.00 |
+| ₱14,750.00 – ₱15,249.99 | ₱15,000.00 | ₱1,425.00 | ₱675.00 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,130.00 |
+| ₱15,250.00 – ₱15,749.99 | ₱15,500.00 | ₱1,472.50 | ₱697.50 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,200.00 |
+| ₱15,750.00 – ₱16,249.99 | ₱16,000.00 | ₱1,520.00 | ₱720.00 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,270.00 |
+| ₱16,250.00 – ₱16,749.99 | ₱16,500.00 | ₱1,567.50 | ₱742.50 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,340.00 |
+| ₱16,750.00 – ₱17,249.99 | ₱17,000.00 | ₱1,615.00 | ₱765.00 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,410.00 |
+| ₱17,250.00 – ₱17,749.99 | ₱17,500.00 | ₱1,662.50 | ₱787.50 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,480.00 |
+| ₱17,750.00 – ₱18,249.99 | ₱18,000.00 | ₱1,710.00 | ₱810.00 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,550.00 |
+| ₱18,250.00 – ₱18,749.99 | ₱18,500.00 | ₱1,757.50 | ₱832.50 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,620.00 |
+| ₱18,750.00 – ₱19,249.99 | ₱19,000.00 | ₱1,805.00 | ₱855.00 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,690.00 |
+| ₱19,250.00 – ₱19,749.99 | ₱19,500.00 | ₱1,852.50 | ₱877.50 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,760.00 |
+| ₱19,750.00 – ₱20,249.99 | ₱20,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱0.00 | ₱0.00 | ₱2,830.00 |
+| ₱20,250.00 – ₱20,749.99 | ₱20,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱47.50 | ₱22.50 | ₱2,900.00 |
+| ₱20,750.00 – ₱21,249.99 | ₱21,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱95.00 | ₱45.00 | ₱2,970.00 |
+| ₱21,250.00 – ₱21,749.99 | ₱21,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱142.50 | ₱67.50 | ₱3,040.00 |
+| ₱21,750.00 – ₱22,249.99 | ₱22,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱190.00 | ₱90.00 | ₱3,110.00 |
+| ₱22,250.00 – ₱22,749.99 | ₱22,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱237.50 | ₱112.50 | ₱3,180.00 |
+| ₱22,750.00 – ₱23,249.99 | ₱23,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱285.00 | ₱135.00 | ₱3,250.00 |
+| ₱23,250.00 – ₱23,749.99 | ₱23,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱332.50 | ₱157.50 | ₱3,320.00 |
+| ₱23,750.00 – ₱24,249.99 | ₱24,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱380.00 | ₱180.00 | ₱3,390.00 |
+| ₱24,250.00 – ₱24,749.99 | ₱24,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱427.50 | ₱202.50 | ₱3,460.00 |
+| ₱24,750.00 – ₱25,249.99 | ₱25,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱475.00 | ₱225.00 | ₱3,530.00 |
+| ₱25,250.00 – ₱25,749.99 | ₱25,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱522.50 | ₱247.50 | ₱3,600.00 |
+| ₱25,750.00 – ₱26,249.99 | ₱26,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱570.00 | ₱270.00 | ₱3,670.00 |
+| ₱26,250.00 – ₱26,749.99 | ₱26,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱617.50 | ₱292.50 | ₱3,740.00 |
+| ₱26,750.00 – ₱27,249.99 | ₱27,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱665.00 | ₱315.00 | ₱3,810.00 |
+| ₱27,250.00 – ₱27,749.99 | ₱27,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱712.50 | ₱337.50 | ₱3,880.00 |
+| ₱27,750.00 – ₱28,249.99 | ₱28,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱760.00 | ₱360.00 | ₱3,950.00 |
+| ₱28,250.00 – ₱28,749.99 | ₱28,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱807.50 | ₱382.50 | ₱4,020.00 |
+| ₱28,750.00 – ₱29,249.99 | ₱29,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱855.00 | ₱405.00 | ₱4,090.00 |
+| ₱29,250.00 – ₱29,749.99 | ₱29,500.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱902.50 | ₱427.50 | ₱4,160.00 |
+| ₱29,750.00 and over | ₱30,000.00 | ₱1,900.00 | ₱900.00 | ₱30.00 | ₱950.00 | ₱450.00 | ₱4,230.00 |

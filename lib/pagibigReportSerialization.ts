@@ -1,15 +1,22 @@
-import { Prisma } from "@prisma/client";
+// Import directly from your custom un-lockable Prisma location
+import { Prisma } from "../prisma/generated/client";
 
-type PagibigReportWithEntries = Prisma.PagibigReportGetPayload<{ include: { PagibigReportEntry: true } }>;
+type PagibigReportWithEntries = Prisma.PagibigReportGetPayload<{ 
+  include: { PagibigReportEntry: true } 
+}>;
 
-const snapshotText = (value: Prisma.JsonValue | null, key: string) => {
+// Explicitly type the mapped entries to reuse in your totals calculation
+type SerializedEntry = ReturnType<typeof serializeEntries>[number];
+
+const snapshotText = (value: Prisma.JsonValue | null, key: string): string | null => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const item = value[key];
+  const item = (value as Record<string, unknown>)[key];
   return typeof item === "string" || typeof item === "number" ? String(item) : null;
 };
 
-export function serializePagibigReport(report: PagibigReportWithEntries) {
-  const entries = report.PagibigReportEntry.map((entry) => ({
+// Helper function to map individual entries with correct TypeScript inferencing
+function serializeEntries(entries: PagibigReportWithEntries["PagibigReportEntry"]) {
+  return entries.map((entry) => ({
     ...entry,
     midNumber: entry.employeePagibigNumber,
     employeeSavings: entry.memberSavings.toString(),
@@ -22,12 +29,21 @@ export function serializePagibigReport(report: PagibigReportWithEntries) {
     safeLoanAmount: entry.safeLoan.toString(),
     totalAmount: entry.totalAmount.toString(),
   }));
-  const total = (field: keyof typeof entries[number]) => entries.reduce(
-    (sum, entry) => sum.plus(String(entry[field])),
-    new Prisma.Decimal(0),
-  ).toString();
+}
+
+export function serializePagibigReport(report: PagibigReportWithEntries) {
+  const entries = serializeEntries(report.PagibigReportEntry);
+
+  // Type parameters 'sum' and 'entry' explicitly to resolve the TS7006 implicit any error
+  const total = (field: keyof SerializedEntry): string => 
+    entries.reduce(
+      (sum: Prisma.Decimal, entry: SerializedEntry) => sum.plus(String(entry[field])),
+      new Prisma.Decimal(0)
+    ).toString();
+
   const reportData = { ...report };
   Reflect.deleteProperty(reportData, "PagibigReportEntry");
+
   return {
     ...reportData,
     employeeSavingsTotal: total("employeeSavings"),
