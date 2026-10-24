@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { getPhilHealthShares } from "@/lib/philHealthReportTotals";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowPathIcon, ChevronLeftIcon, EyeIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ChevronDownIcon, ChevronLeftIcon, EyeIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -72,6 +72,13 @@ const fullName = (employee: Pick<Employee, "firstName" | "middleName" | "lastNam
   const middleInitial = employee.middleName?.trim().charAt(0);
   return `${employee.lastName}, ${employee.firstName}${middleInitial ? ` ${middleInitial.toLocaleUpperCase()}.` : ""}`;
 };
+const employeeNameWithBoldFirstName = (employee: Pick<Employee, "firstName" | "middleName" | "lastName">) => (
+  <>
+    {employee.lastName},{" "}
+    <span className="font-bold">{employee.firstName}</span>
+    {employee.middleName?.trim().charAt(0) ? ` ${employee.middleName.trim().charAt(0).toLocaleUpperCase()}.` : ""}
+  </>
+);
 const money = (amount: number | string) => `₱${(Number(amount) || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const period = (report: Pick<Report, "applicableMonth" | "applicableYear">) => `${months[report.applicableMonth - 1]} ${report.applicableYear}`;
 const emptyPaymentForm = (report: Report, employer: Employer | null): PaymentForm => ({
@@ -116,6 +123,9 @@ function PhilHealthReportsContent() {
   const [notice, setNotice] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [accountEmployeePickerOpen, setAccountEmployeePickerOpen] = useState(false);
+  const [accountEmployeeSearch, setAccountEmployeeSearch] = useState("");
+  const accountPickerRef = useRef<HTMLDivElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState(String(new Date().getMonth() + 1));
   const [reportYear, setReportYear] = useState(String(new Date().getFullYear()));
@@ -162,6 +172,17 @@ function PhilHealthReportsContent() {
     return () => controller.abort();
   }, [employerId, refreshKey, view]);
 
+  useEffect(() => {
+    if (!accountEmployeePickerOpen) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !accountPickerRef.current?.contains(event.target)) {
+        setAccountEmployeePickerOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [accountEmployeePickerOpen]);
+
   const filteredEmployees = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return employees.filter((employee) => {
@@ -173,6 +194,14 @@ function PhilHealthReportsContent() {
     });
   }, [employees, search, statusFilter]);
   const activeEmployees = employees.filter((employee) => employee.philHealthAccount?.active);
+  const accountEmployeeQuery = accountEmployeeSearch.trim().toLocaleLowerCase();
+  const accountEmployeeMatches = (employee: Employee) =>
+    !accountEmployeeQuery ||
+    [fullName(employee), employee.philHealth, employee.employerName, employee.biometricNo, employee.status]
+      .some((value) => value?.toLocaleLowerCase().includes(accountEmployeeQuery));
+  const accountAssignedEmployees = employeeOptions.filter((employee) => employee.assignedToSelectedEmployer && accountEmployeeMatches(employee));
+  const accountOtherEmployees = employeeOptions.filter((employee) => !employee.assignedToSelectedEmployer && accountEmployeeMatches(employee));
+  const selectedAccountEmployee = employeeOptions.find((employee) => String(employee.id) === selectedEmployeeId);
 
   // Render-side PS/ES defaults so year change auto-fills without a state effect
   const year = Number(reportYear);
@@ -192,6 +221,8 @@ function PhilHealthReportsContent() {
   const openAccountForm = async () => {
     setAccountOpen(true);
     setSelectedEmployeeId("");
+    setAccountEmployeePickerOpen(false);
+    setAccountEmployeeSearch("");
     setError("");
     try {
       const response = await fetch(`/api/reports/philhealth/employees?all=1&employerId=${encodeURIComponent(employerId)}`, { cache: "no-store" });
@@ -453,7 +484,7 @@ function PhilHealthReportsContent() {
       {accountOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountOpen(false); }}>
         <form onSubmit={saveAccount} className="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><h2 className="text-lg font-bold text-slate-950">Add PhilHealth Account</h2><button type="button" onClick={() => setAccountOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button></div>
-          <div className="space-y-3 p-5"><label className="block"><span className={labelClass}>Employee · current employer employees listed first</span><select required value={selectedEmployeeId} onChange={(event) => setSelectedEmployeeId(event.target.value)} className={inputClass}><option value="">Select employee</option><optgroup label={`Assigned to ${employer?.name ?? "selected employer"}`}>{employeeOptions.filter((employee) => employee.assignedToSelectedEmployer).map((employee) => <option key={employee.id} value={employee.id}>{fullName(employee)} · {employee.philHealth || "No PhilHealth number"}</option>)}</optgroup><optgroup label="All other employees">{employeeOptions.filter((employee) => !employee.assignedToSelectedEmployer).map((employee) => <option key={employee.id} value={employee.id}>{fullName(employee)} · {employee.philHealth || "No PhilHealth number"}{employee.employerName ? ` · ${employee.employerName}` : ""}</option>)}</optgroup></select></label><p className="text-xs text-slate-500">Employees assigned to the selected employer are listed first; all employees remain available. The selected employee is linked to {employer?.name ?? "the selected employer"} and their existing PhilHealth number is retained.</p></div>
+          <div className="space-y-3 p-5"><div className="block"><span className={labelClass}>Employee · current employer employees listed first</span><div className="relative" ref={accountPickerRef}><button type="button" disabled={saving} aria-haspopup="listbox" aria-expanded={accountEmployeePickerOpen} onClick={() => { setAccountEmployeeSearch(""); setAccountEmployeePickerOpen((current) => !current); }} className={`${inputClass} flex items-center justify-between gap-3 text-left disabled:cursor-not-allowed disabled:bg-slate-100`}><span className={selectedAccountEmployee ? "truncate text-slate-900" : "truncate text-slate-600"}>{selectedAccountEmployee ? employeeNameWithBoldFirstName(selectedAccountEmployee) : "Select employee"}{selectedAccountEmployee?.philHealth ? <span className="ml-2 font-normal text-slate-500">· {selectedAccountEmployee.philHealth}</span> : null}</span><ChevronDownIcon className={`h-4 w-4 shrink-0 text-slate-600 transition-transform ${accountEmployeePickerOpen ? "rotate-180" : ""}`} /></button>{accountEmployeePickerOpen && <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl"><div className="border-b border-slate-200 p-2"><input autoFocus type="search" value={accountEmployeeSearch} onChange={(event) => setAccountEmployeeSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") setAccountEmployeePickerOpen(false); }} aria-label="Search employees" placeholder="Search name, PhilHealth number, or employer" className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-900 outline-none placeholder:text-slate-600 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></div><div role="listbox" aria-label="Employees" className="max-h-56 overflow-y-auto overscroll-contain">{accountAssignedEmployees.length > 0 && <div className="sticky top-0 z-10 bg-slate-100 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-600">{`Assigned to ${employer?.name ?? "selected employer"}`}</div>}{accountAssignedEmployees.map((employee) => { const selected = String(employee.id) === selectedEmployeeId; return <button key={employee.id} type="button" role="option" aria-selected={selected} onClick={() => { setSelectedEmployeeId(String(employee.id)); setAccountEmployeePickerOpen(false); setAccountEmployeeSearch(""); }} className={`flex w-full flex-col px-3 py-2 text-left hover:bg-emerald-50 ${selected ? "bg-emerald-50" : "bg-white"}`}><span className="text-sm text-slate-900">{employeeNameWithBoldFirstName(employee)} <span className="font-normal text-slate-500">· {employee.philHealth || "No PhilHealth number"}</span></span></button>; })}{accountOtherEmployees.length > 0 && <div className="sticky top-0 z-10 bg-slate-100 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-600">All other employees</div>}{accountOtherEmployees.map((employee) => { const selected = String(employee.id) === selectedEmployeeId; return <button key={employee.id} type="button" role="option" aria-selected={selected} onClick={() => { setSelectedEmployeeId(String(employee.id)); setAccountEmployeePickerOpen(false); setAccountEmployeeSearch(""); }} className={`flex w-full flex-col px-3 py-2 text-left hover:bg-emerald-50 ${selected ? "bg-emerald-50" : "bg-white"}`}><span className="text-sm text-slate-900">{employeeNameWithBoldFirstName(employee)} <span className="font-normal text-slate-500">· {employee.philHealth || "No PhilHealth number"}{employee.employerName ? ` · ${employee.employerName}` : ""}</span></span></button>; })}{accountAssignedEmployees.length === 0 && accountOtherEmployees.length === 0 && <p className="px-3 py-4 text-sm font-medium text-slate-600">No employees found.</p>}</div></div>}{/* hidden required field keeps form submission semantics */}<input type="hidden" required value={selectedEmployeeId} onChange={() => {}} /></div></div><p className="text-xs text-slate-500">Employees assigned to the selected employer are listed first; all employees remain available. The selected employee is linked to {employer?.name ?? "the selected employer"} and their existing PhilHealth number is retained.</p></div>
           <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4"><button type="button" onClick={() => setAccountOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700">Cancel</button><button type="submit" disabled={!selectedEmployeeId || saving} className="h-10 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : "Add Account"}</button></div>
         </form>
       </div>}
