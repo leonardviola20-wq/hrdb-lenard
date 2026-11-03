@@ -9,15 +9,18 @@ export const PAGE_ACCESS_OPTIONS = [
   { href: "/settings", label: "Account Settings" },
 ] as const;
 
-export type PageAccessHref = (typeof PAGE_ACCESS_OPTIONS)[number]["href"];
+const CHAT_PAGE_ACCESS = "/chat" as const;
+
+export type PageAccessHref = (typeof PAGE_ACCESS_OPTIONS)[number]["href"] | typeof CHAT_PAGE_ACCESS;
 
 export const DEFAULT_PAGE_ACCESS: PageAccessHref[] = ["/dashboard", "/tasks", "/settings"];
 
 export function isPageAccessHref(value: unknown): value is PageAccessHref {
-  return PAGE_ACCESS_OPTIONS.some((option) => option.href === value);
+  return value === CHAT_PAGE_ACCESS || PAGE_ACCESS_OPTIONS.some((option) => option.href === value);
 }
 
 export function hasPageAccess(pathname: string, accessiblePages: readonly string[]) {
+  if (pathname === CHAT_PAGE_ACCESS || pathname.startsWith(`${CHAT_PAGE_ACCESS}/`)) return true;
   return accessiblePages.some((page) => pathname === page || pathname.startsWith(`${page}/`))
     || (pathname === "/reports" && accessiblePages.some((page) => page.startsWith("/reports/")))
     || (pathname.startsWith("/reports/") && accessiblePages.some((page) => page.startsWith("/reports/")));
@@ -30,6 +33,7 @@ type PageAccessSubject = {
 
 export function canViewPage(subject: PageAccessSubject | null | undefined, href: PageAccessHref) {
   if (!subject) return false;
+  if (href === CHAT_PAGE_ACCESS) return true;
   if (subject.role === "ADMIN") return true;
   return Boolean(subject.accessiblePages?.includes(href));
 }

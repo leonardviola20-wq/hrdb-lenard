@@ -413,7 +413,6 @@ model PagibigEmployeeLoan {
   employer              employer              @relation(fields: [employerId], references: [id])
   PagibigEmployeeRecord PagibigEmployeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
-  @@unique([employerId, loanType, applicationNo])
   @@unique([recordId, loanType])
   @@index([employerId, loanTermDate])
   @@index([recordId])

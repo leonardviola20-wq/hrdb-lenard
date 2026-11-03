@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowPathIcon, BanknotesIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, EllipsisVerticalIcon, EyeIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, PrinterIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { SSS_CONTRIBUTION_EFFECTIVE_DATE, sssContributionTableForYear, getSssContributionBracket, getSssContributionBracketForYear } from "@/lib/sssContributionTable";
+import { SSS_AVAILABLE_YEARS, sssContributionTableForYear, getSssContributionBracket, getSssContributionBracketForYear } from "@/lib/sssContributionTable";
 import { getSssLoanFirstAmortizationDate, getSssLoanReportCategory, getSssLoanStartDate, parseSssLoanDateFromApi, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
 import { getSssLoanStatusLabel, isSssLoanStatus, type SssLoanStatus } from "@/lib/sssLoanStatus";
 import { getSssLoanTypeLabel, getSssLoanTypeListLabel, getSssLoanTypeShortLabel, isSssLoanType, sssLoanTypes, type SssLoanType } from "@/lib/sssLoanTypes";
@@ -833,6 +833,22 @@ export default function SssReportsPage() {
         setError("PRN (Payment Reference Number) is required before saving the draft.");
         return;
       }
+      if (!draft.employerId) {
+        setError("Employer is required before saving the draft.");
+        return;
+      }
+      if (!draft.month || Number(draft.month) < 1 || Number(draft.month) > 12) {
+        setError("Applicable Month is required before saving the draft.");
+        return;
+      }
+      if (!draft.year || Number(draft.year) < 2023) {
+        setError("Applicable Year is required before saving the draft.");
+        return;
+      }
+      if (!draft.amountDue || !Number.isFinite(Number(draft.amountDue))) {
+        setError("Amount Due is required before saving the draft.");
+        return;
+      }
       await draftSaveQueueRef.current;
       await persistReportDraft(true);
       await refreshSssRecords();
@@ -1621,7 +1637,7 @@ export default function SssReportsPage() {
         </form>
       </Modal>}
 
-{ contributionTableOpen && <ContributionTableDialog onClose={() => setContributionTableOpen(false)} year={currentYear} /> }
+{ contributionTableOpen && <ContributionTableDialog onClose={() => setContributionTableOpen(false)} year={Number(draft.year)} /> }
       {notice && <div className="benefit-report-notice benefit-report-notice-success fixed inset-x-4 bottom-5 z-[100] mx-auto max-w-lg bg-white font-medium shadow-xl" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Dismiss confirmation" className="shrink-0 font-semibold text-emerald-800 underline underline-offset-2">Dismiss</button></div>}
     </main>
   );
@@ -1708,18 +1724,27 @@ function Info({ label, value }: { label: string; value: string | null }) {
 }
 
 function ContributionTableDialog({ onClose, year }: { onClose: () => void; year: number }) {
-  const table = sssContributionTableForYear(year);
-  const caption = year >= 2025
-    ? "Business employers and employees — Effective January 1, 2025"
-    : "Business employers and employees — Effective January 1, 2023";
-  const sourceYear = year >= 2025 ? "2024-006" : "2022-02";
-  const sourceUrl = year >= 2025
-    ? "https://www.sss.gov.ph/wp-content/uploads/2024/12/CI-2024-006-Publication.pdf"
-    : "https://www.sss.gov.ph/wp-content/uploads/2022/12/CI-2022-02-Publication.pdf";
-  return <Modal title="SSS Contribution Table" subtitle={caption} onClose={onClose} wide>
-    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><strong>Official schedule for review.</strong> Regular SS is 10% employer and 5% employee up to ₱20,000 MSC. Above ₱20,000, MPF applies at 10% employer and 5% employee. EC is employer-paid: ₱10 for MSC through ₱14,500; ₱30 from ₱15,000.</div>
-    <div className="overflow-auto rounded-xl border border-slate-200"><table className="min-w-[1050px] w-full text-right text-xs text-slate-800"><thead className="sticky top-0 bg-slate-100 text-[10px] uppercase tracking-wide text-slate-600"><tr><th className="px-3 py-2.5 text-left">Compensation Range</th><th className="px-3 py-2.5">MSC</th><th className="px-3 py-2.5">SS ER</th><th className="px-3 py-2.5">MPF ER</th><th className="px-3 py-2.5">EC ER</th><th className="px-3 py-2.5">ER Total</th><th className="px-3 py-2.5">SS EE</th><th className="px-3 py-2.5">MPF EE</th><th className="px-3 py-2.5">EE Total</th><th className="px-3 py-2.5">Combined</th></tr></thead><tbody className="divide-y divide-slate-100">{table.map((row) => <tr key={row.key} className={row.monthlySalaryCredit > 20_000 ? "bg-blue-50/50" : "bg-white"}><td className="px-3 py-2 text-left">{row.range}</td><td className="px-3 py-2">{formatMoney(row.monthlySalaryCredit)}</td><td className="px-3 py-2">{formatMoney(row.employerSs)}</td><td className="px-3 py-2">{formatMoney(row.employerMpf)}</td><td className="px-3 py-2">{formatMoney(row.ec)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employerSs + row.employerMpf + row.ec)}</td><td className="px-3 py-2">{formatMoney(row.employeeSs)}</td><td className="px-3 py-2">{formatMoney(row.employeeMpf)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employeeSs + row.employeeMpf)}</td><td className="px-3 py-2 font-bold text-slate-900">{formatMoney(row.total)}</td></tr>)}</tbody></table></div>
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-slate-500">Source: <a href={sourceUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline">SSS Circular {sourceYear}</a>. The table applies MPF where MSC is above ₱20,000.</p><button type="button" onClick={onClose} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Done reviewing</button></div>
-    <p className="sr-only">Contribution table effective {SSS_CONTRIBUTION_EFFECTIVE_DATE}.</p>
-  </Modal>;
+  const [selectedYear, setSelectedYear] = useState(
+    SSS_AVAILABLE_YEARS.includes(year) ? year : SSS_AVAILABLE_YEARS[SSS_AVAILABLE_YEARS.length - 1]
+  );
+  const table = sssContributionTableForYear(selectedYear);
+  const caption = `Business employers and employees — Effective January 1, ${selectedYear}`;
+  return (
+    <Modal title="SSS Contribution Table" subtitle={caption} onClose={onClose} wide>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {SSS_AVAILABLE_YEARS.map((y) => (
+          <button
+            key={y}
+            type="button"
+            onClick={() => setSelectedYear(y)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${selectedYear === y ? "bg-blue-600 text-white" : "border border-slate-300 bg-white text-slate-700"}`}
+          >
+            {y}
+          </button>
+        ))}
+      </div>
+      <div className="overflow-auto rounded-xl border border-slate-200"><table className="min-w-[1050px] w-full text-right text-xs text-slate-800"><thead className="sticky top-0 bg-slate-100 text-[10px] uppercase tracking-wide text-slate-600"><tr><th className="px-3 py-2.5 text-left">Compensation Range</th><th className="px-3 py-2.5">MSC</th><th className="px-3 py-2.5">SS ER</th><th className="px-3 py-2.5">MPF ER</th><th className="px-3 py-2.5">EC ER</th><th className="px-3 py-2.5">ER Total</th><th className="px-3 py-2.5">SS EE</th><th className="px-3 py-2.5">MPF EE</th><th className="px-3 py-2.5">EE Total</th><th className="px-3 py-2.5">Combined</th></tr></thead><tbody className="divide-y divide-slate-100">{table.map((row) => <tr key={row.key} className={row.monthlySalaryCredit > 20_000 ? "bg-blue-50/50" : "bg-white"}><td className="px-3 py-2 text-left">{row.range}</td><td className="px-3 py-2">{formatMoney(row.monthlySalaryCredit)}</td><td className="px-3 py-2">{formatMoney(row.employerSs)}</td><td className="px-3 py-2">{formatMoney(row.employerMpf)}</td><td className="px-3 py-2">{formatMoney(row.ec)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employerSs + row.employerMpf + row.ec)}</td><td className="px-3 py-2">{formatMoney(row.employeeSs)}</td><td className="px-3 py-2">{formatMoney(row.employeeMpf)}</td><td className="px-3 py-2 font-semibold">{formatMoney(row.employeeSs + row.employeeMpf)}</td><td className="px-3 py-2 font-bold text-slate-900">{formatMoney(row.total)}</td></tr>)}</tbody></table></div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onClose} className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">Done reviewing</button></div>
+    </Modal>
+  );
 }

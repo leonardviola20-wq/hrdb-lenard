@@ -4,6 +4,7 @@ import {
   ArrowRightOnRectangleIcon,
   BriefcaseIcon,
   CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
   ChartBarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -15,8 +16,9 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppNavigationHistoryTracker } from "@/components/AppNavigationHistoryTracker";
+import { DirectMessageWidget } from "@/components/chat/DirectMessageWidget";
 import { HistoryBackLink } from "@/components/HistoryBackLink";
 import { resetAppRouteHistory } from "@/lib/appNavigationHistory";
 import { DEFAULT_PAGE_ACCESS, type PageAccessHref } from "@/lib/pageAccess";
@@ -24,6 +26,16 @@ import { DEFAULT_PAGE_ACCESS, type PageAccessHref } from "@/lib/pageAccess";
 type AppHeaderActions = { actions: ReactNode; backHref?: string; hideBack?: boolean } | null;
 
 const AppHeaderActionsContext = createContext<(value: AppHeaderActions) => void>(() => {});
+
+function createPresenceSessionId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    return (character === "x" ? random : (random & 0x3) | 0x8).toString(16);
+  });
+}
 
 export function useAppHeaderActions() {
   return useContext(AppHeaderActionsContext);
@@ -39,6 +51,7 @@ type CurrentUser = {
 
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
+  { label: "Chat", href: "/chat", icon: ChatBubbleLeftRightIcon },
   { label: "Tasks", href: "/tasks", icon: ChartBarIcon },
   { label: "Employees", href: "/employees", icon: UserGroupIcon },
   { label: "Attendance", href: "/attendance", icon: CalendarDaysIcon },
@@ -52,10 +65,11 @@ type SidebarProps = {
   onToggleCollapsed: () => void;
   mobileOpen: boolean;
   onMobileToggle: () => void;
+  onBeforeLogout: () => Promise<void>;
   user: CurrentUser | null;
 };
 
-export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileToggle, user }: SidebarProps) {
+export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileToggle, onBeforeLogout, user }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -69,6 +83,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
   const logout = async () => {
     setLoggingOut(true);
     try {
+      await onBeforeLogout();
       const response = await fetch("/api/logout", { method: "POST" });
       if (!response.ok) throw new Error("Unable to log out");
       window.dispatchEvent(new Event("hrdb-clear-employee-profile-cache"));
@@ -115,7 +130,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
           Workspace
         </p>
         <div className="space-y-2">
-          {navigation.filter((item) => isAdmin || accessiblePages.includes(("accessHref" in item ? item.accessHref : item.href) as PageAccessHref)).map(({ label, href, icon: Icon }) => {
+          {navigation.filter((item) => item.href === "/chat" || isAdmin || accessiblePages.includes(("accessHref" in item ? item.accessHref : item.href) as PageAccessHref)).map(({ label, href, icon: Icon }) => {
             const active =
               pathname === href || (href === "/tasks" && pathname.startsWith("/tasks/")) || (href === "/reports" && pathname.startsWith("/reports/"));
             const className = `group/item flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
@@ -216,6 +231,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [headerActions, setHeaderActions] = useState<AppHeaderActions>(null);
+  const chatPresenceCleanupRef = useRef<(() => Promise<void>) | null>(null);
+  const canUseChat = Boolean(user);
   const pageTitle = getPageTitle(pathname);
   const pageSubtitle = getPageSubtitle(pathname);
   const showDashboardBack = pathname !== "/dashboard" && pathname !== "/attendance" && pathname !== "/settings" && pathname !== "/management/system-configuration" && !pathname.startsWith("/tasks") && pathname !== "/employees" && pathname !== "/contacts" && pathname !== "/employers" && !pathname.startsWith("/reports");
@@ -263,6 +280,66 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("hrdb-profile-updated", loadUser);
   }, [publicRoute]);
 
+  useEffect(() => {
+    if (publicRoute || !canUseChat) return;
+
+    const sessionId = createPresenceSessionId();
+    let active = true;
+    let timer = 0;
+    let heartbeatInFlight: Promise<void> | null = null;
+    let cleanupRequest: Promise<void> | null = null;
+    const heartbeat = async () => {
+      if (!active) return;
+      const request = (async () => {
+        try {
+          const response = await fetch("/api/chat/presence", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "heartbeat", sessionId }),
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => null) as { error?: string } | null;
+            throw new Error(data?.error || "Unable to update chat presence");
+          }
+        } catch (error) {
+          console.error("Chat presence heartbeat failed:", error);
+        }
+      })();
+      heartbeatInFlight = request;
+      await request;
+      if (heartbeatInFlight === request) heartbeatInFlight = null;
+      if (active) timer = window.setTimeout(() => { void heartbeat(); }, 15_000);
+    };
+
+    const leavePresence = () => {
+      if (cleanupRequest) return cleanupRequest;
+      active = false;
+      window.clearTimeout(timer);
+      cleanupRequest = (async () => {
+        await heartbeatInFlight;
+        const response = await fetch("/api/chat/presence", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+          keepalive: true,
+        });
+        if (!response.ok && response.status !== 401) {
+          console.error("Chat presence cleanup failed:", response.status);
+        }
+      })().catch((error: unknown) => console.error("Chat presence cleanup failed:", error));
+      return cleanupRequest;
+    };
+
+    chatPresenceCleanupRef.current = leavePresence;
+    void heartbeat();
+    return () => {
+      if (chatPresenceCleanupRef.current === leavePresence) {
+        chatPresenceCleanupRef.current = null;
+      }
+      void leavePresence();
+    };
+  }, [publicRoute, canUseChat]);
+
   if (publicRoute) return <><AppNavigationHistoryTracker />{children}</>;
 
   return (
@@ -302,6 +379,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onToggleCollapsed={() => setCollapsed((value) => !value)}
         mobileOpen={mobileOpen}
         onMobileToggle={() => setMobileOpen(false)}
+        onBeforeLogout={() => chatPresenceCleanupRef.current?.() ?? Promise.resolve()}
         user={user}
       />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -338,11 +416,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </footer>
         </div>
       </div>
+      {canUseChat && <DirectMessageWidget />}
     </AppHeaderActionsContext.Provider>
   );
 }
 
 function getPageTitle(pathname: string) {
+  if (pathname === "/chat") return "Chat";
   if (pathname === "/reports") return "Reports Dashboard";
   if (pathname === "/reports/sss") return "SSS Reports";
   if (pathname.startsWith("/reports/pagibig")) return "Pag-IBIG Reports";
@@ -365,6 +445,7 @@ function getPageTitle(pathname: string) {
 }
 
 function getPageSubtitle(pathname: string) {
+  if (pathname === "/chat") return "See who's online and start a direct conversation.";
   if (pathname === "/reports") return "Choose a report type to manage payroll and compliance records.";
   if (pathname === "/reports/sss") return "Monitor SSS employer contributions and loan payments.";
   if (pathname.startsWith("/reports/pagibig")) return "Manage Pag-IBIG member accounts, savings, loans, and payments.";

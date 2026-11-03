@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
   try {
     const employer = await prisma.employer.findUnique({
       where: { id: employerId },
-      select: { id: true, name: true, hdmf: true },
+      select: { id: true, name: true, hdmf: true, longAddress: true, shortAddress: true },
     });
     if (!employer) {
       return NextResponse.json({ error: "Employer not found" }, { status: 404 });
     }
-    const employerDetails = { id: employer.id, name: employer.name, pagibigNumber: employer.hdmf };
+    const employerDetails = { id: employer.id, name: employer.name, pagibigNumber: employer.hdmf, address: employer.longAddress || employer.shortAddress };
 
     if (request.nextUrl.searchParams.get("view") === "payments") {
       const payments = await prisma.pagibigReport.findMany({
@@ -75,7 +75,12 @@ export async function POST(request: NextRequest) {
   const month = Number(body.applicableMonth);
   const year = validPagibigYear(body.applicableYear);
   const pin = typeof body.pin === "string" ? body.pin.trim() : "";
+  const kind = body.kind === "LOAN" ? "LOAN" : "CONTRIBUTION";
+  const manual = body.manual === true;
   const draftId = body.draftId === undefined || body.draftId === null ? null : Number(body.draftId);
+  const employeeIds = Array.isArray(body.employeeIds)
+    ? body.employeeIds.map((id) => Number(id)).filter((id) => Number.isSafeInteger(id) && id > 0)
+    : undefined;
   if (!Number.isSafeInteger(employerId) || employerId <= 0 || !Number.isInteger(month) || month < 1 || month > 12
     || !year || !pin || pin.length > 120 || (draftId !== null && (!Number.isSafeInteger(draftId) || draftId <= 0))) {
     return NextResponse.json({ error: "Select a valid employer, report month and year, and enter the Pag-IBIG report PIN" }, { status: 400 });
@@ -85,7 +90,7 @@ export async function POST(request: NextRequest) {
     const report = await prisma.$transaction(async (transaction) => {
       await transaction.$queryRaw`SELECT pg_advisory_xact_lock(CAST(${employerId} AS integer), CAST(${year * 100 + month} AS integer))::text AS locked`;
       const existingReport = await transaction.pagibigReport.findFirst({
-        where: { employerId, applicableYear: year, applicableMonth: month },
+        where: { employerId, applicableYear: year, applicableMonth: month, manual, ...(manual ? { kind } : {}) },
         select: { id: true },
       });
       if (existingReport) throw new Error("DUPLICATE_PAGIBIG_REPORT");
@@ -101,6 +106,7 @@ export async function POST(request: NextRequest) {
           employerId,
           year,
           excludedFromReport: false,
+          ...(employeeIds !== undefined ? { employeeId: { in: employeeIds } } : {}),
           employee: { AND: [{ pagIbigNumber: { not: null } }, { pagIbigNumber: { not: "" } }] },
         },
         include: {
@@ -136,7 +142,7 @@ export async function POST(request: NextRequest) {
           safeLoanAmount: loanAmount("SAFE"),
         };
       });
-      const calculation = calculatePagIbigReportTotals(amountRows);
+      const adjustedAmountRows = manual ? amountRows.map((row) => kind === "CONTRIBUTION" ? { ...row, calamityLoanAmount: "0", mplLoanAmount: "0", emergencyLoanAmount: "0", safeLoanAmount: "0" } : { ...row, employeeSavings: "0", employerSavings: "0", mp2Amount: "0" }) : amountRows; const calculation = calculatePagIbigReportTotals(adjustedAmountRows);
       if (!calculation) throw new Error("INVALID_PAGIBIG_AMOUNTS");
 
       const entries = records.map((record, index) => {
@@ -179,7 +185,8 @@ export async function POST(request: NextRequest) {
 
       const createdReport = await transaction.pagibigReport.create({
         data: {
-          kind: "CONTRIBUTION",
+          kind,
+          manual,
           employerId: employer.id,
           employerName: employer.name,
           employerPagibigNumber: employer.hdmf,

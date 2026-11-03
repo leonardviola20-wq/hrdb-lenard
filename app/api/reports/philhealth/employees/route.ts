@@ -38,12 +38,10 @@ export async function GET(request: NextRequest) {
           status: true,
           philHealth: true,
           employer: { select: { name: true } },
-          ...(allEmployees ? {} : {
-            philHealthEmployeeRecords: {
-              where: { employerId },
-              select: { id: true, active: true },
-            },
-          }),
+          philHealthEmployeeRecords: {
+            where: { employerId },
+            select: { id: true, active: true },
+          },
         },
       }),
     ]);
@@ -53,10 +51,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         employer: { id: employer.id, name: employer.name, phic: employer.phic },
         employees: employees
-          .map(({ employer: currentEmployer, ...employee }) => ({
+          .map(({ employer: currentEmployer, philHealthEmployeeRecords, ...employee }) => ({
             ...employee,
             employerName: currentEmployer?.name ?? null,
             assignedToSelectedEmployer: employee.employerId === employerId,
+            philHealthAccount: philHealthEmployeeRecords?.[0] ?? null,
           }))
           .sort((first, second) => Number(second.assignedToSelectedEmployer) - Number(first.assignedToSelectedEmployer)
             || first.lastName.localeCompare(second.lastName)

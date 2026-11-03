@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { DEFAULT_PAGE_ACCESS } from "@/lib/pageAccess";
 
 export async function POST(req: Request) {
   try {
@@ -80,6 +81,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role,
+        accessiblePages: DEFAULT_PAGE_ACCESS,
         emailVerified: false,
         verificationTokenHash,
         verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),

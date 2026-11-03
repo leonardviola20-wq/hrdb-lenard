@@ -28450,6 +28450,7 @@ export namespace Prisma {
   export type PagibigReportAvgAggregateOutputType = {
     id: number | null
     employerId: number | null
+    adjustments: Decimal | null
     applicableMonth: number | null
     applicableYear: number | null
     amountDue: Decimal | null
@@ -28460,6 +28461,7 @@ export namespace Prisma {
   export type PagibigReportSumAggregateOutputType = {
     id: number | null
     employerId: number | null
+    adjustments: Decimal | null
     applicableMonth: number | null
     applicableYear: number | null
     amountDue: Decimal | null
@@ -28474,6 +28476,8 @@ export namespace Prisma {
     employerName: string | null
     employerPagibigNumber: string | null
     pin: string | null
+    manual: boolean | null
+    adjustments: Decimal | null
     applicableMonth: number | null
     applicableYear: number | null
     amountDue: Decimal | null
@@ -28493,6 +28497,8 @@ export namespace Prisma {
     employerName: string | null
     employerPagibigNumber: string | null
     pin: string | null
+    manual: boolean | null
+    adjustments: Decimal | null
     applicableMonth: number | null
     applicableYear: number | null
     amountDue: Decimal | null
@@ -28512,6 +28518,8 @@ export namespace Prisma {
     employerName: number
     employerPagibigNumber: number
     pin: number
+    manual: number
+    adjustments: number
     applicableMonth: number
     applicableYear: number
     amountDue: number
@@ -28529,6 +28537,7 @@ export namespace Prisma {
   export type PagibigReportAvgAggregateInputType = {
     id?: true
     employerId?: true
+    adjustments?: true
     applicableMonth?: true
     applicableYear?: true
     amountDue?: true
@@ -28539,6 +28548,7 @@ export namespace Prisma {
   export type PagibigReportSumAggregateInputType = {
     id?: true
     employerId?: true
+    adjustments?: true
     applicableMonth?: true
     applicableYear?: true
     amountDue?: true
@@ -28553,6 +28563,8 @@ export namespace Prisma {
     employerName?: true
     employerPagibigNumber?: true
     pin?: true
+    manual?: true
+    adjustments?: true
     applicableMonth?: true
     applicableYear?: true
     amountDue?: true
@@ -28572,6 +28584,8 @@ export namespace Prisma {
     employerName?: true
     employerPagibigNumber?: true
     pin?: true
+    manual?: true
+    adjustments?: true
     applicableMonth?: true
     applicableYear?: true
     amountDue?: true
@@ -28591,6 +28605,8 @@ export namespace Prisma {
     employerName?: true
     employerPagibigNumber?: true
     pin?: true
+    manual?: true
+    adjustments?: true
     applicableMonth?: true
     applicableYear?: true
     amountDue?: true
@@ -28697,6 +28713,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber: string | null
     pin: string
+    manual: boolean
+    adjustments: Decimal | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal
@@ -28735,6 +28753,8 @@ export namespace Prisma {
     employerName?: boolean
     employerPagibigNumber?: boolean
     pin?: boolean
+    manual?: boolean
+    adjustments?: boolean
     applicableMonth?: boolean
     applicableYear?: boolean
     amountDue?: boolean
@@ -28758,6 +28778,8 @@ export namespace Prisma {
     employerName?: boolean
     employerPagibigNumber?: boolean
     pin?: boolean
+    manual?: boolean
+    adjustments?: boolean
     applicableMonth?: boolean
     applicableYear?: boolean
     amountDue?: boolean
@@ -28779,6 +28801,8 @@ export namespace Prisma {
     employerName?: boolean
     employerPagibigNumber?: boolean
     pin?: boolean
+    manual?: boolean
+    adjustments?: boolean
     applicableMonth?: boolean
     applicableYear?: boolean
     amountDue?: boolean
@@ -28816,6 +28840,8 @@ export namespace Prisma {
       employerName: string
       employerPagibigNumber: string | null
       pin: string
+      manual: boolean
+      adjustments: Prisma.Decimal | null
       applicableMonth: number
       applicableYear: number
       amountDue: Prisma.Decimal
@@ -29228,6 +29254,8 @@ export namespace Prisma {
     readonly employerName: FieldRef<"PagibigReport", 'String'>
     readonly employerPagibigNumber: FieldRef<"PagibigReport", 'String'>
     readonly pin: FieldRef<"PagibigReport", 'String'>
+    readonly manual: FieldRef<"PagibigReport", 'Boolean'>
+    readonly adjustments: FieldRef<"PagibigReport", 'Decimal'>
     readonly applicableMonth: FieldRef<"PagibigReport", 'Int'>
     readonly applicableYear: FieldRef<"PagibigReport", 'Int'>
     readonly amountDue: FieldRef<"PagibigReport", 'Decimal'>
@@ -37627,6 +37655,8 @@ export namespace Prisma {
     employerName: 'employerName',
     employerPagibigNumber: 'employerPagibigNumber',
     pin: 'pin',
+    manual: 'manual',
+    adjustments: 'adjustments',
     applicableMonth: 'applicableMonth',
     applicableYear: 'applicableYear',
     amountDue: 'amountDue',
@@ -39826,7 +39856,6 @@ export namespace Prisma {
 
   export type PagibigEmployeeLoanWhereUniqueInput = Prisma.AtLeast<{
     id?: number
-    employerId_loanType_applicationNo?: PagibigEmployeeLoanEmployerIdLoanTypeApplicationNoCompoundUniqueInput
     recordId_loanType?: PagibigEmployeeLoanRecordIdLoanTypeCompoundUniqueInput
     AND?: PagibigEmployeeLoanWhereInput | PagibigEmployeeLoanWhereInput[]
     OR?: PagibigEmployeeLoanWhereInput[]
@@ -39844,7 +39873,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PagibigEmployeeLoan"> | Date | string
     employer?: XOR<EmployerRelationFilter, employerWhereInput>
     PagibigEmployeeRecord?: XOR<PagibigEmployeeRecordRelationFilter, PagibigEmployeeRecordWhereInput>
-  }, "id" | "employerId_loanType_applicationNo" | "recordId_loanType">
+  }, "id" | "recordId_loanType">
 
   export type PagibigEmployeeLoanOrderByWithAggregationInput = {
     id?: SortOrder
@@ -40102,6 +40131,8 @@ export namespace Prisma {
     employerName?: StringFilter<"PagibigReport"> | string
     employerPagibigNumber?: StringNullableFilter<"PagibigReport"> | string | null
     pin?: StringFilter<"PagibigReport"> | string
+    manual?: BoolFilter<"PagibigReport"> | boolean
+    adjustments?: DecimalNullableFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFilter<"PagibigReport"> | number
     applicableYear?: IntFilter<"PagibigReport"> | number
     amountDue?: DecimalFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string
@@ -40124,6 +40155,8 @@ export namespace Prisma {
     employerName?: SortOrder
     employerPagibigNumber?: SortOrderInput | SortOrder
     pin?: SortOrder
+    manual?: SortOrder
+    adjustments?: SortOrderInput | SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -40149,6 +40182,8 @@ export namespace Prisma {
     employerName?: StringFilter<"PagibigReport"> | string
     employerPagibigNumber?: StringNullableFilter<"PagibigReport"> | string | null
     pin?: StringFilter<"PagibigReport"> | string
+    manual?: BoolFilter<"PagibigReport"> | boolean
+    adjustments?: DecimalNullableFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFilter<"PagibigReport"> | number
     applicableYear?: IntFilter<"PagibigReport"> | number
     amountDue?: DecimalFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string
@@ -40171,6 +40206,8 @@ export namespace Prisma {
     employerName?: SortOrder
     employerPagibigNumber?: SortOrderInput | SortOrder
     pin?: SortOrder
+    manual?: SortOrder
+    adjustments?: SortOrderInput | SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -40198,6 +40235,8 @@ export namespace Prisma {
     employerName?: StringWithAggregatesFilter<"PagibigReport"> | string
     employerPagibigNumber?: StringNullableWithAggregatesFilter<"PagibigReport"> | string | null
     pin?: StringWithAggregatesFilter<"PagibigReport"> | string
+    manual?: BoolWithAggregatesFilter<"PagibigReport"> | boolean
+    adjustments?: DecimalNullableWithAggregatesFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntWithAggregatesFilter<"PagibigReport"> | number
     applicableYear?: IntWithAggregatesFilter<"PagibigReport"> | number
     amountDue?: DecimalWithAggregatesFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string
@@ -43245,6 +43284,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -43266,6 +43307,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -43284,6 +43327,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -43305,6 +43350,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -43325,6 +43372,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -43342,6 +43391,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -43360,6 +43411,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -45828,12 +45881,6 @@ export namespace Prisma {
     isNot?: PagibigEmployeeRecordWhereInput
   }
 
-  export type PagibigEmployeeLoanEmployerIdLoanTypeApplicationNoCompoundUniqueInput = {
-    employerId: number
-    loanType: string
-    applicationNo: string
-  }
-
   export type PagibigEmployeeLoanRecordIdLoanTypeCompoundUniqueInput = {
     recordId: number
     loanType: string
@@ -46050,6 +46097,8 @@ export namespace Prisma {
     employerName?: SortOrder
     employerPagibigNumber?: SortOrder
     pin?: SortOrder
+    manual?: SortOrder
+    adjustments?: SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -46065,6 +46114,7 @@ export namespace Prisma {
   export type PagibigReportAvgOrderByAggregateInput = {
     id?: SortOrder
     employerId?: SortOrder
+    adjustments?: SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -46079,6 +46129,8 @@ export namespace Prisma {
     employerName?: SortOrder
     employerPagibigNumber?: SortOrder
     pin?: SortOrder
+    manual?: SortOrder
+    adjustments?: SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -46098,6 +46150,8 @@ export namespace Prisma {
     employerName?: SortOrder
     employerPagibigNumber?: SortOrder
     pin?: SortOrder
+    manual?: SortOrder
+    adjustments?: SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -46113,6 +46167,7 @@ export namespace Prisma {
   export type PagibigReportSumOrderByAggregateInput = {
     id?: SortOrder
     employerId?: SortOrder
+    adjustments?: SortOrder
     applicableMonth?: SortOrder
     applicableYear?: SortOrder
     amountDue?: SortOrder
@@ -49652,6 +49707,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -49672,6 +49729,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -49934,6 +49993,8 @@ export namespace Prisma {
     employerName?: StringFilter<"PagibigReport"> | string
     employerPagibigNumber?: StringNullableFilter<"PagibigReport"> | string | null
     pin?: StringFilter<"PagibigReport"> | string
+    manual?: BoolFilter<"PagibigReport"> | boolean
+    adjustments?: DecimalNullableFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFilter<"PagibigReport"> | number
     applicableYear?: IntFilter<"PagibigReport"> | number
     amountDue?: DecimalFilter<"PagibigReport"> | Decimal | DecimalJsLike | number | string
@@ -53985,6 +54046,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -54004,6 +54067,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -57155,6 +57220,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -57175,6 +57242,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -57368,6 +57437,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -57388,6 +57459,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -58788,6 +58861,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -59016,6 +59091,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -59036,6 +59113,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -59055,6 +59134,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -60355,6 +60436,8 @@ export namespace Prisma {
     employerName: string
     employerPagibigNumber?: string | null
     pin: string
+    manual?: boolean
+    adjustments?: Decimal | DecimalJsLike | number | string | null
     applicableMonth: number
     applicableYear: number
     amountDue: Decimal | DecimalJsLike | number | string
@@ -60782,6 +60865,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -60801,6 +60886,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -60820,6 +60907,8 @@ export namespace Prisma {
     employerName?: StringFieldUpdateOperationsInput | string
     employerPagibigNumber?: NullableStringFieldUpdateOperationsInput | string | null
     pin?: StringFieldUpdateOperationsInput | string
+    manual?: BoolFieldUpdateOperationsInput | boolean
+    adjustments?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     applicableMonth?: IntFieldUpdateOperationsInput | number
     applicableYear?: IntFieldUpdateOperationsInput | number
     amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string

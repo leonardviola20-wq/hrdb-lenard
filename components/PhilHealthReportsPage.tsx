@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "
 import Link from "next/link";
 import { getPhilHealthShares } from "@/lib/philHealthReportTotals";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowPathIcon, ChevronDownIcon, ChevronLeftIcon, EyeIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BanknotesIcon, ChevronDownIcon, ChevronLeftIcon, EllipsisVerticalIcon, EyeIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 type Employee = {
   id: number;
@@ -105,7 +105,7 @@ function PhilHealthReportsContent() {
   const requestedEmployerId = params.get("employerId") ?? "";
   const employerNumber = Number(requestedEmployerId);
   const employerId = Number.isSafeInteger(employerNumber) && employerNumber > 0 ? String(employerNumber) : "";
-  const view = params.get("view") === "payments" ? "payments" : params.get("view") === "reports" ? "reports" : "employees";
+  const view = params.get("view") === "employees" ? "employees" : "reports";
   const [employer, setEmployer] = useState<Employer | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeOptions, setEmployeeOptions] = useState<Employee[]>([]);
@@ -121,6 +121,7 @@ function PhilHealthReportsContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [paymentSavedOpen, setPaymentSavedOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [accountEmployeePickerOpen, setAccountEmployeePickerOpen] = useState(false);
@@ -132,6 +133,21 @@ function PhilHealthReportsContent() {
   const [paymentReport, setPaymentReport] = useState<Report | null>(null);
   const [paymentForm, setPaymentForm] = useState<PaymentForm | null>(null);
   const [viewReport, setViewReport] = useState<Report | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
+  const [reportYearFilter, setReportYearFilter] = useState(String(new Date().getFullYear()));
+  const [reportPage, setReportPage] = useState(1);
+  const [reportMenuOpen, setReportMenuOpen] = useState<number | null>(null);
+  const reportMenuRef = useRef<HTMLDivElement | null>(null);
+  const reportPageSize = 10;
+
+  useEffect(() => {
+    if (!paymentSavedOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPaymentSavedOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [paymentSavedOpen]);
 
   useEffect(() => {
     if (!employerId) return;
@@ -193,14 +209,52 @@ function PhilHealthReportsContent() {
       return statusMatches && searchMatches;
     });
   }, [employees, search, statusFilter]);
+  useEffect(() => {
+    if (reportMenuOpen === null) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (event.target instanceof Node && !reportMenuRef.current?.contains(event.target)) setReportMenuOpen(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setReportMenuOpen(null);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [reportMenuOpen]);
+
   const activeEmployees = employees.filter((employee) => employee.philHealthAccount?.active);
+  const reportYears = useMemo(() => Array.from(new Set([new Date().getFullYear(), ...reports.map((report) => report.applicableYear)])).sort((a, b) => b - a), [reports]);
+  const filteredReports = useMemo(() => {
+    const query = reportSearch.trim().toLocaleLowerCase();
+    return reports.filter((report) => {
+      if (reportYearFilter !== "ALL" && String(report.applicableYear) !== reportYearFilter) return false;
+      if (!query) return true;
+      return [period(report), report.employerName, report.payment?.transactionDate, report.payment?.transactionConfirmationNumber, report.payment?.eparNumber]
+        .some((value) => value?.toLocaleLowerCase().includes(query));
+    });
+  }, [reports, reportSearch, reportYearFilter]);
+  const reportPageCount = Math.max(1, Math.ceil(filteredReports.length / reportPageSize));
+  const currentReportPage = Math.min(reportPage, reportPageCount);
+  const visibleReports = filteredReports.slice((currentReportPage - 1) * reportPageSize, currentReportPage * reportPageSize);
+  const displayedReports = useMemo(() => {
+    if (reportYearFilter === "ALL") return visibleReports;
+    const year = Number(reportYearFilter);
+    return Array.from({ length: 12 }, (_, index) => {
+      const month = index + 1;
+      const existing = reports.find((report) => report.applicableYear === year && report.applicableMonth === month);
+      return existing ?? ({ id: -month, applicableMonth: month, applicableYear: year, employerName: "", employerPhicNumber: null, amountDue: "0", entries: [], payment: null } as Report);
+    });
+  }, [reportYearFilter, reports, visibleReports]);
   const accountEmployeeQuery = accountEmployeeSearch.trim().toLocaleLowerCase();
   const accountEmployeeMatches = (employee: Employee) =>
     !accountEmployeeQuery ||
     [fullName(employee), employee.philHealth, employee.employerName, employee.biometricNo, employee.status]
       .some((value) => value?.toLocaleLowerCase().includes(accountEmployeeQuery));
-  const accountAssignedEmployees = employeeOptions.filter((employee) => employee.assignedToSelectedEmployer && accountEmployeeMatches(employee));
-  const accountOtherEmployees = employeeOptions.filter((employee) => !employee.assignedToSelectedEmployer && accountEmployeeMatches(employee));
+  const accountAssignedEmployees = employeeOptions.filter((employee) => employee.assignedToSelectedEmployer && !employee.philHealthAccount && accountEmployeeMatches(employee));
+  const accountOtherEmployees = employeeOptions.filter((employee) => !employee.assignedToSelectedEmployer && !employee.philHealthAccount && accountEmployeeMatches(employee));
   const selectedAccountEmployee = employeeOptions.find((employee) => String(employee.id) === selectedEmployeeId);
 
   // Render-side PS/ES defaults so year change auto-fills without a state effect
@@ -285,8 +339,20 @@ function PhilHealthReportsContent() {
     setPaymentForm(emptyPaymentForm(report, employer));
   };
 
-  const openReportForm = () => {
+  const openReportForm = async () => {
     setError("");
+    if (employerId && view === "reports") {
+      try {
+        const response = await fetch(`/api/reports/philhealth/employees?employerId=${encodeURIComponent(employerId)}`, { cache: "no-store" });
+        const data = await response.json();
+        if (response.ok) {
+          setEmployer(data.employer as Employer);
+          setEmployees(data.employees as Employee[]);
+        }
+      } catch {
+        // Keep the dialog usable with any employee data already loaded.
+      }
+    }
     setReportOpen(true);
   };
 
@@ -321,6 +387,8 @@ function PhilHealthReportsContent() {
       if (!response.ok) throw new Error(data.error || "Unable to create contribution report");
       setReportOpen(false);
       setNotice(`PhilHealth report created. Amount due: ${money((data.report as Report).amountDue)}.`);
+      setLoading(true);
+      setRefreshKey((current) => current + 1);
       router.push(`/reports/philhealth?view=reports&employerId=${encodeURIComponent(employerId)}`);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to create contribution report");
@@ -348,7 +416,7 @@ function PhilHealthReportsContent() {
       setViewReport((current) => (current && current.id === paymentReport.id
         ? { ...current, payment: data.payment as Payment }
         : current));
-      setNotice("PhilHealth payment details saved.");
+      setPaymentSavedOpen(true);
       setLoading(true);
       setRefreshKey((current) => current + 1);
     } catch (saveError) {
@@ -385,11 +453,10 @@ function PhilHealthReportsContent() {
     }
   };
 
-  const isPaymentView = view === "payments";
-  const title = view === "employees" ? "Employee List" : isPaymentView ? "Payments" : "Monthly Contribution Reports";
+  const title = view === "employees" ? "Employee List" : "Monthly Contribution Reports";
 
   return (
-    <main className="benefit-report-page flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden p-4 sm:p-6 lg:p-8">
+    <main className="benefit-report-page flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden p-0 sm:p-2 lg:p-4">
       <section className="benefit-report-header shrink-0 rounded-2xl p-3 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -400,13 +467,11 @@ function PhilHealthReportsContent() {
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Benefits reports</p>
               <h1 className="benefit-report-title">PhilHealth {title}</h1>
               {employer && <p className="truncate text-sm font-semibold text-slate-700">{employer.name} · {employer.phic || "—"}</p>}
-              <p className="hidden text-sm text-slate-600 sm:block">Employer-scoped accounts, monthly contribution reports, and payments.</p>
             </div>
           </div>
           {employerId && <nav aria-label="PhilHealth report pages" className="flex flex-wrap gap-2">
-            <Link href={`/reports/philhealth?view=employees&employerId=${encodeURIComponent(employerId)}`} aria-current={view === "employees" ? "page" : undefined} className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold ${view === "employees" ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>Employee List</Link>
-            <Link href={`/reports/philhealth?view=reports&employerId=${encodeURIComponent(employerId)}`} aria-current={view === "reports" ? "page" : undefined} className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold ${view === "reports" ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>Reports</Link>
-            <Link href={`/reports/philhealth?view=payments&employerId=${encodeURIComponent(employerId)}`} aria-current={isPaymentView ? "page" : undefined} className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold ${isPaymentView ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"}`}>Payments</Link>
+            {view !== "employees" && <Link href={`/reports/philhealth?view=employees&employerId=${encodeURIComponent(employerId)}`} className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Employee List</Link>}
+            {view !== "reports" && <Link href={`/reports/philhealth?view=reports&employerId=${encodeURIComponent(employerId)}`} className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reports</Link>}
           </nav>}
         </div>
         {view === "employees" && employerId && <div className="benefit-report-toolbar mt-3 min-w-0 overflow-x-auto border-t border-slate-100 pt-3">
@@ -417,9 +482,13 @@ function PhilHealthReportsContent() {
           </select>
           <button type="button" onClick={() => { setSearch(""); setStatusFilter("ACTIVE"); setEmployeePage(1); }} className="h-10 shrink-0 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reset</button>
         </div>}
-        {(view === "reports" || isPaymentView) && <div className="benefit-report-toolbar mt-3 min-w-0 overflow-x-auto border-t border-slate-100 pt-3">
-          {view === "reports" && <button type="button" onClick={openReportForm} className="benefit-report-primary"><PlusIcon className="h-4 w-4" />Create Monthly Report</button>}
-          <button type="button" onClick={() => { setLoading(true); setRefreshKey((current) => current + 1); }} className="h-10 shrink-0 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Refresh</button>
+        {view === "reports" && <div className="benefit-report-toolbar mt-3 min-w-0 overflow-x-auto border-t border-slate-100 pt-3">
+          {employerId && <button type="button" onClick={() => void openReportForm()} className="benefit-report-primary"><PlusIcon className="h-4 w-4" />Create Monthly Report</button>}
+          <input aria-label="Search reports" value={reportSearch} onChange={(event) => { setReportSearch(event.target.value); setReportPage(1); }} placeholder="Search reports" className="h-10 min-w-40 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 sm:max-w-xs" />
+          <select aria-label="Report year filter" value={reportYearFilter} onChange={(event) => { setReportYearFilter(event.target.value); setReportPage(1); }} className="h-10 shrink-0 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800">
+            <option value="ALL">All years</option>
+            {reportYears.map((year) => <option key={year} value={String(year)}>{year}</option>)}
+          </select>
         </div>}
       </section>
 
@@ -431,8 +500,17 @@ function PhilHealthReportsContent() {
         {loading || loadedContext !== `${employerId}:${view}` ? <div className="flex flex-1 flex-col items-center justify-center p-10 text-center text-sm text-slate-700"><ArrowPathIcon className="mb-3 h-5 w-5 animate-spin text-slate-400" /><p>Loading PhilHealth records...</p></div> : view === "employees" ? (
           <>
             <div className="benefit-report-section-heading"><h2 className="text-sm font-semibold text-slate-900">Employee Accounts</h2><p className="text-xs text-slate-500">{filteredEmployees.length} shown · {activeCount} active · {inactiveCount} inactive</p></div>
-            <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
-              <table className="benefit-report-table w-full min-w-[850px] text-left text-sm text-slate-900">
+            <div className="min-h-0 flex-1 overflow-hidden overscroll-contain">
+              <table className="benefit-report-table w-full table-fixed text-left text-sm text-slate-900">
+                <colgroup>
+                  <col style={{ width: "24%" }} />
+                  <col style={{ width: "18%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "14%" }} />
+                </colgroup>
                 <thead className="sticky top-0 z-10"><tr><th className="px-3 py-2">Employee Name</th><th className="px-3 py-2">PhilHealth No.</th><th className="px-3 py-2 text-right">PS</th><th className="px-3 py-2 text-right">ES</th><th className="px-3 py-2 text-right">Total</th><th className="px-3 py-2 whitespace-nowrap text-center">Account Status</th><th className="px-3 py-2 text-center">Action</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {visibleEmployees.map((employee) => {
@@ -444,7 +522,7 @@ function PhilHealthReportsContent() {
                       <td className="px-3 py-1 text-right tabular-nums">{account?.active ? money(defaultEs) : "—"}</td>
                       <td className="px-3 py-1 text-right font-semibold tabular-nums">{account?.active ? money(Number(defaultPs) + Number(defaultEs)) : "—"}</td>
                       <td className="px-3 py-1 text-center">{account ? <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${account.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{account.active ? "Active" : "Inactive"}</span> : <span className="text-xs text-slate-500">Not added</span>}</td>
-                      <td className="px-3 py-1 text-center">{account ? <button type="button" onClick={() => void setAccountActive(account.id, !account.active)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">{account.active ? "Set inactive" : "Set active"}</button> : <span className="text-xs text-slate-400">Add account</span>}</td>
+                      <td className="px-3 py-1 text-center">{account ? <button type="button" onClick={() => void setAccountActive(account.id, !account.active)} aria-label={account.active ? "Set inactive" : "Set active"} title={account.active ? "Set inactive" : "Set active"} className="inline-flex h-7 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">{account.active ? "Set inactive" : "Set active"}</button> : <span className="text-xs text-slate-400">Add account</span>}</td>
                     </tr>;
                   })}
                   {!visibleEmployees.length && <tr><td colSpan={7} className="h-11 px-4 text-center text-sm text-slate-600">No employees match your search.</td></tr>}
@@ -457,26 +535,36 @@ function PhilHealthReportsContent() {
           </>
         ) : (
           <>
-            <div className="benefit-report-section-heading"><h2 className="text-sm font-semibold text-slate-900">{isPaymentView ? "Payment History" : "Monthly Contribution Reports"}</h2><p className="text-xs text-slate-600">{reports.length} {isPaymentView ? "payments recorded" : "reports"} · Amount Due {money(reports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</p></div>
-            <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
-              <table className="benefit-report-table w-full min-w-[920px] text-left text-sm text-slate-900">
-                <thead className="sticky top-0 z-10"><tr><th className="bg-slate-100 px-3 py-2 font-bold">Applicable Period</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Employees</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Due</th><th className="bg-slate-100 px-3 py-2 font-bold">Transaction</th><th className="bg-slate-100 px-3 py-2 font-bold">ePAR</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Paid</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Action</th></tr></thead>
+            <div className="min-h-0 flex-1 overflow-hidden overscroll-contain">
+              <table className="benefit-report-table w-full table-fixed text-left text-sm text-slate-900">
+                <colgroup>
+                  <col style={{ width: "16%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "14%" }} />
+                  <col style={{ width: "10%" }} />
+                </colgroup>
+                <thead className="sticky top-0 z-10"><tr><th className="bg-slate-100 px-3 py-2 font-bold">Applicable Period</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Employees</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Adjustments</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Due</th><th className="bg-slate-100 px-3 py-2 font-bold">Transaction</th><th className="bg-slate-100 px-3 py-2 font-bold">ePAR</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Amount Paid</th><th className="bg-slate-100 px-3 py-2 text-right font-bold">Action</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
-                  {reports.map((report) => <tr key={report.id} className="hover:bg-slate-50">
-                    <td className="px-3 py-1 font-semibold">{period(report)}<div className="text-xs font-medium text-slate-500">{report.employerName}</div></td>
+                  {displayedReports.map((report) => <tr key={report.id < 0 ? `month-${-report.id}` : report.id} className="hover:bg-slate-50">
+                    <td className="px-3 py-1 font-semibold">{period(report)}</td>
                     <td className="px-3 py-1 text-right tabular-nums">{report.entries.length}</td>
+                    <td className="px-3 py-1 text-right tabular-nums">{report.payment ? money(Math.max(0, Number(report.payment.amountPaid) - Number(report.amountDue))) : "—"}</td>
                     <td className="px-3 py-1 text-right font-bold tabular-nums">{money(report.amountDue)}</td>
-                    <td className="px-3 py-1 text-xs text-slate-600">{report.payment ? (report.payment.transactionDate || "—") : "Unpaid"}</td>
+                    <td className="px-3 py-1 text-xs text-slate-600">{report.id < 0 ? "Not created" : (report.payment ? (report.payment.transactionDate || "—") : "Unpaid")}</td>
                     <td className="px-3 py-1 text-xs text-slate-600">{report.payment ? (report.payment.eparNumber || report.payment.transactionConfirmationNumber || "—") : "—"}</td>
                     <td className="px-3 py-1 text-right font-semibold tabular-nums">{report.payment ? money(report.payment.amountPaid) : "—"}</td>
-                    <td className="px-3 py-1 text-right"><div className="inline-flex items-center gap-1"><button type="button" onClick={() => setViewReport(report)} aria-label={`View ${period(report)} report`} title="View report and payment details" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-700 hover:bg-emerald-50"><EyeIcon className="h-4 w-4" /></button>{report.payment ? <button type="button" onClick={() => openPaymentForm(report)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">View / Edit</button> : isPaymentView ? <span className="text-xs text-slate-500">No payment</span> : <button type="button" onClick={() => openPaymentForm(report)} className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800">Record Payment</button>}{canEditPayments && <button type="button" onClick={() => setDeleteReportTarget(report)} className="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">Delete</button>}</div></td>
+                    <td className="px-3 py-1 text-right"><div className="relative inline-block text-left" ref={reportMenuOpen === report.id ? reportMenuRef : null}><button type="button" onClick={() => setViewReport(report)} disabled={report.id < 0} aria-label={`View ${period(report)} report`} title="View report and payment details" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"><EyeIcon className="h-4 w-4" /></button><button type="button" onClick={() => setReportMenuOpen(reportMenuOpen === report.id ? null : report.id)} disabled={report.id < 0} aria-label="Report actions" title="Report actions" className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-40"><EllipsisVerticalIcon className="h-4 w-4" /></button>{report.id > 0 && reportMenuOpen === report.id && <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-slate-200 bg-white py-1 shadow-lg"><button type="button" onClick={() => { setReportMenuOpen(null); setViewReport(report); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><EyeIcon className="h-4 w-4" />View report</button><button type="button" onClick={() => { setReportMenuOpen(null); openPaymentForm(report); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><BanknotesIcon className="h-4 w-4" />{report.payment ? "View or edit payment" : "Record payment"}</button>{canEditPayments && <button type="button" onClick={() => { setReportMenuOpen(null); setDeleteReportTarget(report); }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50"><TrashIcon className="h-4 w-4" />Delete report</button>}</div>}</div></td>
                   </tr>)}
-                  {!reports.length && <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-600">{isPaymentView ? "No PhilHealth payments have been recorded yet." : "No monthly contribution reports have been created yet."}</td></tr>}
+                  {!filteredReports.length && <tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-600">No monthly contribution reports have been created yet.</td></tr>}
                 </tbody>
-                <tfoot className="border-t-2 border-slate-300 bg-slate-100 font-bold"><tr><td className="px-3 py-2">Totals</td><td className="px-3 py-2 text-right tabular-nums">{reports.reduce((sum, report) => sum + report.entries.length, 0)}</td><td className="px-3 py-2 text-right tabular-nums">{money(reports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</td><td /><td /><td className="px-3 py-2 text-right tabular-nums">{money(reports.reduce((sum, report) => sum + Number(report.payment?.amountPaid ?? 0), 0))}</td><td /></tr></tfoot>
+                <tfoot className="border-t-2 border-slate-300 bg-slate-100 font-bold"><tr><td className="px-3 py-2">Totals</td><td className="px-3 py-2 text-right tabular-nums">{displayedReports.filter((report) => report.id > 0).reduce((sum, report) => sum + report.entries.length, 0)}</td><td /><td className="px-3 py-2 text-right tabular-nums">{money(displayedReports.filter((report) => report.id > 0).reduce((sum, report) => sum + Number(report.amountDue), 0))}</td><td /><td /><td className="px-3 py-2 text-right tabular-nums">{money(displayedReports.filter((report) => report.id > 0).reduce((sum, report) => sum + Number(report.payment?.amountPaid ?? 0), 0))}</td><td /></tr></tfoot>
               </table>
             </div>
-            <footer className="flex shrink-0 items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-700"><span>{reports.length} records</span><Link href={`/reports/philhealth?view=employees&employerId=${encodeURIComponent(employerId)}`} className="font-semibold text-emerald-800 hover:underline">Employee List</Link></footer>
+            <footer className="flex shrink-0 items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-700"><span>{displayedReports.length} records{displayedReports.length > reportPageSize ? ` · Page ${currentReportPage} of ${reportPageCount}` : ""}</span><div className="flex items-center gap-2">{reportYearFilter === "ALL" && displayedReports.length > reportPageSize && <><button type="button" onClick={() => setReportPage(currentReportPage - 1)} disabled={currentReportPage === 1} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Previous</button><button type="button" onClick={() => setReportPage(currentReportPage + 1)} disabled={currentReportPage >= reportPageCount} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Next</button></>}</div></footer>
           </>
         )}
       </section>}
@@ -622,6 +710,22 @@ function PhilHealthReportsContent() {
           </div>
         </div>
       </div>}
+      {paymentSavedOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentSavedOpen(false); }}>
+          <section role="alertdialog" aria-modal="true" aria-labelledby="philhealth-payment-saved-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <header className="flex items-center justify-between gap-3">
+              <h2 id="philhealth-payment-saved-title" className="text-lg font-bold text-slate-900">Payment saved</h2>
+              <button type="button" onClick={() => setPaymentSavedOpen(false)} aria-label="Close" className="rounded-full p-2 text-slate-600 hover:bg-slate-100">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </header>
+            <p className="mt-3 text-sm text-slate-700">PhilHealth payment details saved.</p>
+            <div className="mt-5 flex justify-end">
+              <button type="button" autoFocus onClick={() => setPaymentSavedOpen(false)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
@@ -681,7 +785,7 @@ function PhilHealthReportDetails({ report, canEditPayments, onClose, onPayment }
                   <td className="px-3 py-3 text-right tabular-nums text-slate-950">{money(Number(entry.amount) / 2)}</td>
                   <td className="px-3 py-3 text-right font-semibold tabular-nums text-slate-950">{money(entry.amount)}</td>
                 </tr>)}
-                {!report.entries.length && <tr><td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-600">This report has no employee entries.</td></tr>}
+                {!report.entries.length && <tr><td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-600">This report has no employee entries.</td></tr>}
               </tbody>
               <tfoot className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-950"><tr>
                 <td colSpan={4} className="px-3 py-3">Total ({report.entries.length} {report.entries.length === 1 ? "employee" : "employees"})</td>

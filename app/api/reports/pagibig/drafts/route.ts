@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const drafts = await prisma.pagibigReportDraft.findMany({
-      where: { createdBy: userId, employerId, kind: "CONTRIBUTION" },
+      where: { createdBy: userId, employerId },
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json({ drafts }, { headers: { "Cache-Control": "private, no-store" } });
@@ -38,17 +38,36 @@ export async function POST(request: NextRequest) {
   const month = Number(body.applicableMonth);
   const year = validPagibigYear(body.applicableYear);
   const pin = typeof body.pin === "string" ? body.pin.trim() : "";
+  const kind = body.kind === "LOAN" ? "LOAN" : "CONTRIBUTION";
+  const manual = body.manual === true;
   if ((id !== null && (!Number.isSafeInteger(id) || id <= 0)) || !Number.isSafeInteger(employerId) || employerId <= 0
     || !Number.isInteger(month) || month < 1 || month > 12 || !year || pin.length > 120) {
     return NextResponse.json({ error: "Enter a valid report period and PIN before saving the draft" }, { status: 400 });
   }
   try {
-    const data = { employerId, applicableMonth: month, applicableYear: year, pin, kind: "CONTRIBUTION", entries: [] as Prisma.InputJsonArray, updatedAt: new Date() };
-    const draft = id === null
+    const existingReport = await prisma.pagibigReport.findFirst({
+      where: { employerId, applicableMonth: month, applicableYear: year, manual, ...(manual ? { kind } : {}) },
+      select: { id: true },
+    });
+    if (existingReport) {
+      return NextResponse.json({ error: "A Pag-IBIG report already exists for this month and year" }, { status: 409 });
+    }
+    // Enforce a single draft per user/employer/month/year...
+    // instead of creating a duplicate when no explicit id is supplied.
+    let existingDraftId = id;
+    if (existingDraftId === null) {
+      const existing = await prisma.pagibigReportDraft.findFirst({
+        where: { createdBy: userId, employerId, applicableMonth: month, applicableYear: year, kind },
+        select: { id: true },
+      });
+      if (existing) existingDraftId = existing.id;
+    }
+    const data = { employerId, applicableMonth: month, applicableYear: year, pin, kind, entries: [] as Prisma.InputJsonArray, updatedAt: new Date() };
+    const draft = existingDraftId === null
       ? await prisma.pagibigReportDraft.create({ data: { ...data, createdBy: userId } })
-      : await prisma.pagibigReportDraft.updateMany({ where: { id, createdBy: userId }, data }).then(async (result) => result.count ? prisma.pagibigReportDraft.findUnique({ where: { id } }) : null);
+      : await prisma.pagibigReportDraft.updateMany({ where: { id: existingDraftId, createdBy: userId }, data }).then(async (result) => result.count ? prisma.pagibigReportDraft.findUnique({ where: { id: existingDraftId } }) : null);
     if (!draft) return NextResponse.json({ error: "Pag-IBIG report draft not found" }, { status: 404 });
-    return NextResponse.json({ draft }, { status: id === null ? 201 : 200, headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ draft }, { status: id === null && existingDraftId === null ? 201 : 200, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Save Pag-IBIG report draft error:", error);
     return NextResponse.json({ error: "Unable to save Pag-IBIG report draft" }, { status: 500 });

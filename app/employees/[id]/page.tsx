@@ -741,8 +741,28 @@ function EmployeeProfileContent() {
                       <EyeIcon aria-hidden="true" className="h-5 w-5" />
                     </Link>
                   </div>
-                  <Value label="Pag-IBIG" value={displayedEmployee.pagIbigNumber} />
-                  <Value label="PhilHealth" value={displayedEmployee.philHealth} />
+                  <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                    <Value label="Pag-IBIG" value={displayedEmployee.pagIbigNumber} />
+                    <Link
+                      href={displayedEmployee.employer?.id ? `/reports/pagibig?view=members&employerId=${displayedEmployee.employer.id}` : "/reports/pagibig?view=members"}
+                      aria-label="View Pag-IBIG records"
+                      title="View Pag-IBIG records"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                    >
+                      <EyeIcon aria-hidden="true" className="h-5 w-5" />
+                    </Link>
+                  </div>
+                  <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                    <Value label="PhilHealth" value={displayedEmployee.philHealth} />
+                    <Link
+                      href={displayedEmployee.employer?.id ? `/reports/philhealth?view=employees&employerId=${displayedEmployee.employer.id}` : "/reports/philhealth?view=employees"}
+                      aria-label="View PhilHealth records"
+                      title="View PhilHealth records"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                    >
+                      <EyeIcon aria-hidden="true" className="h-5 w-5" />
+                    </Link>
+                  </div>
                   <Value label="TIN" value={displayedEmployee.tinNumber} />
                 </ProfileSection>
               </div>}

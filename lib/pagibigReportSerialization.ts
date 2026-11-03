@@ -53,6 +53,7 @@ export function serializePagibigReport(report: PagibigReportWithEntries) {
     mplLoanTotal: total("mplLoanAmount"),
     emergencyLoanTotal: total("emergencyLoanAmount"),
     safeLoanTotal: total("safeLoanAmount"),
+    paymentTypeCode: report.manual ? 2 : 1,
     entries,
   };
 }

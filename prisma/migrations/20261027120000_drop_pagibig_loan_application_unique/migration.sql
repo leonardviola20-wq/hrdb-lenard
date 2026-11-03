@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS "PagibigEmployeeLoan_employerId_loanType_applicationNo_key";

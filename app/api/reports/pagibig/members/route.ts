@@ -198,7 +198,8 @@ export async function POST(request: NextRequest) {
         const loanTermDate = dateFromInput(dateText);
         const termYears = Number(detail.termYears);
         const amountCents = parsePagIbigMoneyCents(detail.amount);
-        const status = detail.status === "INACTIVE" ? "INACTIVE" : detail.status === "ACTIVE" ? "ACTIVE" : "";
+        const rawStatus = typeof detail.status === "string" ? detail.status.toUpperCase() : "";
+        const status = (rawStatus === "ACTIVE" || rawStatus.startsWith("INACTIVE")) ? rawStatus : "";
         if (applicationNo.length > 120 || amountCents === null) throw new Error("INVALID_PAGIBIG_LOAN");
         const matchingLoans = savedLoans.filter((loan) => getPagibigLoanTypeAliases(type).includes(loan.loanType.toUpperCase().replace(/[\s-]+/g, "_")));
         if (!applicationNo && amountCents === 0 && !loanTermDate) {
@@ -209,8 +210,14 @@ export async function POST(request: NextRequest) {
           throw new Error("INVALID_PAGIBIG_LOAN");
         }
         if (matchingLoans.length > 1) throw new Error("DUPLICATE_PAGIBIG_LOAN_TYPE");
+        const employeeRecords = await transaction.pagibigEmployeeRecord.findMany({ where: { employeeId, employerId }, select: { id: true } });
+        const employeeRecordIds = employeeRecords.map((item) => item.id);
+        if (status === "ACTIVE" && applicationNo) {
+          const previousActiveLoanIds = await transaction.pagibigEmployeeLoan.findMany({ where: { employerId, loanType: { in: getPagibigLoanTypeAliases(type) }, status: "ACTIVE", recordId: { in: employeeRecordIds.filter((id) => id !== record.id) } }, select: { id: true } });
+          if (previousActiveLoanIds.length) await transaction.pagibigEmployeeLoan.updateMany({ where: { id: { in: previousActiveLoanIds.map((loan) => loan.id) } }, data: { status: "INACTIVE", updatedAt: new Date() } });
+        }
         const duplicateApplication = await transaction.pagibigEmployeeLoan.findFirst({
-          where: { employerId, loanType: { in: getPagibigLoanTypeAliases(type) }, applicationNo, recordId: { not: record.id } },
+          where: { employerId, loanType: { in: getPagibigLoanTypeAliases(type) }, applicationNo, status: "ACTIVE", recordId: { notIn: employeeRecordIds } },
           select: { id: true },
         });
         if (duplicateApplication) throw new Error("DUPLICATE_PAGIBIG_APPLICATION");

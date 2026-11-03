@@ -457,6 +457,8 @@ exports.Prisma.PagibigReportScalarFieldEnum = {
   employerName: 'employerName',
   employerPagibigNumber: 'employerPagibigNumber',
   pin: 'pin',
+  manual: 'manual',
+  adjustments: 'adjustments',
   applicableMonth: 'applicableMonth',
   applicableYear: 'applicableYear',
   amountDue: 'amountDue',

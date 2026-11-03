@@ -37,7 +37,7 @@ const reportCards = [
     accent: "from-violet-500 to-violet-600",
     actions: [
       { label: "View", href: "/reports/pagibig?view=members", requiresEmployer: true },
-      { label: "Payments", href: "/reports/pagibig?view=payments", requiresEmployer: true },
+      { label: "Reports", href: "/reports/pagibig?view=payments", requiresEmployer: true },
     ],
   },
   {
@@ -46,8 +46,8 @@ const reportCards = [
     Icon: ShieldCheckIcon,
     accent: "from-emerald-500 to-emerald-600",
     actions: [
-      { label: "Contribution", href: "/reports/philhealth?view=employees", requiresEmployer: true },
-      { label: "Payments", href: "/reports/philhealth?view=payments", requiresEmployer: true },
+      { label: "View", href: "/reports/philhealth?view=employees", requiresEmployer: true },
+      { label: "Reports", href: "/reports/philhealth?view=reports", requiresEmployer: true },
     ],
   },
 ] as const;

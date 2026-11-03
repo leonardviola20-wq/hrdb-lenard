@@ -100,7 +100,7 @@ export default function AdminPage() {
 
   const openAccessDialog = (user: AdminUser) => {
     setAccessUser(user);
-    setSelectedPages(user.accessiblePages);
+    setSelectedPages(user.accessiblePages.filter((page) => page !== "/chat"));
     setAccessError("");
   };
 
@@ -192,7 +192,7 @@ export default function AdminPage() {
               </button>
             </header>
             <div className="px-5 py-4 sm:px-6">
-              <p className="mb-3 text-sm text-gray-600">Choose which sidebar pages this user can open.</p>
+              <p className="mb-3 text-sm text-gray-600">Choose which sidebar pages this user can open. Chat is available to all signed-in users.</p>
               <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
                 {PAGE_ACCESS_OPTIONS.map(({ href, label }) => (
                   <label key={href} className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50">

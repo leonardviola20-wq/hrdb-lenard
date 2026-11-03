@@ -544,8 +544,8 @@ export default function TasksPage() {
     color: string;
     dot: string;
   }[] = [
-    { status: "IN_PROGRESS", title: "In progress", description: "Tasks currently being worked on", color: "bg-blue-50", dot: "bg-blue-500" },
     { status: "PENDING", title: "To do", description: "Tasks waiting to be started", color: "bg-slate-100", dot: "bg-slate-500" },
+    { status: "IN_PROGRESS", title: "In progress", description: "Tasks currently being worked on", color: "bg-blue-50", dot: "bg-blue-500" },
     { status: "COMPLETED", title: "Completed", description: "Finished tasks", color: "bg-emerald-50", dot: "bg-emerald-500" },
   ];
 
@@ -589,51 +589,11 @@ export default function TasksPage() {
           </div>
         )}
 
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-sm font-medium text-slate-500">Quick filters:</span>
-          {[
-            { value: "ALL", label: "All tasks" },
-            { value: "PENDING", label: "To do" },
-            { value: "IN_PROGRESS", label: "In progress" },
-            { value: "OVERDUE", label: "Overdue" },
-            { value: "HIGH", label: "High priority" },
-            { value: "FLAGGED", label: "Flagged" },
-          ].map((quickFilter) => (
-            <button
-              key={quickFilter.value}
-              type="button"
-              onClick={() => setFilter(quickFilter.value)}
-              className={`${filter !== "ALL" && filter !== quickFilter.value ? "hidden" : "inline-flex"} rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                filter === quickFilter.value
-                  ? quickFilter.value === "OVERDUE"
-                    ? "border-rose-200 bg-rose-100 text-rose-700"
-                    : quickFilter.value === "HIGH"
-                      ? "border-amber-200 bg-amber-100 text-amber-700"
-                      : quickFilter.value === "FLAGGED"
-                        ? "border-rose-200 bg-rose-100 text-rose-700"
-                      : "border-blue-200 bg-blue-100 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-              }`}
-            >
-              {quickFilter.label}
-            </button>
-          ))}
-          {filter !== "ALL" && (
-            <button
-              type="button"
-              onClick={() => setFilter("ALL")}
-              className="text-xs font-medium text-slate-400 hover:text-slate-700"
-            >
-              Clear filter
-            </button>
-          )}
-        </div>
-
         {message && <p className="mb-4 text-red-600">{message}</p>}
         {loading ? <p className="text-slate-600">Loading tasks...</p> : visibleTasks.length === 0 && filter !== "ALL" ? (
           <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">No tasks match this filter.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {columns.map((column) => {
               const columnTasks = visibleTasks.filter((task) => task.status === column.status);
               if (filter !== "ALL" && columnTasks.length === 0) return null;
@@ -649,7 +609,7 @@ export default function TasksPage() {
                       <p className="mt-1 text-xs text-slate-500">{column.description}</p>
                     </div>
                   </div>
-                  <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="flex flex-col gap-2.5">
                     {columnTasks.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-slate-300 bg-white/40 p-5 text-center text-sm text-slate-500">No tasks here</div>
                     ) : columnTasks.map((task, index) => {
