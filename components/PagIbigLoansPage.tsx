@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { HistoryBackLink } from "@/components/HistoryBackLink";
 
@@ -28,6 +28,10 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 2024 + 1 }, (_, i) => currentYear - i);
 
 export default function PagIbigLoansPage() {
+  return <Suspense fallback={<main className="flex-1 bg-slate-50 p-4 sm:p-6" />}><PagIbigLoansContent /></Suspense>;
+}
+
+function PagIbigLoansContent() {
   const searchParams = useSearchParams();
   const employerId = searchParams.get("employerId") ?? "";
   const [year, setYear] = useState(String(currentYear));

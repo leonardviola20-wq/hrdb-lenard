@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent as ReactFormEvent } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent as ReactFormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -23,6 +23,10 @@ import { ReportDeleteDialog, PaymentDialog, ContributionTableDialog } from "./ss
 import type { PaymentFormState, Report, SssLoan, SssReportDraft } from "./sss-reports/types";
 
 export default function SssReportsPage() {
+  return <Suspense fallback={<main className="flex-1 bg-slate-50 p-4 sm:p-6" />}><SssReportsContent /></Suspense>;
+}
+
+function SssReportsContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
