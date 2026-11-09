@@ -3,7 +3,7 @@
 import { monthNames } from "./constants";
 import type { ReportDraft } from "./types";
 
-type Props = {
+export type DraftsMenuProps = {
   open: boolean;
   drafts: ReportDraft[];
   onToggle: () => void;
@@ -11,7 +11,7 @@ type Props = {
   onDelete: (draft: ReportDraft) => void;
 };
 
-export function DraftsMenu({ open, drafts, onToggle, onResume, onDelete }: Props) {
+export function DraftsMenu({ open, drafts, onToggle, onResume, onDelete }: DraftsMenuProps) {
   return (
     <div className="relative">
       <button

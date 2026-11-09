@@ -1,16 +1,14 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowPathIcon, ChevronLeftIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getPagibigCreateEmployeeHref } from "@/lib/pagibigEmployeeWorkflow";
 import { sortPagibigPreviewMembers } from "@/lib/pagibigReportPreview";
 import { validPagibigYear } from "@/lib/pagibigYear";
 import {
   AccountFormDialog,
   DeleteReportDialog,
-  DraftsMenu,
   ManualReportsDialog,
   MembersTable,
   PaymentDialog,
@@ -18,9 +16,11 @@ import {
   ReportGenerationDialog,
   ReportsTable,
 } from "@/components/pagibig-reports";
-import { inputClass, memberAccountYear, monthNames } from "@/components/pagibig-reports/constants";
+import { PagIbigReportsHeader } from "@/components/pagibig-reports/ReportsHeader";
+import { memberAccountYear, monthNames } from "@/components/pagibig-reports/constants";
 import { usePagibigAccountForm } from "@/components/pagibig-reports/usePagibigAccountForm";
 import { usePagibigDrafts } from "@/components/pagibig-reports/usePagibigDrafts";
+import { usePagibigEmployeeRoster } from "@/components/pagibig-reports/usePagibigEmployeeRoster";
 import { usePagibigPayments } from "@/components/pagibig-reports/usePagibigPayments";
 import { usePagibigReportData } from "@/components/pagibig-reports/usePagibigReportData";
 import { usePagibigReportForm } from "@/components/pagibig-reports/usePagibigReportForm";
@@ -67,14 +67,6 @@ function PagIbigReportsContent() {
   const [selectedManualReports, setSelectedManualReports] = useState<Report[] | null>(null);
   const [manualViewReturnReports, setManualViewReturnReports] = useState<Report[] | null>(null);
 
-  const [allEmployees, setAllEmployees] = useState<Member[]>([]);
-  const [allEmployeesError, setAllEmployeesError] = useState("");
-  const [allEmployeesLoading, setAllEmployeesLoading] = useState(false);
-  const [selectedReportEmployees, setSelectedReportEmployees] = useState<Member[]>([]);
-  const reportEmployeeRosterLoadedRef = useRef(false);
-  const previewRequestRef = useRef(0);
-  const autoAddEmployeeRef = useRef("");
-
   const account = usePagibigAccountForm();
   const {
     accountFormOpen, returnToReportPreview, editingMember, accountForm,
@@ -109,11 +101,17 @@ function PagIbigReportsContent() {
     deletingReport, openPayment, savePayment,
   } = payments;
 
+  const roster = usePagibigEmployeeRoster({ onError: setError });
+  const { allEmployees, setAllEmployees, allEmployeesError, clearRosterError, allEmployeesLoading, setAllEmployeesLoading, rosterLoadedRef } = roster;
+
   const accountActions = usePagibigAccountActions({
     account, accountYear, reportYear, setReportFormOpen: (open) => setReportFormOpen(open),
   });
   const { openAddAccount, openEditAccount, closeAccountForm, openLoanEditor, saveLoanDetail, deleteLoanDetail, onSelectEmployeeForAccount } = accountActions;
 
+  const previewRequestRef = useRef(0);
+  const autoAddEmployeeRef = useRef("");
+  const [selectedReportEmployees, setSelectedReportEmployees] = useState<Member[]>([]);
   const reportActions = usePagibigReportActions({
     form, drafts, selectedEmployerId, paymentsView, yearFilter,
     reports, setReports, setError, setNotice,
@@ -151,9 +149,6 @@ function PagIbigReportsContent() {
   }, [paymentsView, selectedEmployerId, setReportDrafts, setError]);
 
   useDismissableMenu(reportMenuRef, Boolean(reportMenuOpen), () => setReportMenuOpen(null));
-  const newReportMenuRef = useRef<HTMLDivElement | null>(null);
-  const [newReportMenuOpen, setNewReportMenuOpen] = useState(false);
-  useDismissableMenu(newReportMenuRef, newReportMenuOpen, () => setNewReportMenuOpen(false));
   const draftsMenuRef = useRef<HTMLDivElement | null>(null);
   useDismissableMenu(draftsMenuRef, draftsOpen, () => setDraftsOpen(false));
 
@@ -193,52 +188,25 @@ function PagIbigReportsContent() {
     reportEmployer,
   });
 
-  const loadReportEmployeeOptions = useCallback(async () => {
-    setAllEmployeesLoading(true);
-    setAllEmployeesError("");
-    try {
-      const response = await fetch("/api/reports/pagibig/employees", { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to load employees");
-      setAllEmployees(data.employees as Member[]);
-    } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : "Unable to load employees";
-      setAllEmployeesError(message);
-      setError(message);
-    } finally {
-      setAllEmployeesLoading(false);
-      reportEmployeeRosterLoadedRef.current = true;
-    }
-  }, [setError]);
+  const resetMemberFilters = (status: "ALL" | "ACTIVE") => {
+    setSearch("");
+    setMemberStatusFilter(status);
+    setMemberPage(1);
+  };
 
+  /** Loads the roster and pre-selects the just-created employee in the account form. */
   const handleAddAccountRoster = useCallback((employeeId: string) => {
-    setAllEmployeesError("");
+    clearRosterError();
     setAllEmployees([]);
     setAllEmployeesLoading(true);
-    fetch("/api/reports/pagibig/employees", { cache: "no-store" })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to load employees");
-        return data.employees as Member[];
-      })
-      .then((employees) => {
-        setAllEmployees(employees);
-        if (!employeeId) return;
-        const employee = employees.find((item) => String(item.id) === employeeId);
-        if (!employee) {
-          setAccountError("The new employee could not be found. Refresh the employee list and try again.");
-          return;
-        }
-        setAccountForm((current) => ({ ...current, employeeId, midNumber: employee.pagIbigNumber ?? "" }));
-      })
-      .catch((loadError: unknown) => {
-        setAllEmployeesError(loadError instanceof Error ? loadError.message : "Unable to load employees");
-      })
-      .finally(() => {
-        setAllEmployeesLoading(false);
-        reportEmployeeRosterLoadedRef.current = true;
-      });
-  }, [setAccountError, setAccountForm]);
+    roster.handleAddAccountRoster(employeeId, (employee) => {
+      if (!employee) {
+        setAccountError("The new employee could not be found. Refresh the employee list and try again.");
+        return;
+      }
+      setAccountForm((current) => ({ ...current, employeeId: employee.id ? String(employee.id) : employeeId, midNumber: employee.pagIbigNumber ?? "" }));
+    });
+  }, [clearRosterError, setAccountError, setAccountForm, roster]);
 
   useEffect(() => {
     if (paymentsView || !selectedEmployerId || !Number.isSafeInteger(requestedNewEmployeeId) || requestedNewEmployeeId <= 0
@@ -292,19 +260,12 @@ function PagIbigReportsContent() {
         setMembers((current) => sortPagibigPreviewMembers([...current, newMember]));
         setPreviewMembers((current) => sortPagibigPreviewMembers([...current, newMember]));
       }
-      if (!editingMember && !returnToReportPreview) {
-        setSearch("");
-        setMemberStatusFilter("ALL");
-        setMemberPage(1);
-      }
       setAccountFormOpen(false);
       setLoanEditorBackup(null);
       if (returnToReportPreview) {
         setReportFormOpen(true);
       } else {
-        setSearch("");
-        setMemberStatusFilter("ACTIVE");
-        setMemberPage(1);
+        resetMemberFilters("ACTIVE");
         setError("");
         setNotice("");
         requestRefresh();
@@ -348,75 +309,51 @@ function PagIbigReportsContent() {
     form.setUpdatingReportId(null);
     setReportFormOpen(false);
   };
+  /** Shows the details dialog, remembering which manual-reports list to return to afterwards. */
+  const openReportDetails = (report: Report, fromManualReports: Report[] | null) => {
+    if (fromManualReports) { setSelectedManualReports(fromManualReports); setManualViewReturnReports(null); }
+    setSelectedReport(report);
+  };
+  const closeReportDetails = () => {
+    setSelectedReport(null);
+    if (manualViewReturnReports) { setSelectedManualReports(manualViewReturnReports); setManualViewReturnReports(null); }
+  };
+  const closeManualReports = () => setSelectedManualReports(null);
+  const openPaymentFromManualReports = (report: Report) => {
+    setSelectedManualReports(null);
+    openPayment(report);
+  };
 
   return (
     <main className="benefit-report-page flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden p-0 sm:p-2 lg:p-4 md:h-[calc(100dvh-7.75rem)]">
-      <section className="benefit-report-header shrink-0 rounded-2xl p-3 sm:p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link href={`/reports?employerId=${encodeURIComponent(selectedEmployerId)}`} aria-label="Back to Reports" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
-              <ChevronLeftIcon className="h-5 w-5" />
-            </Link>
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Benefits reports</p>
-              <h1 className="benefit-report-title">{paymentsView ? "Payments" : "Employee List"}</h1>
-              {reportEmployer?.id === Number(selectedEmployerId) && <p className="truncate text-sm font-semibold text-slate-700" title={`${reportEmployer.name} · ${reportEmployer.pagibigNumber || "-"}`}>{reportEmployer.name} · {reportEmployer.pagibigNumber || "-"}</p>}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {paymentsView ? (
-              <Link href={`/reports/pagibig?view=members&employerId=${encodeURIComponent(selectedEmployerId)}`} aria-current="page" className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">Employees</Link>
-            ) : (
-              <Link href={`/reports/pagibig?view=payments&employerId=${encodeURIComponent(selectedEmployerId)}`} className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">Payments</Link>
-            )}
-          </div>
-        </div>
-
-        <div className="benefit-report-toolbar mt-3 min-w-0 border-t border-slate-100 pt-3">
-          {selectedEmployerId && (paymentsView ? (
-            <>
-              <div ref={newReportMenuOpen ? newReportMenuRef : null} className="relative">
-                <button type="button" onClick={() => setNewReportMenuOpen((open) => !open)} aria-haspopup="menu" aria-expanded={newReportMenuOpen} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />New</button>
-                {newReportMenuOpen && (
-                  <div role="menu" className="absolute left-0 z-20 mt-2 min-w-[9rem] rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
-                    <button type="button" role="menuitem" onClick={() => { setNewReportMenuOpen(false); void openReportForm([], true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><PlusIcon className="h-4 w-4" />Manual</button>
-                    <button type="button" role="menuitem" onClick={() => { setNewReportMenuOpen(false); void openReportForm(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><PlusIcon className="h-4 w-4" />PIF</button>
-                  </div>
-                )}
-              </div>
-              <div className="inline-flex rounded-lg border border-slate-300 bg-white p-1" role="tablist" aria-label="Pag-IBIG payment view">
-                <button type="button" role="tab" aria-selected={reportView === "PIF"} onClick={() => { setReportView("PIF"); setReportPage(1); }} className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${reportView === "PIF" ? "bg-violet-700 text-white shadow-sm" : "text-slate-700 hover:bg-slate-100"}`}>PIF</button>
-                <button type="button" role="tab" aria-selected={reportView === "MANUAL"} onClick={() => { setReportView("MANUAL"); setReportPage(1); }} className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${reportView === "MANUAL" ? "bg-violet-700 text-white shadow-sm" : "text-slate-700 hover:bg-slate-100"}`}>Manual</button>
-              </div>
-            </>
-          ) : (
-            <button type="button" onClick={() => openAddAccount("", handleAddAccountRoster)} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />Add</button>
-          ))}
-          <input id="pagibig-search" aria-label="Search Pag-IBIG records" value={search} onChange={(event) => { setSearch(event.target.value); if (!paymentsView) setMemberPage(1); }} placeholder={paymentsView ? "Search period or employee" : "Search employee, code, or MID"} className={`${inputClass} min-w-[14rem] flex-[2_1_16rem]`} />
-          {paymentsView ? (
-            <>
-              <select id="pagibig-year" aria-label="Filter reports by year" value={yearFilter} onChange={(event) => { setYearFilter(event.target.value); setReportPage(1); }} className={`${inputClass} flex-[0_0_8rem]`}>
-                <option value="">All years</option>{view.years.map((year) => <option key={year} value={year}>{year}</option>)}
-              </select>
-              <select id="pagibig-payment-status" aria-label="Filter reports by payment status" value={paymentStatusFilter} onChange={(event) => { const value = event.target.value; if (value === "ALL" || value === "PAID" || value === "UNPAID") setPaymentStatusFilter(value); setReportPage(1); }} className={`${inputClass} flex-[0_0_8rem]`}>
-                <option value="ALL">All statuses</option><option value="UNPAID">Unpaid</option><option value="PAID">Paid</option>
-              </select>
-            </>
-          ) : (
-            <select id="pagibig-member-status" aria-label="Filter employee accounts by status" value={memberStatusFilter} onChange={(event) => {
-              const status = event.target.value;
-              if (status === "ALL" || status === "ACTIVE" || status === "INACTIVE") setMemberStatusFilter(status);
-              setMemberPage(1);
-            }} className={`${inputClass} flex-[0_0_10rem]`}>
-              <option value="ALL">All statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </select>
-          )}
-          <button type="button" onClick={refresh} disabled={refreshing} aria-label="Refresh Pag-IBIG records" title="Refresh" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"><ArrowPathIcon className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} /></button>
-          {selectedEmployerId && paymentsView && <DraftsMenu open={draftsOpen} drafts={reportDrafts} onToggle={() => setDraftsOpen((open) => !open)} onResume={(draft) => void resumeReportDraft(draft)} onDelete={(draft) => void deleteReportDraft(draft)} />}
-        </div>
-      </section>
+      <PagIbigReportsHeader
+        selectedEmployerId={selectedEmployerId}
+        paymentsView={paymentsView}
+        reportEmployer={reportEmployer}
+        refreshing={refreshing}
+        onRefresh={refresh}
+        search={search}
+        onSearchChange={(value) => { setSearch(value); if (!paymentsView) setMemberPage(1); }}
+        years={view.years}
+        yearFilter={yearFilter}
+        onYearFilterChange={(value) => { setYearFilter(value); setReportPage(1); }}
+        paymentStatusFilter={paymentStatusFilter}
+        onPaymentStatusFilterChange={(value) => { setPaymentStatusFilter(value); setReportPage(1); }}
+        memberStatusFilter={memberStatusFilter}
+        onMemberStatusFilterChange={(value) => { setMemberStatusFilter(value); setMemberPage(1); }}
+        reportView={reportView}
+        onReportViewChange={(value) => { setReportView(value); setReportPage(1); }}
+        onOpenManualReportForm={() => void openReportForm([], true)}
+        onOpenPifReportForm={() => void openReportForm()}
+        onOpenAddAccount={() => openAddAccount("", handleAddAccountRoster)}
+        drafts={selectedEmployerId && paymentsView ? {
+          open: draftsOpen,
+          drafts: reportDrafts,
+          onToggle: () => setDraftsOpen((open) => !open),
+          onResume: (draft) => void resumeReportDraft(draft),
+          onDelete: (draft) => void deleteReportDraft(draft),
+        } : undefined}
+      />
 
       {!selectedEmployerId && <p role="status" className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Select an employer from the Reports dashboard to view Pag-IBIG records.</p>}
       {error && <div role="alert" className="benefit-report-notice benefit-report-notice-error shrink-0 flex items-center gap-2"><span>{error}</span><button type="button" onClick={() => setError("")} aria-label="Dismiss error" className="shrink-0 rounded-md p-1 text-rose-800 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-600"><XMarkIcon className="h-4 w-4" /></button></div>}
@@ -540,7 +477,7 @@ function PagIbigReportsContent() {
         }}
         onAddAllEmployees={() => void addAllReportEmployees()}
         onToggleEmployeePicker={() => {
-          if (!reportEmployeeRosterLoadedRef.current && !allEmployeesLoading && !allEmployeesError) void loadReportEmployeeOptions();
+          if (!rosterLoadedRef.current && !allEmployeesLoading && !allEmployeesError) void roster.loadReportEmployeeOptions();
           setReportEmployeePickerOpen((current) => !current);
         }}
         onAddEmployee={(employeeId) => void addReportEmployee(employeeId)}
@@ -550,9 +487,9 @@ function PagIbigReportsContent() {
         onRemoveEmployee={removeReportEmployee}
       />
 
-      {selectedReport && <ReportDetails report={selectedReport} onClose={() => { setSelectedReport(null); if (manualViewReturnReports) { setSelectedManualReports(manualViewReturnReports); setManualViewReturnReports(null); } }} onPayment={(paidReport) => { setSelectedReport(null); if (manualViewReturnReports) { setSelectedManualReports(manualViewReturnReports); setManualViewReturnReports(null); } openPayment(paidReport); }} employerAddress={reportEmployer?.address ?? null} />}
+      {selectedReport && <ReportDetails report={selectedReport} onClose={closeReportDetails} onPayment={(paidReport) => { setSelectedReport(null); openPayment(paidReport); }} employerAddress={reportEmployer?.address ?? null} />}
 
-      {selectedManualReports && <ManualReportsDialog reports={selectedManualReports} canEditPayments={canEditPayments} onClose={() => setSelectedManualReports(null)} onViewDetails={(report) => { setManualViewReturnReports(selectedManualReports); setSelectedManualReports(null); setSelectedReport(report); }} onOpenPayment={(report) => { setSelectedManualReports(null); openPayment(report); }} />}
+      {selectedManualReports && <ManualReportsDialog reports={selectedManualReports} canEditPayments={canEditPayments} onClose={closeManualReports} onViewDetails={(report) => openReportDetails(report, selectedManualReports)} onOpenPayment={openPaymentFromManualReports} />}
 
       {deleteReportTarget && <DeleteReportDialog report={deleteReportTarget} deleting={deletingReport} onCancel={() => setDeleteReportTarget(null)} onDelete={() => void deleteReport()} />}
 
