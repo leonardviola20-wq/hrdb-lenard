@@ -1,7 +1,8 @@
 "use client";
 
 import { PencilSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { formatAmount, formatEmployeeName, memberAmountColumns } from "./format";
+import { formatAmount, formatEmployeeName, formatMoney } from "./format";
+import { memberAmountColumns } from "./format";
 import type { Member } from "./types";
 
 type Props = {
@@ -16,7 +17,8 @@ type Props = {
   memberPageCount: number;
   onPrevPage: () => void;
   onNextPage: () => void;
-  onOpenAccount: (member: Member) => void;
+  onEditAccount: (member: Member) => void;
+  onAddAccount: (employeeId: string) => void;
 };
 
 export function MembersTable({
@@ -31,7 +33,8 @@ export function MembersTable({
   memberPageCount,
   onPrevPage,
   onNextPage,
-  onOpenAccount,
+  onEditAccount,
+  onAddAccount,
 }: Props) {
   return (
     <>
@@ -43,18 +46,26 @@ export function MembersTable({
             <col style={{ width: "12%" }} />
             <col style={{ width: "10%" }} />
           </colgroup>
-          <thead><tr><th className="bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">Employee / Pag-IBIG Number</th>{memberAmountColumns.map((column) => <th key={column.label} data-report-accent className={`px-3 py-2 text-right text-sm font-bold ${column.headerClass}`}>{column.label}</th>)}<th className="bg-slate-100 px-3 py-2 text-right text-sm font-bold text-slate-800">Grand Total</th><th className="bg-slate-100 px-3 py-2 text-right text-sm font-bold text-slate-800">Action</th></tr></thead>
+          <thead><tr><th className="bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">Employee / Pag-IBIG Number</th>{memberAmountColumns.map((column) => <th key={column.label} data-report-accent className={`px-3 py-2 text-right text-sm font-bold ${column.headerClass}`}>{column.label}</th>)}<th className="bg-slate-100 px-3 py-2 text-right text-sm font-bold text-slate-800">Grand Total</th><th className="bg-slate-100 px-3 py-2 text-right text-sm font-bold text-slate-800">Account</th></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {visibleMembers.map((member) => {
               const account = member.pagIbigAccount;
-              const setup = !Boolean(account);
-              const rowTotal = memberAmountColumns.reduce((total, column) => total + Number(account?.[column.field] ?? 0), 0);
+              const setup = !account;
+              const grandTotal = account ? Number(account.employeeSavings) + Number(account.employerSavings) + Number(account.mp2Amount) + Number(account.calamityLoanAmount) + Number(account.mplLoanAmount) + Number(account.emergencyLoanAmount) + Number(account.safeLoanAmount) : 0;
               return (
                 <tr key={member.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-1 font-semibold text-slate-900">{formatEmployeeName(member)} <div className="text-xs font-medium text-slate-700">{member.pagIbigNumber || "Pag-IBIG number not set"} - <span className={account?.excludedFromReport ? "text-red-700" : "text-emerald-700"}>{account?.excludedFromReport ? "Inactive" : "Active"}</span></div></td>
-                  {memberAmountColumns.map((column) => <td key={column.label} className={`px-3 py-1 text-right font-medium tabular-nums ${column.cellClass}`}>{account ? formatAmount(account[column.field]) : "-"}</td>)}
-                  <td className="px-3 py-1 text-right font-bold tabular-nums text-slate-950">{account ? formatAmount(rowTotal) : "-"}</td>
-                  <td className="px-3 py-1 text-right"><button type="button" onClick={() => onOpenAccount(member)} aria-label={setup ? "Set up Pag-IBIG account" : "Edit Pag-IBIG account"} title={setup ? "Set up Pag-IBIG account" : "Edit Pag-IBIG account"} className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">{setup ? <PlusIcon className="h-4 w-4" /> : <PencilSquareIcon className="h-4 w-4" />}</button></td>
+                  <td className="px-3 py-2 align-top">
+                    <div className="font-semibold text-slate-900">{formatEmployeeName(member)}</div>
+                    <div className="text-xs text-slate-500">{member.pagIbigNumber || "No MID"}</div>
+                  </td>
+                  {memberAmountColumns.map((column) => {
+                    const value = account ? (account as unknown as Record<string, string | null>)[column.field] : "0";
+                    return <td key={column.label} className={`px-3 py-2 text-right tabular-nums ${column.cellClass}`}>{formatAmount(value)}</td>;
+                  })}
+                  <td className="px-3 py-2 text-right font-bold tabular-nums text-slate-950">{formatAmount(grandTotal)}</td>
+                  <td className="px-3 py-2 text-right">
+                    <button type="button" onClick={() => (setup ? onAddAccount(String(member.id)) : onEditAccount(member))} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">{setup ? <PlusIcon className="h-4 w-4" /> : <PencilSquareIcon className="h-4 w-4" />}</button>
+                  </td>
                 </tr>
               );
             })}

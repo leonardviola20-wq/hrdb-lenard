@@ -6,7 +6,7 @@ import { monthNames } from "./constants";
 import { formatMoney } from "./format";
 import type { Report } from "./types";
 
-export function ReportDetails({ report, onClose, onPayment, employerAddress }: { report: Report; onClose: () => void; onPayment: (report: Report) => void; employerAddress?: string | null }) {
+function ReportDetails({ report, onClose, onPayment, employerAddress }: { report: Report; onClose: () => void; onPayment: (report: Report) => void; employerAddress?: string | null }) {
   const totalSavings = report.entries.reduce((sum, entry) => sum + Number(entry.employeeSavings) + Number(entry.employerSavings), 0);
   const totalMp2 = report.entries.reduce((sum, entry) => sum + Number(entry.mp2Amount), 0);
   const totalLoans = report.entries.reduce((sum, entry) => sum + Number(entry.calamityLoanAmount) + Number(entry.mplLoanAmount) + Number(entry.emergencyLoanAmount) + Number(entry.safeLoanAmount), 0);
@@ -126,3 +126,5 @@ export function ReportDetails({ report, onClose, onPayment, employerAddress }: {
     </div>
   );
 }
+
+export { ReportDetails };

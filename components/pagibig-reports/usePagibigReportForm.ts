@@ -1,144 +1,97 @@
 "use client";
 
-import { useState, type Dispatch, type FormEvent, type SetStateAction } from "react";
-import type { Member, Report, ReportDraft } from "@/components/pagibig-reports/types";
+import { useReducer } from "react";
+import type { Member } from "@/components/pagibig-reports/types";
 import type { PagibigPreviewFilter } from "@/lib/pagibigReportPreview";
 
-type GenerateReportContext = {
-  employerId: string;
+// Report-form related state consolidated into a reducer (Tier 4 pilot).
+// Exposes the same setter signatures as the previous useState calls so call
+// sites do not need to change.
+
+export type PagibigReportFormState = {
+  reportFormOpen: boolean;
+  previewMembers: Member[];
+  previewLoading: boolean;
+  previewError: string;
+  previewYear: string;
+  previewFilter: PagibigPreviewFilter;
+  reportEmployeePickerOpen: boolean;
+  reportEmployeeId: string;
+  reportMonth: string;
+  reportYear: string;
+  reportPin: string;
+  manualReport: boolean;
+  reportKind: "CONTRIBUTION" | "LOAN";
   reportDraftId: number | null;
-  setReports: Dispatch<SetStateAction<Report[]>>;
-  setReportDrafts: Dispatch<SetStateAction<ReportDraft[]>>;
-  setSelectedReport: Dispatch<SetStateAction<Report | null>>;
-  setError: (message: string) => void;
-  setNotice: (message: string) => void;
+  updatingReportId: number | null;
+  generating: boolean;
+  returnToReportPreview: boolean;
 };
 
-export function usePagibigReportForm() {
-  const [reportFormOpen, setReportFormOpen] = useState(false);
-  const [previewMembers, setPreviewMembers] = useState<Member[]>([]);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState("");
-  const [previewYear, setPreviewYear] = useState("");
-  const [previewFilter, setPreviewFilter] = useState<PagibigPreviewFilter>("ALL");
-  const [reportEmployeePickerOpen, setReportEmployeePickerOpen] = useState(false);
-  const [reportEmployeeId, setReportEmployeeId] = useState("");
-  const [reportMonth, setReportMonth] = useState(String(new Date().getMonth() + 1));
-  const [reportYear, setReportYear] = useState(String(new Date().getFullYear()));
-  const [reportPin, setReportPin] = useState("");
-  const [manualReport, setManualReport] = useState(false);
-  const [reportKind, setReportKind] = useState<"CONTRIBUTION" | "LOAN">("CONTRIBUTION");
-  const [updatingReportId, setUpdatingReportId] = useState<number | null>(null);
-  const [generating, setGenerating] = useState(false);
+type Action<K extends keyof PagibigReportFormState = keyof PagibigReportFormState> =
+  | { type: "SET"; field: K; value: PagibigReportFormState[K] | ((prev: PagibigReportFormState[K]) => PagibigReportFormState[K]) }
+  | { type: "RESET_PREVIEW" };
 
-  const resetPreview = () => {
-    setPreviewMembers([]);
-    setPreviewError("");
-    setPreviewYear("");
-  };
+const initialState: PagibigReportFormState = {
+  reportFormOpen: false,
+  previewMembers: [],
+  previewLoading: false,
+  previewError: "",
+  previewYear: "",
+  previewFilter: "ALL",
+  reportEmployeePickerOpen: false,
+  reportEmployeeId: "",
+  reportMonth: String(new Date().getMonth() + 1),
+  reportYear: String(new Date().getFullYear()),
+  reportPin: "",
+  manualReport: false,
+  reportKind: "CONTRIBUTION",
+  reportDraftId: null,
+  updatingReportId: null,
+  generating: false,
+  returnToReportPreview: false,
+};
 
-  const generateReport = async (
-    event: FormEvent<HTMLFormElement> | undefined,
-    {
-      employerId,
-      reportDraftId,
-      setReports,
-      setReportDrafts,
-      setSelectedReport,
-      setError,
-      setNotice,
-    }: GenerateReportContext,
-  ) => {
-    event?.preventDefault();
-    setGenerating(true);
-    setError("");
-
-    try {
-      const employeeIds = previewMembers.map((member) => member.id);
-      const endpoint = updatingReportId
-        ? `/api/reports/pagibig/${updatingReportId}?employerId=${encodeURIComponent(employerId)}`
-        : "/api/reports/pagibig";
-      const method = updatingReportId ? "PUT" : "POST";
-      const body = updatingReportId
-        ? JSON.stringify({ pin: reportPin, employeeIds })
-        : JSON.stringify({
-            employerId,
-            applicableMonth: reportMonth,
-            applicableYear: reportYear,
-            pin: reportPin,
-            draftId: reportDraftId,
-            employeeIds,
-            kind: manualReport ? reportKind : "CONTRIBUTION",
-            manual: manualReport,
-          });
-      const response = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to generate Pag-IBIG report");
-
-      const updatedReport = data.report as Report;
-      setReports((current) =>
-        updatingReportId
-          ? current.map((report) => (report.id === updatedReport.id ? updatedReport : report))
-          : [updatedReport, ...current],
-      );
-      if (reportDraftId !== null) {
-        setReportDrafts((current) => current.filter((draft) => draft.id !== reportDraftId));
-      }
-      setUpdatingReportId(null);
-      setReportFormOpen(false);
-      setSelectedReport(updatedReport);
-      setNotice(
-        updatingReportId
-          ? "Pag-IBIG report updated."
-          : "Pag-IBIG report saved as an immutable snapshot.",
-      );
-    } catch (generateError) {
-      setError(
-        generateError instanceof Error
-          ? generateError.message
-          : "Unable to generate Pag-IBIG report",
-      );
-    } finally {
-      setGenerating(false);
+function reducer(state: PagibigReportFormState, action: Action): PagibigReportFormState {
+  switch (action.type) {
+    case "SET": {
+      const current = state[action.field];
+      const value = typeof action.value === "function" ? (action.value as (prev: unknown) => unknown)(current) : action.value;
+      return { ...state, [action.field]: value };
     }
-  };
+    case "RESET_PREVIEW":
+      return { ...state, previewMembers: [], previewError: "", previewYear: "" };
+    default:
+      return state;
+  }
+}
+
+export function usePagibigReportForm(initial?: Partial<PagibigReportFormState>) {
+  const [state, dispatch] = useReducer(reducer, { ...initialState, ...initial });
+  const set = <K extends keyof PagibigReportFormState>(field: K) => (value: PagibigReportFormState[K] | ((prev: PagibigReportFormState[K]) => PagibigReportFormState[K])) =>
+    dispatch({ type: "SET", field, value } as Action<K> as Action<keyof PagibigReportFormState>);
 
   return {
-    reportFormOpen,
-    setReportFormOpen,
-    previewMembers,
-    setPreviewMembers,
-    previewLoading,
-    setPreviewLoading,
-    previewError,
-    setPreviewError,
-    previewYear,
-    setPreviewYear,
-    previewFilter,
-    setPreviewFilter,
-    reportEmployeePickerOpen,
-    setReportEmployeePickerOpen,
-    reportEmployeeId,
-    setReportEmployeeId,
-    reportMonth,
-    setReportMonth,
-    reportYear,
-    setReportYear,
-    reportPin,
-    setReportPin,
-    manualReport,
-    setManualReport,
-    reportKind,
-    setReportKind,
-    updatingReportId,
-    setUpdatingReportId,
-    generating,
-    setGenerating,
-    generateReport,
-    resetPreview,
+    state,
+    dispatch,
+    // drop-in setters matching previous useState API
+    setReportFormOpen: set("reportFormOpen"),
+    setPreviewMembers: set("previewMembers"),
+    setPreviewLoading: set("previewLoading"),
+    setPreviewError: set("previewError"),
+    setPreviewYear: set("previewYear"),
+    setPreviewFilter: set("previewFilter"),
+    setReportEmployeePickerOpen: set("reportEmployeePickerOpen"),
+    setReportEmployeeId: set("reportEmployeeId"),
+    setReportMonth: set("reportMonth"),
+    setReportYear: set("reportYear"),
+    setReportPin: set("reportPin"),
+    setManualReport: set("manualReport"),
+    setReportKind: set("reportKind"),
+    setReportDraftId: set("reportDraftId"),
+    setUpdatingReportId: set("updatingReportId"),
+    setGenerating: set("generating"),
+    setReturnToReportPreview: set("returnToReportPreview"),
+    resetPreview: () => dispatch({ type: "RESET_PREVIEW" }),
   };
 }

@@ -8,11 +8,12 @@ export function proxy(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
   const pathname = req.nextUrl.pathname;
   const isPublicRoute =
-    pathname === "/" || pathname === "/login" || pathname === "/register";
+    pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/index.html";
+  const isStaticAsset = /\.(css|js|png|jpe?g|svg|ico|json|ttf|woff2?|pdf|webp)$/i.test(pathname);
   const isNextAsset =
     pathname.startsWith("/_next/") || pathname === "/favicon.ico";
 
-  if (!isPublicRoute && !isNextAsset && !pathname.startsWith("/api/")) {
+  if (!isPublicRoute && !isNextAsset && !isStaticAsset && !pathname.startsWith("/api/")) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", req.url));
     }

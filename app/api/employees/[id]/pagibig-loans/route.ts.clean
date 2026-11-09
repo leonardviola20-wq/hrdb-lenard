@@ -1,0 +1,122 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getAuthenticatedSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+type RouteContext = { params: Promise<{ id: string }> };
+
+/** Returns this employee's Pag-IBIG loans (CAL / MPL / Emergency / Safe) across all employers and years.
+ *
+ * PagibigEmployeeLoan belongs to a PagibigEmployeeRecord, which ties an employee to an employer+year.
+ * We therefore: (1) find every employee record for the employee, (2) load every loan for those records,
+ * and (3) surface the employee/record context so the page can show which year and employer each loan
+ * belongs to.
+ */
+export async function GET(request: NextRequest, { params }: RouteContext) {
+  const session = getAuthenticatedSession(request);
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  let accessiblePages: string[] = [];
+  if (session.role !== "ADMIN") {
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      select: { accessiblePages: true },
+    });
+    accessiblePages = user?.accessiblePages ?? [];
+    if (!accessiblePages.includes("/employees")) {
+      return NextResponse.json({ error: "Employees access required" }, { status: 403 });
+    }
+  }
+
+  const employeeId = Number((await params).id);
+  if (!Number.isSafeInteger(employeeId) || employeeId <= 0) {
+    return NextResponse.json({ error: "Invalid employee id" }, { status: 400 });
+  }
+
+  try {
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      select: {
+        id: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+        pagIbigNumber: true,
+      },
+    });
+    if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+
+    // All Pag-IBIG accounts (one per employer+year) for this employee.
+    const records = await prisma.pagibigEmployeeRecord.findMany({
+      where: { employeeId },
+      orderBy: [{ employer: { name: "asc" } }, { year: "desc" }],
+      select: {
+        id: true,
+        year: true,
+        employerId: true,
+        employer: { select: { id: true, name: true } },
+      },
+    });
+
+    // Every loan tied to those accounts.
+    const loans = await prisma.pagibigEmployeeLoan.findMany({
+      where: {
+        recordId: { in: records.map((r) => r.id) },
+      },
+      orderBy: [
+        { record: { year: "desc" } },
+        { record: { employer: { name: "asc" } } },
+        { loanTermDate: "desc" },
+      ],
+      include: {
+        record: {
+          select: {
+            year: true,
+            employer: { select: { id: true, name: true } },
+          },
+        },
+        employer: { select: { id: true, name: true } },
+        PagibigEmployeeRecord: {
+          select: { year: true, employeeId: true },
+        },
+      },
+    });
+
+    const items = loans.map((loan) => ({
+      id: loan.id,
+      recordId: loan.recordId,
+      employerId: loan.employerId,
+      employerName: loan.employer.name ?? "",
+      recordYear: loan.record.year,
+      employeeId: loan.PagibigEmployeeRecord.employeeId,
+      employeeName: `${employee.firstName} ${employee.lastName}`.trim(),
+      employeeCode: "",
+      pagIbigNumber: employee.pagIbigNumber,
+      loanType: loan.loanType,
+      applicationNo: loan.applicationNo,
+      loanDate: loan.loanTermDate.toISOString().slice(0, 10),
+      termYears: loan.termYears,
+      amount: loan.amount?.toString() ?? "0",
+      status: loan.status ?? "INACTIVE",
+      createdAt: loan.createdAt.toISOString().slice(0, 10),
+    }));
+
+    return NextResponse.json(
+      {
+        employee: {
+          id: employee.id,
+          firstName: employee.firstName,
+          middleName: employee.middleName,
+          lastName: employee.lastName,
+          pagIbigNumber: employee.pagIbigNumber,
+        },
+        canEditLoans: session.role === "ADMIN" || accessiblePages.includes("/employees"),
+        loans: items,
+      },
+      { headers: { "Cache-Control": "private, no-store" } }
+    );
+  } catch (error) {
+    console.error("Load Pag-IBIG employee loans error:", error);
+    return NextResponse.json({ error: "Unable to load Pag-IBIG loans" }, { status: 500 });
+  }
+}

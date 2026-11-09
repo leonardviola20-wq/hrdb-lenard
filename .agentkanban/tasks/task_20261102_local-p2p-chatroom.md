@@ -13,9 +13,6 @@ description: Add a local peer-to-peer chatroom to the HR application, with a cle
 Repository review found no existing chat or signaling service. The implementation will use the single local Next.js Node process only for authenticated, in-memory room discovery and WebRTC offer/answer signaling; chat messages will travel directly over WebRTC data channels, with no external STUN/TURN or persistence. Scope is a small room (up to eight people) on the same local network. The app must be opened in a secure browser context for peer connections; multi-process hosting and internet/NAT traversal are outside this local MVP.
 
 ### user
-
-### user
-
 Enable Chat for all signed-in users.
 
 ### agent
@@ -23,6 +20,7 @@ Enable Chat for all signed-in users.
 Selected behavior: Chat should be available to every signed-in user, not restricted by the admin-managed `/chat` page permission. I’ll implement that once the task workflow is explicitly advanced to `implement`.
 
 ### user
+
 
 Two different accounts are signed in, but the other account does not have Chat in its sidebar.
 
@@ -136,41 +134,5 @@ Can we add more emojis and allow reacting to a specific message? The chosen beha
 Implemented the searchable, category-based emoji picker in the composer and on individual messages. Emoji selection inserts at the composer caret; each conversation participant can add or remove their own reaction, with aggregate counts and selected state shown in the widget. Reactions are authenticated, rate-limited, validated as single emoji graphemes, and limited to 20 distinct emoji per message in the in-memory store.
 
 Validation: all 17 focused chat store/API tests pass, targeted ESLint passes, and the live widget verified emoji search and draft insertion without sending a message. Reaction behavior is covered in store/API tests; no chat message was sent solely to perform a live UI reaction check. Full TypeScript validation remains blocked by unrelated existing errors in Pag-IBIG report typing and matcher typings.
-
-### user
-
-resume
-
-### agent
-
-Resumed the approved Pag-IBIG refactor. The page now uses the existing feature-folder components for its member list, payments table, report preview, report details, payment dialog, and drafts menu. Member/report filtering, sorting, pagination, manual report merging, and preview totals now live in `usePagibigReportView`. The route entry, Suspense boundary, URL-backed state, API calls, and save handlers remain in `PagIbigReportsPage.tsx`.
-
-Updated `TECHNICAL.md` and project memory. Validation: all 136 configured tests pass; scoped ESLint and `git diff --check` pass. Full TypeScript validation reports no errors in the refactored components, but remains blocked by the unrelated Pag-IBIG loans route typing issue and test-file typing issues. The optional page smoke test could not run because the checkout's Vitest/Vite/jsdom tooling is incomplete, and there is no shared browser page for a visual check. The earlier chat refactor also passes the configured tests, focused ESLint, and scoped whitespace checks.
-
-### user
-
-### agent
-
-Cleaned up the Pag-IBIG Reports page by moving the Add/Edit account and loan editor into `components/pagibig-reports/AccountFormDialog.tsx` and the PIF/manual report-generation form and employee preview into `components/pagibig-reports/ReportGenerationDialog.tsx`. The page retains URL-backed state, API calls, save workflows, and account-edit return-to-preview behavior; the extracted JSX is formatted for readability.
-
-Updated `TECHNICAL.md`, project memory, and the task checklist. Validation: all 136 configured tests pass, focused ESLint is clean, and scoped whitespace checks pass. `tsc --noEmit` reports only the known unrelated loans-route and page-test typing errors; it reports no errors in the changed page or extracted components. A browser page was not available for a visual check.
-
-### user
-
-Continue the Pag-IBIG Reports workflow-hook refactor from the prior context and complete the outstanding integration and verification.
-
-### agent
-
-Completed Iteration 13. Added employer-scoped draft loading to `usePagibigDrafts`, moved draft save/delete operations there, and moved report generation into `usePagibigReportForm`. `PagIbigReportsPage.tsx` now wires the feature hooks while retaining URL/Suspense state and cross-view account-save and preview-selection coordination. Updated `TECHNICAL.md`, project memory, and the TODO checklist.
-
-Validation: all 136 configured tests pass; focused ESLint and `git diff --check` pass. `npx tsc --noEmit` still reports only the known unrelated loans-route and page-test typing errors; no errors point to the changed page or hooks.
-
-### user
-
-git commit push merge then branch
-
-### agent
-
-The current branch is `feature/benefits-reports-20261021`, already three commits ahead of its origin, and the worktree contains many unrelated modified and untracked files. I have not staged, committed, pushed, or merged anything. Before proceeding, confirm which changes to include, the merge destination, and whether to create a new branch or delete the current feature branch after merging.
 
 ### user

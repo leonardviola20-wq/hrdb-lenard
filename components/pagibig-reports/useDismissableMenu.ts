@@ -6,7 +6,9 @@ export function useDismissableMenu<T extends HTMLElement>(
   onClose: () => void,
 ) {
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
   useEffect(() => {
     if (!open) return;
     const closeOnOutsideClick = (event: MouseEvent) => {

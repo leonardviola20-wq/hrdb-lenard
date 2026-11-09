@@ -1,147 +1,79 @@
 "use client";
 
-import { useState } from "react";
-import type { AccountForm, LoanDetail, Member } from "@/components/pagibig-reports/types";
+import { useReducer } from "react";
+import type { Member } from "@/components/pagibig-reports/types";
+import type { AccountForm, LoanDetail } from "@/components/pagibig-reports/types";
 import type { PagibigLoanType } from "@/lib/pagibigLoanTypes";
-import { emptyAccountForm, emptyLoanDetail, loanLabels } from "@/components/pagibig-reports/format";
-import { PAGIBIG_LOAN_TYPES } from "@/lib/pagibigLoanTypes";
+import { emptyAccountForm, emptyLoanDetail } from "@/components/pagibig-reports/format";
 
-export function usePagibigAccountForm() {
-  const [accountFormOpen, setAccountFormOpen] = useState(false);
-  const [returnToReportPreview, setReturnToReportPreview] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [accountForm, setAccountForm] = useState<AccountForm>(emptyAccountForm);
-  const [loanEditorType, setLoanEditorType] = useState<PagibigLoanType | "" | null>(null);
-  const [loanEditorDetail, setLoanEditorDetail] = useState<LoanDetail>(emptyLoanDetail);
-  const [loanEditorReason, setLoanEditorReason] = useState("");
-  const [loanEditorSourceType, setLoanEditorSourceType] = useState<PagibigLoanType | null>(null);
-  const [loanEditorBackup, setLoanEditorBackup] = useState<{
-    sourceType: PagibigLoanType;
-    detail: LoanDetail;
-  } | null>(null);
-  const [loanStatusFilter, setLoanStatusFilter] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
-  const [savingAccount, setSavingAccount] = useState(false);
-  const [accountError, setAccountError] = useState("");
+export type PagibigAccountFormState = {
+  accountFormOpen: boolean;
+  returnToReportPreview: boolean;
+  editingMember: Member | null;
+  accountForm: AccountForm;
+  loanEditorType: PagibigLoanType | "" | null;
+  loanEditorDetail: LoanDetail;
+  loanEditorReason: string;
+  loanEditorSourceType: PagibigLoanType | null;
+  loanEditorBackup: { sourceType: PagibigLoanType; detail: LoanDetail } | null;
+  loanStatusFilter: "ACTIVE" | "INACTIVE";
+  savingAccount: boolean;
+  accountError: string;
+};
 
-  const openLoanEditor = (type: PagibigLoanType | "" | null) => {
-    setLoanEditorType(type);
-    setLoanEditorSourceType(
-      type && accountForm.loanDetails[type].applicationNo.trim() ? type : null,
-    );
-    const detail = type ? { ...accountForm.loanDetails[type] } : emptyLoanDetail();
-    const inactive = detail.status.startsWith("INACTIVE_");
-    setLoanEditorDetail(inactive ? { ...detail, status: "INACTIVE" } : detail);
-    setLoanEditorReason(inactive ? detail.status.slice("INACTIVE_".length) : "");
-    setAccountError("");
-  };
+type Action<K extends keyof PagibigAccountFormState = keyof PagibigAccountFormState> =
+  | { type: "SET"; field: K; value: PagibigAccountFormState[K] | ((prev: PagibigAccountFormState[K]) => PagibigAccountFormState[K]) }
+  | { type: "RESET_LOAN_EDITOR" };
 
-  const saveLoanDetail = () => {
-    if (!loanEditorType) {
-      setAccountError("Choose a loan type.");
-      return;
+const initialState: PagibigAccountFormState = {
+  accountFormOpen: false,
+  returnToReportPreview: false,
+  editingMember: null,
+  accountForm: emptyAccountForm(),
+  loanEditorType: null,
+  loanEditorDetail: emptyLoanDetail(),
+  loanEditorReason: "",
+  loanEditorSourceType: null,
+  loanEditorBackup: null,
+  loanStatusFilter: "ACTIVE",
+  savingAccount: false,
+  accountError: "",
+};
+
+function reducer(state: PagibigAccountFormState, action: Action): PagibigAccountFormState {
+  switch (action.type) {
+    case "SET": {
+      const current = state[action.field];
+      const value = typeof action.value === "function" ? (action.value as (prev: unknown) => unknown)(current) : action.value;
+      return { ...state, [action.field]: value };
     }
+    case "RESET_LOAN_EDITOR":
+      return { ...state, loanEditorType: null, loanEditorDetail: emptyLoanDetail(), loanEditorReason: "", loanEditorSourceType: null, loanEditorBackup: null };
+    default:
+      return state;
+  }
+}
 
-    const type = loanEditorType;
-    const detail = loanEditorDetail;
-    const amount = Number(detail.amount);
-    const trimmedApplicationNo = detail.applicationNo.trim();
-    const duplicate = PAGIBIG_LOAN_TYPES.some(
-      (loanType) =>
-        loanType !== type &&
-        accountForm.loanDetails[loanType].applicationNo.trim() &&
-        accountForm.loanDetails[loanType].applicationNo.trim() === trimmedApplicationNo,
-    );
-
-    if (duplicate) {
-      setAccountError("This application number is already used by another loan.");
-      return;
-    }
-
-    if (
-      !trimmedApplicationNo ||
-      !detail.loanTermDate ||
-      !Number.isInteger(Number(detail.termYears)) ||
-      Number(detail.termYears) < 1 ||
-      Number(detail.termYears) > 50 ||
-      !Number.isFinite(amount) ||
-      amount < 0 ||
-      !["ACTIVE", "INACTIVE"].includes(detail.status) ||
-      (detail.status === "INACTIVE" &&
-        !["RESIGNED", "PAID", "NEW_LOAN", "HOLD"].includes(loanEditorReason))
-    ) {
-      setAccountError(
-        "Complete the loan application number, term date, term, amount, status, and inactive reason.",
-      );
-      return;
-    }
-
-    setAccountForm((current) => ({
-      ...current,
-      loanDetails: {
-        ...current.loanDetails,
-        [type]: {
-          ...detail,
-          applicationNo: trimmedApplicationNo,
-          status: detail.status === "INACTIVE" ? `INACTIVE_${loanEditorReason}` : "ACTIVE",
-        },
-      },
-    }));
-    setLoanEditorType(null);
-    setLoanEditorDetail(emptyLoanDetail());
-    setLoanEditorReason("");
-    setLoanEditorSourceType(null);
-    setLoanEditorBackup(null);
-    setAccountError("");
-  };
-
-  const deleteLoanDetail = (type: PagibigLoanType) => {
-    if (!window.confirm(`Delete the ${loanLabels[type]} loan? It will be removed when you save the account.`)) {
-      return;
-    }
-
-    if (loanEditorType === type) {
-      setLoanEditorType(null);
-      setLoanEditorDetail(emptyLoanDetail());
-      setLoanEditorSourceType(null);
-      setLoanEditorBackup(null);
-    } else if (loanEditorBackup?.sourceType === type) {
-      setLoanEditorBackup(null);
-    }
-
-    setAccountForm((current) => ({
-      ...current,
-      loanDetails: { ...current.loanDetails, [type]: emptyLoanDetail() },
-    }));
-    setAccountError("");
-  };
+export function usePagibigAccountForm(initial?: Partial<PagibigAccountFormState>) {
+  const [state, dispatch] = useReducer(reducer, { ...initialState, ...initial });
+  const set = <K extends keyof PagibigAccountFormState>(field: K) => (value: PagibigAccountFormState[K] | ((prev: PagibigAccountFormState[K]) => PagibigAccountFormState[K])) =>
+    dispatch({ type: "SET", field, value } as Action<K> as Action<keyof PagibigAccountFormState>);
 
   return {
-    accountFormOpen,
-    setAccountFormOpen,
-    returnToReportPreview,
-    setReturnToReportPreview,
-    editingMember,
-    setEditingMember,
-    accountForm,
-    setAccountForm,
-    loanEditorType,
-    setLoanEditorType,
-    loanEditorDetail,
-    setLoanEditorDetail,
-    loanEditorReason,
-    setLoanEditorReason,
-    loanEditorSourceType,
-    setLoanEditorSourceType,
-    loanEditorBackup,
-    setLoanEditorBackup,
-    loanStatusFilter,
-    setLoanStatusFilter,
-    savingAccount,
-    setSavingAccount,
-    accountError,
-    setAccountError,
-    openLoanEditor,
-    saveLoanDetail,
-    deleteLoanDetail,
+    state,
+    dispatch,
+    setAccountFormOpen: set("accountFormOpen"),
+    setReturnToReportPreview: set("returnToReportPreview"),
+    setEditingMember: set("editingMember"),
+    setAccountForm: set("accountForm"),
+    setLoanEditorType: set("loanEditorType"),
+    setLoanEditorDetail: set("loanEditorDetail"),
+    setLoanEditorReason: set("loanEditorReason"),
+    setLoanEditorSourceType: set("loanEditorSourceType"),
+    setLoanEditorBackup: set("loanEditorBackup"),
+    setLoanStatusFilter: set("loanStatusFilter"),
+    setSavingAccount: set("savingAccount"),
+    setAccountError: set("accountError"),
+    resetLoanEditor: () => dispatch({ type: "RESET_LOAN_EDITOR" }),
   };
 }

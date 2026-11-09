@@ -8,7 +8,6 @@ import type { Report } from "./types";
 type Props = {
   displayedPagibigReports: Report[];
   pagedReports: Report[];
-  reportPageSize: number;
   currentReportPage: number;
   reportPageCount: number;
   canEditPayments: boolean;
@@ -18,14 +17,15 @@ type Props = {
   openUpdateReport: (report: Report) => void | Promise<void>;
   setDeleteReportTarget: (report: Report) => void;
   openPayment: (report: Report) => void;
-  onViewReport: (report: Report) => void;
+  setSelectedManualReports: (reports: Report[] | null) => void;
+  setSelectedReport: (report: Report | null) => void;
+  setManualViewReturnReports: (reports: Report[] | null) => void;
   setReportPage: (page: number) => void;
 };
 
 export function ReportsTable({
   displayedPagibigReports,
   pagedReports,
-  reportPageSize,
   currentReportPage,
   reportPageCount,
   canEditPayments,
@@ -35,7 +35,9 @@ export function ReportsTable({
   openUpdateReport,
   setDeleteReportTarget,
   openPayment,
-  onViewReport,
+  setSelectedManualReports,
+  setSelectedReport,
+  setManualViewReturnReports,
   setReportPage,
 }: Props) {
   return (
@@ -75,7 +77,7 @@ export function ReportsTable({
                   <td className="px-3 py-1 text-sm text-slate-700">{paid && report.payDate ? `${report.payDate.slice(5, 7)}/${report.payDate.slice(8, 10)}/${report.payDate.slice(2, 4)}` : "-"}</td>
                   <td className="px-3 py-1 text-right font-medium tabular-nums text-slate-950">{paid ? formatMoney(report.amountPaid) : "-"}</td>
                   <td className="px-3 py-1"><div className="flex items-center justify-end gap-1">
-                    <button type="button" onClick={() => onViewReport(report)} disabled={report.id < 0} aria-label={`View ${monthNames[report.applicableMonth - 1]} ${report.applicableYear} report`} title="View report and payment details" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-violet-700 hover:bg-violet-100 disabled:opacity-40"><EyeIcon className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => { const siblings = displayedPagibigReports.filter((item) => item.employerId === report.employerId && item.applicableMonth === report.applicableMonth && item.applicableYear === report.applicableYear).sort((a, b) => (a.kind === "CONTRIBUTION" ? 0 : 1) - (b.kind === "CONTRIBUTION" ? 0 : 1)); (siblings.length ? setSelectedManualReports(siblings) : (setManualViewReturnReports(null), setSelectedReport(report))); }} disabled={report.id < 0} aria-label={`View ${monthNames[report.applicableMonth - 1]} ${report.applicableYear} report`} title="View report and payment details" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-violet-700 hover:bg-violet-100 disabled:opacity-40"><EyeIcon className="h-4 w-4" /></button>
 
 
                     {!paid && report.id > 0 && <button type="button" onClick={() => openPayment(report)} aria-label={`Record payment for ${monthNames[report.applicableMonth - 1]} ${report.applicableYear}`} title="Record payment" className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"><BanknotesIcon className="h-4 w-4" /></button>}
@@ -96,7 +98,7 @@ export function ReportsTable({
             </tbody>
           </table>
         </div>
-        <div className="benefit-report-footer"><span>Showing {pagedReports.length ? (currentReportPage - 1) * reportPageSize + 1 : 0}-{Math.min(currentReportPage * reportPageSize, displayedPagibigReports.length)} of {displayedPagibigReports.length} reports · Total {formatMoney(displayedPagibigReports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</span><div className="flex items-center gap-2"><button type="button" onClick={() => setReportPage(currentReportPage - 1)} disabled={currentReportPage === 1} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Previous</button><span className="tabular-nums">Page {currentReportPage} of {reportPageCount}</span><button type="button" onClick={() => setReportPage(currentReportPage + 1)} disabled={currentReportPage === reportPageCount} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Next</button></div></div>
+        <div className="benefit-report-footer"><span>Showing {pagedReports.length ? (currentReportPage - 1) * 8 + 1 : 0}-{Math.min(currentReportPage * 8, displayedPagibigReports.length)} of {displayedPagibigReports.length} reports · Total {formatMoney(displayedPagibigReports.reduce((sum, report) => sum + Number(report.amountDue), 0))}</span><div className="flex items-center gap-2"><button type="button" onClick={() => setReportPage(currentReportPage - 1)} disabled={currentReportPage === 1} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Previous</button><span className="tabular-nums">Page {currentReportPage} of {reportPageCount}</span><button type="button" onClick={() => setReportPage(currentReportPage + 1)} disabled={currentReportPage === reportPageCount} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Next</button></div></div>
       </>
   );
 }

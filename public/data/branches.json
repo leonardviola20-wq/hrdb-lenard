@@ -1,0 +1,34 @@
+[
+  {
+    "id": "shangrila",
+    "name": "Mandaluyong",
+    "address": "Level 6, East Wing, Shangri-La Plaza, Shaw Blvd corner EDSA, Ortigas Center, Wack-Wack, Mandaluyong City",
+    "phone": "(02) 8631 7189",
+    "hours": "Mon - Sun: 10:00 AM - 9:00 PM",
+    "map": "https://maps.google.com/?q=Shangri-La+Plaza+Mandaluyong"
+  },
+  {
+    "id": "promenade",
+    "name": "San Juan",
+    "address": "G/F, Promenade Mall, Annapolis St corner 1502 Missouri, Greenhills, San Juan City",
+    "phone": "(02) 8584 6266",
+    "hours": "Mon - Thu: 10:00 AM - 9:00 PM | Fri - Sun: 10:00 AM - 10:00 PM",
+    "map": "https://maps.google.com/?q=Promenade+Mall+Greenhills"
+  },
+  {
+    "id": "magnolia",
+    "name": "Quezon City",
+    "address": "Level 2, Robinsons Magnolia, Aurora Blvd corner Doña Hemady St, Gilmore Ave, Quezon City",
+    "phone": "(02) 8470 2414",
+    "hours": "Mon - Sun: 10:00 AM - 10:00 PM",
+    "map": "https://maps.google.com/?q=Robinsons+Magnolia+Quezon+City"
+  },
+  {
+    "id": "robinsons-manila",
+    "name": "Manila",
+    "address": "Level 2, Midtown Wing, Robinsons Place Manila, Pedro Gil corner Adriatico St, Ermita, Manila (also Level 1, Space 276)",
+    "phone": "(02) 8567 3800",
+    "hours": "Mon - Sun: 10:00 AM - 10:00 PM",
+    "map": "https://maps.google.com/?q=Robinsons+Place+Manila+Ermita"
+  }
+]

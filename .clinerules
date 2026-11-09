@@ -1,0 +1,134 @@
+# Custom Rules for Cline
+
+You are an expert full-stack developer working on a hybrid architecture that integrates a **Next.js (React/Tailwind CSS) frontend/BFF** with a **Python backend/microservice**, utilizing **Prisma** to interface with a **PostgreSQL** database.
+
+Always adhere to the architectural boundaries, coding styles, and workflows defined below.
+
+---
+
+## 🏗️ 1. Architecture Boundaries & Workflows
+
+### Tech Stack Split
+* **Frontend:** Next.js (App Router), Tailwind CSS, TypeScript.
+* **Backend:** Python (e.g., FastAPI/Flask) for heavy computation, data processing, or Python-specific libraries.
+* **Database & ORM:** PostgreSQL accessed via Prisma Client. 
+
+### Prisma Workflow
+* **Single Source of Truth:** The database schema is defined *only* in `prisma/schema.prisma`. 
+* **Schema Updates:** If changes to the database structure are needed:
+  1. Modify `schema.prisma`.
+  2. Run `npx prisma migrate dev --name <migration_name>` to apply changes.
+  3. Run `npx prisma generate` to update the TypeScript client.
+  *Note: If the Python service needs access to the DB, it should use a mirror client (like `prisma-client-py`) or raw/SQL Alchemy mappings reflecting the Prisma schema precisely.*
+* **Data Safety:** Never execute raw `DROP` or harmful destructive SQL commands directly in the terminal without confirmation.
+
+---
+
+## ⚡ 2. Frontend & Style Guidelines (Next.js + Tailwind CSS)
+
+### Target Directory Tree & Anti-Bloat Blueprint
+You must strictly adhere to the following lightweight, colocation-first folder structure. Do not introduce premature feature slicing (`features/`), deep domain layers (`services/`, `repositories/`), or redundant API endpoints.
+
+```text
+my-next-app/
+├── public/
+│   ├── favicon.ico
+│   └── images/
+├── src/
+│   ├── app/                    # Next.js App Router (routes and page layouts only)
+│   │   ├── (auth)/             # Route group for authentication flows
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   └── register/
+│   │   │       └── page.tsx
+│   │   ├── dashboard/          # Feature or page-specific route
+│   │   │   ├── _components/    # Private components used ONLY in dashboard
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── api/                # Route handlers (webhooks, external clients only)
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx          # Root layout
+│   │   └── page.tsx            # Home page
+│   ├── components/             # Truly global, presentational UI components
+│   │   └── ui/                 # Atomic design tokens (e.g., shadcn/ui components)
+│   ├── lib/                    # Shared helper functions, DB clients, and utilities
+│   │   ├── db.ts
+│   │   └── utils.ts
+│   └── types/                  # Shared/Global TypeScript interfaces
+│       └── index.ts
+├── .eslintrc.json
+├── next.config.ts
+├── package.json
+├── tailwind.config.ts
+└── tsconfig.json
+```
+
+### Next.js Best Practices & Modularity
+* **Routing & Colocation:** Keep `src/app/` strictly tied to routing, page definitions, and layouts. If a component is only used within a specific route, colocate it inside a private directory named `_components` under that specific route folder (e.g., `src/app/dashboard/_components/`).
+* **RSC Default:** Default to **React Server Components (RSC)** for data fetching and layout rendering. Fetch data directly inside Server Components or dedicated `lib/` helpers using Prisma or native `fetch`. Do not create an internal `/app/api/` route handler just to proxy data requests for your own Server Components.
+* **Client Directives:** Add `"use client"` at the top of a file *only* when utilizing state (`useState`, `useEffect`), browser APIs, or interactive hooks.
+* **Error Handling:** Maintain clean routing structures with proper `loading.tsx` and `error.tsx` handling for dynamic segments.
+* **Component Modularity:** You are strictly forbidden from writing monolithic `.tsx` files. If a frontend component exceeds **150 lines of code**, you must break it down into modular sub-components, custom hooks, utilities, or standalone type files.
+* **Component Size Monitoring (all components):** Every `.tsx` component file is subject to a size budget. Monitor line counts and keep components small. When a component grows, extract sub-components into a colocated `_components/` (route-private) or `components/<feature>/` (shared) directory, custom hooks into `hooks/` or colocated `_hooks/`, and pure logic into `lib/` with unit tests. Do not inline large JSX, state, or handlers into a single file — split into focused sub-components that receive props.
+* **Pag-IBIG page size budget:** `components/PagIbigReportsPage.tsx` must not grow beyond ~1,320 lines. Any new logic/state/handlers must be added to `lib/` (pure, tested) or `components/pagibig-reports/`, not inlined in the page.
+* **Global Components:** Use `src/components/ui/` only for primitive, reusable UI blocks (Buttons, Inputs, Modals) that carry zero business logic.
+
+### UI & Styling (Tailwind)
+* Utilize utility classes cleanly. Group layout utilities first (`flex`, `grid`), followed by sizing, spacing (`p-4`, `m-2`), typography, and colors.
+* Avoid raw CSS or style tags entirely unless dealing with third-party overrides.
+* Use Tailwind components or class consistency to ensure dark mode support (e.g., `bg-white dark:bg-slate-900`) if configured.
+
+---
+
+## 🐍 3. Python Service Guidelines
+
+### Environment Management
+* Always run Python commands within the project's dedicated virtual environment (e.g., source `venv/bin/activate` or use `poetry run`/`pipenv run`).
+* Keep dependencies updated in `requirements.txt`, `pyproject.toml`, or `Pipfile`. If you install a package, immediately dump/lock the dependencies.
+
+### Code Style
+* Adhere strictly to **PEP 8** standards.
+* Use explicit type hinting for all function arguments and return types.
+* Structure async endpoints properly if using an asynchronous framework like FastAPI.
+
+---
+
+## 🛠️ 4. Cline Behavioral Constraints
+
+### Mandatory Pre-Code Validation Loop (SRP & Anti-Bloat)
+Before using any file-writing or editing tools (`write_to_file`, `replace_in_file`) for frontend tasks, you **MUST** state your action plan by responding with the following architecture check:
+1. **Component Scope:** A 1-sentence definition of the single responsibility of the main file.
+2. **Modular Bloat Checklist:**
+   - Are there custom hooks needed to extract state/logic/data-fetching? (Yes/No)
+   - Are there sub-components that should live in their own files? (Yes/No)
+   - Are there TypeScript types or helper utilities that belong in separate `.types.ts` or `.utils.ts` files? (Yes/No)
+3. **Proposed File Breakdown:** List the exact target file structures you plan to create or modify inside the target tree.
+
+**DO NOT** generate or inject the full code implementation until the user explicitly reviews and approves this architecture plan.
+
+### Step-by-Step Execution
+* **Plan Before Action:** For multi-file changes or complex integrations (especially frontend-to-backend linkages), state your action plan in bullet points and wait for the user to review or prompt execution.
+* **Atomic Commits/Changes:** Implement modifications incrementally. Do not rewrite massive chunks of unrelated files.
+* **Testing:** After executing changes on the backend, frontend components, or Prisma schemas, explicitly ask to run the appropriate tests or spin up local servers (`npm run dev`, database clients, etc.) to verify your work.
+
+---
+
+## 🔀 5. Git Workflow & Commit Conventions
+
+### Branching
+* Work on feature branches named `feat/<short-description>`, `fix/<short-description>`, or `refactor/<short-description>` (e.g., `feat/pagibig-tier4-report-form`, `refactor/shred-bloat`).
+* Never commit directly to `main`/`master`. Always open a PR for review.
+* Keep branches short-lived; rebase on `main` before opening a PR.
+
+### Commits
+* Use **Conventional Commits**: `<type>(<scope>): <short summary>` where type is `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, or `perf`.
+* Keep each commit atomic — one logical change per commit. Do not mix unrelated changes.
+* Write clear, imperative commit messages in the present tense (e.g., `feat(pagibig): add report-form reducer hook`).
+* Never amend or force-push commits that have been pushed to a shared branch.
+
+### Safety
+* Never run destructive git commands (`reset --hard`, `push --force`, `clean -fdx`) without explicit user confirmation.
+* Never commit secrets, `.env` files, or build artifacts. Respect `.gitignore`.
+* Always run `tsc --noEmit`, eslint, and the test suite before committing.
+* **Testing:** After executing changes on the backend, frontend components, or Prisma schemas, explicitly ask to run the appropriate tests or spin up local servers (`npm run dev`, database clients, etc.) to verify your work.

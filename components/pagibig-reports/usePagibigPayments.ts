@@ -1,19 +1,7 @@
-import { useState, type Dispatch, type FormEvent, type SetStateAction } from "react";
+import { useState } from "react";
 import type { PaymentForm, Report } from "./types";
 
-export function usePagibigPayments({
-  selectedEmployerId,
-  setReports,
-  setSelectedReport,
-  setError,
-  setNotice,
-}: {
-  selectedEmployerId: string;
-  setReports: Dispatch<SetStateAction<Report[]>>;
-  setSelectedReport: Dispatch<SetStateAction<Report | null>>;
-  setError: (message: string) => void;
-  setNotice: (message: string) => void;
-}) {
+export function usePagibigPayments(selectedEmployerId: string, setReports: (updater: (current: Report[]) => Report[]) => void) {
   const [paymentReport, setPaymentReport] = useState<Report | null>(null);
   const [paymentForm, setPaymentForm] = useState<PaymentForm>({ amountPaid: "", paymentType: "Bank", payDate: "", transactionReference: "", adjustments: "0" });
   const [savingPayment, setSavingPayment] = useState(false);
@@ -33,7 +21,7 @@ export function usePagibigPayments({
     });
   };
 
-  const savePayment = async (event: FormEvent<HTMLFormElement>) => {
+  const savePayment = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!paymentReport) return;
     setSavingPayment(true);
@@ -55,36 +43,6 @@ export function usePagibigPayments({
     }
   };
 
-  const deleteReport = async () => {
-    if (!deleteReportTarget) return;
-    setDeletingReport(true);
-    setError("");
-    try {
-      const response = await fetch(`/api/reports/pagibig/${deleteReportTarget.id}`, {
-        method: "DELETE",
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(
-          (data as { error?: string } | null)?.error || "Unable to delete Pag-IBIG report",
-        );
-      }
-
-      const deletedId = deleteReportTarget.id;
-      setReports((current) => current.filter((report) => report.id !== deletedId));
-      setSelectedReport((current) => (current?.id === deletedId ? null : current));
-      setPaymentReport((current) => (current?.id === deletedId ? null : current));
-      setDeleteReportTarget(null);
-      setNotice("Pag-IBIG report deleted.");
-    } catch (deleteError) {
-      setError(
-        deleteError instanceof Error ? deleteError.message : "Unable to delete Pag-IBIG report",
-      );
-    } finally {
-      setDeletingReport(false);
-    }
-  };
-
   return {
     paymentReport, setPaymentReport,
     paymentForm, setPaymentForm,
@@ -92,6 +50,6 @@ export function usePagibigPayments({
     paymentError, setPaymentError,
     deleteReportTarget, setDeleteReportTarget,
     deletingReport, setDeletingReport,
-    openPayment, savePayment, deleteReport,
+    openPayment, savePayment,
   };
 }

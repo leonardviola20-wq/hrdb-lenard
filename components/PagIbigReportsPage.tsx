@@ -5,36 +5,30 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowPathIcon, ChevronLeftIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getPagibigCreateEmployeeHref } from "@/lib/pagibigEmployeeWorkflow";
-import { PAGIBIG_LOAN_TYPES, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
-import { AccountFormDialog } from "@/components/pagibig-reports/AccountFormDialog";
-import { ReportDetails } from "@/components/pagibig-reports/ReportDetails";
-import { MembersTable } from "@/components/pagibig-reports/MembersTable";
-import { ReportsTable } from "@/components/pagibig-reports/ReportsTable";
-import { DraftsMenu } from "@/components/pagibig-reports/DraftsMenu";
-import { PaymentDialog } from "@/components/pagibig-reports/PaymentDialog";
-import { ReportGenerationDialog } from "@/components/pagibig-reports/ReportGenerationDialog";
-import { usePagibigReportData } from "@/components/pagibig-reports/usePagibigReportData";
-import { usePagibigPayments } from "@/components/pagibig-reports/usePagibigPayments";
-import { usePagibigDrafts } from "@/components/pagibig-reports/usePagibigDrafts";
-import { usePagibigAccountForm } from "@/components/pagibig-reports/usePagibigAccountForm";
-import { usePagibigReportForm } from "@/components/pagibig-reports/usePagibigReportForm";
-import { useDismissableMenu } from "@/components/pagibig-reports/useDismissableMenu";
-import {
-  emptyAccountForm,
-  emptyLoanDetail,
-  formatMoney,
-} from "@/components/pagibig-reports/format";
-import { inputClass, memberAccountYear, monthNames } from "@/components/pagibig-reports/constants";
-import type {
-  Account,
-  LoanDetail,
-  Member,
-  Report,
-  ReportDraft,
-} from "@/components/pagibig-reports/types";
-import { mergePagibigPreviewMembers, sortPagibigPreviewMembers } from "@/lib/pagibigReportPreview";
+import { sortPagibigPreviewMembers } from "@/lib/pagibigReportPreview";
 import { validPagibigYear } from "@/lib/pagibigYear";
+import {
+  AccountFormDialog,
+  DeleteReportDialog,
+  DraftsMenu,
+  ManualReportsDialog,
+  MembersTable,
+  PaymentDialog,
+  ReportDetails,
+  ReportGenerationDialog,
+  ReportsTable,
+} from "@/components/pagibig-reports";
+import { inputClass, memberAccountYear, monthNames } from "@/components/pagibig-reports/constants";
+import { usePagibigAccountForm } from "@/components/pagibig-reports/usePagibigAccountForm";
+import { usePagibigDrafts } from "@/components/pagibig-reports/usePagibigDrafts";
+import { usePagibigPayments } from "@/components/pagibig-reports/usePagibigPayments";
+import { usePagibigReportData } from "@/components/pagibig-reports/usePagibigReportData";
+import { usePagibigReportForm } from "@/components/pagibig-reports/usePagibigReportForm";
 import { usePagibigReportView } from "@/components/pagibig-reports/usePagibigReportView";
+import { useDismissableMenu } from "@/components/pagibig-reports/useDismissableMenu";
+import { usePagibigAccountActions } from "@/components/pagibig-reports/usePagibigAccountActions";
+import { usePagibigReportActions } from "@/components/pagibig-reports/usePagibigReportActions";
+import type { Account, Member, Report, ReportDraft } from "@/components/pagibig-reports/types";
 
 export default function PagIbigReportsPage() {
   return <Suspense fallback={<main className="flex-1 bg-slate-50 p-4 sm:p-6" />}><PagIbigReportsContent /></Suspense>;
@@ -49,94 +43,89 @@ function PagIbigReportsContent() {
   const paymentsView = searchParams.get("view") === "payments";
   const requestedAccountYear = validPagibigYear(searchParams.get("year"));
   const requestedNewEmployeeId = Number(searchParams.get("addEmployeeId"));
-  const [allEmployees, setAllEmployees] = useState<Member[]>([]);
-  const [allEmployeesError, setAllEmployeesError] = useState("");
-  const [allEmployeesLoading, setAllEmployeesLoading] = useState(false);
-  const [search, setSearch] = useState("");
+
   const [accountYear] = useState(String(requestedAccountYear ?? memberAccountYear));
   const {
-    members,
-    setMembers,
-    reports,
-    setReports,
+    members, setMembers,
+    reports, setReports,
     reportEmployer,
     canEditPayments,
-    loading,
-    loadedContext,
+    loading, loadedContext,
     refreshing,
-    refreshKey,
-    error,
-    setError,
+    error, setError,
     requestRefresh,
   } = usePagibigReportData({ accountYear, paymentsView, selectedEmployerId });
-  const {
-    accountFormOpen,
-    setAccountFormOpen,
-    returnToReportPreview,
-    setReturnToReportPreview,
-    editingMember,
-    setEditingMember,
-    accountForm,
-    setAccountForm,
-    loanEditorType,
-    setLoanEditorType,
-    loanEditorDetail,
-    setLoanEditorDetail,
-    loanEditorReason,
-    setLoanEditorReason,
-    loanEditorSourceType,
-    setLoanEditorSourceType,
-    loanEditorBackup,
-    setLoanEditorBackup,
-    loanStatusFilter,
-    setLoanStatusFilter,
-    savingAccount,
-    setSavingAccount,
-    accountError,
-    setAccountError,
-    openLoanEditor,
-    saveLoanDetail,
-    deleteLoanDetail,
-  } = usePagibigAccountForm();
-  const {
-    reportFormOpen,
-    setReportFormOpen,
-    previewMembers,
-    setPreviewMembers,
-    previewLoading,
-    setPreviewLoading,
-    previewError,
-    setPreviewError,
-    previewYear,
-    setPreviewYear,
-    previewFilter,
-    setPreviewFilter,
-    reportEmployeePickerOpen,
-    setReportEmployeePickerOpen,
-    reportEmployeeId,
-    setReportEmployeeId,
-    reportMonth,
-    setReportMonth,
-    reportYear,
-    setReportYear,
-    reportPin,
-    setReportPin,
-    manualReport,
-    setManualReport,
-    reportKind,
-    setReportKind,
-    updatingReportId,
-    setUpdatingReportId,
-    generating,
-    generateReport: saveGeneratedReport,
-  } = usePagibigReportForm();
+  const [notice, setNotice] = useState("");
+  const [search, setSearch] = useState("");
   const [memberPage, setMemberPage] = useState(1);
   const [memberStatusFilter, setMemberStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ACTIVE");
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()));
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<"ALL" | "PAID" | "UNPAID">("ALL");
   const [reportPage, setReportPage] = useState(1);
+  const [reportView, setReportView] = useState<"PIF" | "MANUAL">("PIF");
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedManualReports, setSelectedManualReports] = useState<Report[] | null>(null);
+  const [manualViewReturnReports, setManualViewReturnReports] = useState<Report[] | null>(null);
+
+  const [allEmployees, setAllEmployees] = useState<Member[]>([]);
+  const [allEmployeesError, setAllEmployeesError] = useState("");
+  const [allEmployeesLoading, setAllEmployeesLoading] = useState(false);
   const [selectedReportEmployees, setSelectedReportEmployees] = useState<Member[]>([]);
-  const [notice, setNotice] = useState("");
+  const reportEmployeeRosterLoadedRef = useRef(false);
+  const previewRequestRef = useRef(0);
+  const autoAddEmployeeRef = useRef("");
+
+  const account = usePagibigAccountForm();
+  const {
+    accountFormOpen, returnToReportPreview, editingMember, accountForm,
+    loanEditorType, loanEditorDetail, loanEditorReason, loanEditorSourceType, loanEditorBackup,
+    loanStatusFilter, savingAccount, accountError,
+  } = account.state;
+  const {
+    setAccountFormOpen, setAccountForm,
+    setLoanEditorBackup, setSavingAccount, setAccountError,
+  } = account;
+
+  const form = usePagibigReportForm();
+  const {
+    reportFormOpen, previewMembers, previewLoading, previewError, previewYear, previewFilter,
+    reportEmployeePickerOpen, reportEmployeeId, reportMonth, reportYear, reportPin,
+    manualReport, reportKind, updatingReportId, generating,
+  } = form.state;
+  const {
+    setReportFormOpen, setPreviewMembers, setReportYear,
+    setReportEmployeePickerOpen, setReportEmployeeId, setReportMonth, setReportPin,
+    setReportKind,
+  } = form;
+
+  const drafts = usePagibigDrafts();
+  const { reportDrafts, setReportDrafts, savingDraft, draftsOpen, setDraftsOpen, reportDraftId: currentDraftId } = drafts;
+  // `currentDraftId` is passed to ReportGenerationDialog; draft mutations live in usePagibigReportActions.
+
+  const payments = usePagibigPayments(selectedEmployerId, setReports);
+  const {
+    paymentReport, setPaymentReport, paymentForm, setPaymentForm,
+    savingPayment, paymentError, deleteReportTarget, setDeleteReportTarget,
+    deletingReport, openPayment, savePayment,
+  } = payments;
+
+  const accountActions = usePagibigAccountActions({
+    account, accountYear, reportYear, setReportFormOpen: (open) => setReportFormOpen(open),
+  });
+  const { openAddAccount, openEditAccount, closeAccountForm, openLoanEditor, saveLoanDetail, deleteLoanDetail, onSelectEmployeeForAccount } = accountActions;
+
+  const reportActions = usePagibigReportActions({
+    form, drafts, selectedEmployerId, paymentsView, yearFilter,
+    reports, setReports, setError, setNotice,
+    allEmployees, selectedReportEmployees, setSelectedReportEmployees, previewRequestRef,
+  });
+  const {
+    openReportForm, openUpdateReport, addReportEmployee, removeReportEmployee, addAllReportEmployees,
+    resetReportYearPreview, saveReportDraft, resumeReportDraft, deleteReportDraft, generateReport,
+  } = reportActions;
+
+  const [reportMenuOpen, setReportMenuOpen] = useState<number | null>(null);
+  const reportMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!notice && !error) return;
@@ -145,64 +134,30 @@ function PagIbigReportsContent() {
       setError("");
     }, 2000);
     return () => window.clearTimeout(timer);
-  }, [notice, error, setError]);
-  const {
-    reportDrafts,
-    setReportDrafts,
-    savingDraft,
-    draftsOpen,
-    setDraftsOpen,
-    reportDraftId,
-    setReportDraftId,
-    saveReportDraft,
-    deleteReportDraft,
-  } = usePagibigDrafts({
-    setError,
-    setNotice,
-    employerId: selectedEmployerId,
-    paymentsView,
-    refreshKey,
-  });
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [selectedManualReports, setSelectedManualReports] = useState<Report[] | null>(null);
-  const [manualViewReturnReports, setManualViewReturnReports] = useState<Report[] | null>(null);
-  const [reportMenuOpen, setReportMenuOpen] = useState<number | null>(null);
-  const reportMenuRef = useRef<HTMLDivElement | null>(null);
-  const [newReportMenuOpen, setNewReportMenuOpen] = useState(false);
-  const [viewReportMenuOpen, setViewReportMenuOpen] = useState(false);
-  const viewReportMenuRef = useRef<HTMLDivElement | null>(null);
-  const [reportView, setReportView] = useState<"PIF" | "MANUAL">("PIF");
-  const newReportMenuRef = useRef<HTMLDivElement | null>(null);
-  const previewRequestRef = useRef(0);
-  const autoAddEmployeeRef = useRef("");
-  const reportEmployeeRosterLoadedRef = useRef(false);
+  }, [notice, error]);
 
-  const draftsMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!paymentsView || !selectedEmployerId) return;
+    let cancelled = false;
+    fetch(`/api/reports/pagibig/drafts?employerId=${encodeURIComponent(selectedEmployerId)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load Pag-IBIG drafts");
+        return data.drafts as ReportDraft[];
+      })
+      .then((loaded) => { if (!cancelled) setReportDrafts(loaded); })
+      .catch((loadError: unknown) => { if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Unable to load Pag-IBIG drafts"); });
+    return () => { cancelled = true; };
+  }, [paymentsView, selectedEmployerId, setReportDrafts, setError]);
 
   useDismissableMenu(reportMenuRef, Boolean(reportMenuOpen), () => setReportMenuOpen(null));
+  const newReportMenuRef = useRef<HTMLDivElement | null>(null);
+  const [newReportMenuOpen, setNewReportMenuOpen] = useState(false);
   useDismissableMenu(newReportMenuRef, newReportMenuOpen, () => setNewReportMenuOpen(false));
-  useDismissableMenu(viewReportMenuRef, viewReportMenuOpen, () => setViewReportMenuOpen(false));
+  const draftsMenuRef = useRef<HTMLDivElement | null>(null);
   useDismissableMenu(draftsMenuRef, draftsOpen, () => setDraftsOpen(false));
-  const {
-    paymentReport,
-    setPaymentReport,
-    paymentForm,
-    setPaymentForm,
-    savingPayment,
-    paymentError,
-    deleteReportTarget,
-    setDeleteReportTarget,
-    deletingReport,
-    openPayment,
-    savePayment,
-    deleteReport,
-  } = usePagibigPayments({
-    selectedEmployerId,
-    setReports,
-    setSelectedReport,
-    setError,
-    setNotice,
-  });
+
+  const dataReady = loading || loadedContext !== `${selectedEmployerId}:${paymentsView ? "payments" : `members:${accountYear}`}`;
 
   const refresh = () => {
     setError("");
@@ -220,31 +175,7 @@ function PagIbigReportsContent() {
     requestRefresh();
   };
 
-
-  const {
-    filteredMembers,
-    memberPageCount,
-    currentMemberPage,
-    visibleMembers,
-    memberFirstResult,
-    memberLastResult,
-    years,
-    reportPageSize,
-    reportPageCount,
-    currentReportPage,
-    pagedReports,
-    displayedPagibigReports,
-    memberTotals,
-    memberSavingsTotal,
-    memberOverallTotal,
-    showSavingsColumns,
-    showLoanColumns,
-    previewColumnCount,
-    filteredPreviewMembers,
-    previewEntries,
-    previewTotal,
-    previewOverall,
-  } = usePagibigReportView({
+  const view = usePagibigReportView({
     members,
     reports,
     reportView,
@@ -262,18 +193,28 @@ function PagIbigReportsContent() {
     reportEmployer,
   });
 
-  const openAddAccount = useCallback((employeeId = "") => {
-    setReturnToReportPreview(false);
-    setEditingMember(null);
-    setAccountForm({ ...emptyAccountForm(), employeeId, year: accountYear });
-    setLoanEditorType(null);
-    setLoanEditorDetail(emptyLoanDetail());
-    setLoanStatusFilter("ACTIVE");
-    setAccountError("");
+  const loadReportEmployeeOptions = useCallback(async () => {
+    setAllEmployeesLoading(true);
+    setAllEmployeesError("");
+    try {
+      const response = await fetch("/api/reports/pagibig/employees", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load employees");
+      setAllEmployees(data.employees as Member[]);
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : "Unable to load employees";
+      setAllEmployeesError(message);
+      setError(message);
+    } finally {
+      setAllEmployeesLoading(false);
+      reportEmployeeRosterLoadedRef.current = true;
+    }
+  }, [setError]);
+
+  const handleAddAccountRoster = useCallback((employeeId: string) => {
     setAllEmployeesError("");
     setAllEmployees([]);
     setAllEmployeesLoading(true);
-    setAccountFormOpen(true);
     fetch("/api/reports/pagibig/employees", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
@@ -297,17 +238,7 @@ function PagIbigReportsContent() {
         setAllEmployeesLoading(false);
         reportEmployeeRosterLoadedRef.current = true;
       });
-  }, [
-    accountYear,
-    setAccountError,
-    setAccountForm,
-    setAccountFormOpen,
-    setEditingMember,
-    setLoanEditorDetail,
-    setLoanEditorType,
-    setLoanStatusFilter,
-    setReturnToReportPreview,
-  ]);
+  }, [setAccountError, setAccountForm]);
 
   useEffect(() => {
     if (paymentsView || !selectedEmployerId || !Number.isSafeInteger(requestedNewEmployeeId) || requestedNewEmployeeId <= 0
@@ -316,316 +247,8 @@ function PagIbigReportsContent() {
     if (autoAddEmployeeRef.current === key) return;
     autoAddEmployeeRef.current = key;
     router.replace(`/reports/pagibig?view=members&employerId=${encodeURIComponent(selectedEmployerId)}&year=${encodeURIComponent(accountYear)}`, { scroll: false });
-    openAddAccount(String(requestedNewEmployeeId));
-  }, [accountYear, loadedContext, loading, openAddAccount, paymentsView, requestedNewEmployeeId, router, selectedEmployerId]);
-
-  const openEditAccount = (member: Member, fromReportPreview = false) => {
-    setReturnToReportPreview(fromReportPreview);
-    if (fromReportPreview) setReportFormOpen(false);
-    const account = member.pagIbigAccount;
-    setEditingMember(account ? member : null);
-    setAccountError("");
-    setAccountForm({
-      employeeId: String(member.id),
-      year: String(account?.year ?? (fromReportPreview ? reportYear : accountYear)),
-      midNumber: member.pagIbigNumber ?? "",
-      employeeSavings: account?.employeeSavings ?? "200",
-      employerSavings: account?.employerSavings ?? "200",
-      excludedFromReport: account?.excludedFromReport ?? false,
-      mp2AccountNumber: account?.mp2AccountNumber ?? "",
-      mp2Amount: account?.mp2Amount ?? "0",
-      loanDetails: Object.fromEntries(PAGIBIG_LOAN_TYPES.map((type) => {
-        const detail = account?.loanDetails[type];
-        return [type, detail ? { ...detail, termYears: String(detail.termYears) } : emptyLoanDetail()];
-      })) as Record<PagibigLoanType, LoanDetail>,
-    });
-    setLoanEditorType(null);
-    setLoanEditorDetail(emptyLoanDetail());
-    setLoanStatusFilter("ACTIVE");
-    setAccountFormOpen(true);
-  };
-
-  const closeAccountForm = () => {
-    if (loanEditorBackup) {
-      setAccountForm((current) => ({ ...current, loanDetails: { ...current.loanDetails, [loanEditorBackup.sourceType]: loanEditorBackup.detail } }));
-    }
-    setAccountFormOpen(false);
-    setLoanEditorType(null);
-    setLoanEditorSourceType(null);
-    setLoanEditorDetail(emptyLoanDetail());
-    setLoanEditorBackup(null);
-    if (returnToReportPreview) setReportFormOpen(true);
-    setReturnToReportPreview(false);
-  };
-
-  const loadReportEmployeeOptions = async () => {
-    setAllEmployeesLoading(true);
-    setAllEmployeesError("");
-    try {
-      const response = await fetch("/api/reports/pagibig/employees", { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to load employees");
-      setAllEmployees(data.employees as Member[]);
-    } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : "Unable to load employees";
-      setAllEmployeesError(message);
-      setError(message);
-    } finally {
-      setAllEmployeesLoading(false);
-      reportEmployeeRosterLoadedRef.current = true;
-    }
-  };
-
-  const loadReportYearAccounts = async (
-    year: string,
-    retainedMembers = mergePagibigPreviewMembers(
-      previewMembers.map((member) => ({ ...member, pagIbigAccount: null })),
-      selectedReportEmployees,
-    ),
-  ) => {
-    const requestId = ++previewRequestRef.current;
-    const employerId = selectedEmployerId;
-    setPreviewLoading(true);
-    setPreviewError("");
-    setPreviewYear("");
-    setPreviewMembers(retainedMembers.map((member) => ({ ...member, pagIbigAccount: null })));
-    try {
-      const response = await fetch(`/api/reports/pagibig/members?employerId=${encodeURIComponent(employerId)}&year=${encodeURIComponent(year)}`, { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to load employee Pag-IBIG accounts");
-      if (requestId === previewRequestRef.current) {
-        setPreviewMembers(mergePagibigPreviewMembers(data.employees as Member[], retainedMembers));
-        setPreviewYear(year);
-      }
-    } catch (loadError) {
-      if (requestId === previewRequestRef.current) {
-        const message = loadError instanceof Error ? loadError.message : "Unable to load employee Pag-IBIG accounts";
-        setPreviewError(message);
-        setError(message);
-      }
-    } finally {
-      if (requestId === previewRequestRef.current) setPreviewLoading(false);
-    }
-  };
-
-  const openReportForm = async (initialEmployees: Member[] = [], manual = false) => {
-    setError("");
-    setNotice("");
-    setReportDraftId(null);
-    setUpdatingReportId(null);
-    setReportFormOpen(true);
-    setReportPin("");
-    setManualReport(manual);
-    setReportKind("CONTRIBUTION");
-    setPreviewError("");
-    setSelectedReportEmployees(initialEmployees);
-    setPreviewMembers(initialEmployees);
-    setReportEmployeeId("");
-    setReportEmployeePickerOpen(false);
-    // When in Payments view, seed the report year from the active year filter
-    // so the employee preview loads for the selected year (e.g. 2025).
-    const initialYear = paymentsView && yearFilter ? yearFilter : reportYear;
-    setReportYear(initialYear);
-    setPreviewYear(initialYear);
-    // Default to the first month of the target year that does not already have a saved report.
-    const monthsWithReports = new Set(reports.filter((report) => report.applicableYear === Number(initialYear)).map((report) => report.applicableMonth));
-    if (monthsWithReports.has(Number(reportMonth))) {
-      for (let m = 1; m <= 12; m++) {
-        if (!monthsWithReports.has(m)) { setReportMonth(String(m)); break; }
-      }
-    }
-  };
-
-  const openUpdateReport = async (report: Report) => {
-    setError("");
-    setNotice("");
-    setUpdatingReportId(report.id);
-    setReportDraftId(null);
-    setReportFormOpen(true);
-    setReportPin(report.pin ?? "");
-    setPreviewError("");
-    setReportMonth(String(report.applicableMonth));
-    setReportYear(String(report.applicableYear));
-    setSelectedReportEmployees([]);
-    setPreviewMembers([]);
-    setReportEmployeeId("");
-    setReportEmployeePickerOpen(false);
-    await loadReportYearAccounts(String(report.applicableYear), []);
-    const reportEmployeeIds = new Set(report.entries.map((entry) => entry.employeeId));
-    setPreviewMembers((current) => current.filter((member) => reportEmployeeIds.has(member.id)));
-    setSelectedReportEmployees((current) => current.filter((member) => reportEmployeeIds.has(member.id)));
-    setPreviewYear(String(report.applicableYear));
-    setPreviewFilter("ALL");
-  };
-
-  const addReportEmployee = async (employeeId: string = reportEmployeeId) => {
-    const employee = allEmployees.find((item) => String(item.id) === employeeId);
-    if (!employee || previewMembers.some((member) => member.id === employee.id)) return;
-    setPreviewLoading(true);
-    let account: Account | null = null;
-    try {
-      const response = await fetch(`/api/reports/pagibig/members?employerId=${encodeURIComponent(selectedEmployerId)}&year=${encodeURIComponent(reportYear)}`, { cache: "no-store" });
-      const data = await response.json();
-      if (response.ok) {
-        const yearEmployee = (data.employees as Member[]).find((item) => item.id === employee.id);
-        account = yearEmployee?.pagIbigAccount ?? null;
-        // If the account exists but is inactive, set it to active so the employee
-        // is eligible for inclusion in generated reports.
-        if (account && account.excludedFromReport && employee.pagIbigNumber) {
-          const targetAccount = account;
-          try {
-            const updateResponse = await fetch("/api/reports/pagibig/members", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                employeeId: String(employee.id),
-                year: reportYear,
-                midNumber: employee.pagIbigNumber,
-                employeeSavings: targetAccount.employeeSavings,
-                employerSavings: targetAccount.employerSavings,
-                excludedFromReport: false,
-                mp2AccountNumber: targetAccount.mp2AccountNumber ?? "",
-                mp2Amount: targetAccount.mp2Amount,
-                loanDetails: Object.fromEntries(
-                  PAGIBIG_LOAN_TYPES.map((type) => {
-                    const detail = targetAccount.loanDetails[type];
-                    return [type, detail ? { ...detail, termYears: String(detail.termYears) } : emptyLoanDetail()];
-                  })
-                ) as Record<PagibigLoanType, LoanDetail>,
-                employerId: Number(selectedEmployerId),
-                isNewAccount: false,
-              }),
-            });
-            if (updateResponse.ok) {
-              const updateData = await updateResponse.json();
-              account = updateData.account as Account;
-            }
-          } catch {
-            // If setting the account to active fails, proceed with the account as-is.
-          }
-        }
-      }
-    } catch {
-      // Fall back to adding the employee without a year account if the lookup fails.
-    } finally {
-      setPreviewLoading(false);
-    }
-    const restrictedAccount = manualReport && account ? (reportKind === "CONTRIBUTION"
-      ? { ...account, calamityLoanAmount: "0", mplLoanAmount: "0", emergencyLoanAmount: "0", safeLoanAmount: "0" }
-      : { ...account, employeeSavings: "0", employerSavings: "0", mp2Amount: "0" }) : account;
-    const selectedEmployee: Member = { ...employee, pagIbigAccount: restrictedAccount };
-    setSelectedReportEmployees((current) => mergePagibigPreviewMembers(current, [selectedEmployee]));
-    setPreviewMembers((current) => mergePagibigPreviewMembers(current, [selectedEmployee]));
-    setPreviewFilter("ALL");
-    setReportEmployeeId("");
-    setPreviewYear(reportYear);
-  };
-
-
-  const removeReportEmployee = (employeeId: number) => {
-    setSelectedReportEmployees((current) => current.filter((member) => member.id !== employeeId));
-    setPreviewMembers((current) => current.filter((member) => member.id !== employeeId));
-  };
-
-
-  const addAllReportEmployees = async () => {
-    const targetYear = reportYear;
-    if (!validPagibigYear(targetYear)) return;
-    if (!reportFormOpen) await openReportForm([]);
-
-    const currentMonth = Number(reportMonth);
-    const currentYear = Number(targetYear);
-    let previousMonth = currentMonth - 1;
-    let previousYear = currentYear;
-    if (previousMonth < 1) {
-      previousMonth = 12;
-      previousYear -= 1;
-    }
-
-    let availableReports = reports;
-    // Always refresh reports so Add All uses the same previous-month logic
-    // regardless of view or user role.
-    try {
-      const reportsResponse = await
-        fetch(`/api/reports/pagibig?employerId=${encodeURIComponent(selectedEmployerId)}`, { cache: "no-store" });
-      const reportsData = await reportsResponse.json();
-      if (reportsResponse.ok && Array.isArray(reportsData.reports)) {
-        availableReports = reportsData.reports as Report[];
-        setReports(availableReports);
-      }
-    } catch {
-      // Fall back to the currently loaded reports, if any.
-    }
-
-    const previousReport = availableReports.find((report) =>
-      report.applicableMonth === previousMonth && report.applicableYear === previousYear);
-    const previousEmployeeCodes = previousReport
-      ? new Set(previousReport.entries.map((entry) => entry.employeeCode))
-      : null;
-
-    const requestId = ++previewRequestRef.current;
-    setPreviewLoading(true);
-    setPreviewError("");
-    setPreviewYear("");
-    setPreviewMembers([]);
-    setSelectedReportEmployees([]);
-    try {
-      const response = await fetch(`/api/reports/pagibig/members?employerId=${encodeURIComponent(selectedEmployerId)}&year=${encodeURIComponent(targetYear)}`, { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to load employee Pag-IBIG accounts");
-      if (requestId !== previewRequestRef.current) return;
-      const yearEmployees = data.employees as Member[];
-      let employeesToAdd = previousEmployeeCodes
-        ? yearEmployees.filter((employee) => previousEmployeeCodes.has(employee.employeeCode))
-        : yearEmployees;
-      if (manualReport) {
-        employeesToAdd = employeesToAdd.map((employee) => ({
-          ...employee,
-          pagIbigAccount: employee.pagIbigAccount ? (reportKind === "CONTRIBUTION"
-            ? { ...employee.pagIbigAccount, calamityLoanAmount: "0", mplLoanAmount: "0", emergencyLoanAmount: "0", safeLoanAmount: "0" }
-            : { ...employee.pagIbigAccount, employeeSavings: "0", employerSavings: "0", mp2Amount: "0" }) : null,
-        }));
-      }
-      if (employeesToAdd.length === 0) {
-        setPreviewError(previousReport
-          ? `No matching employees found for ${monthNames[previousMonth - 1]} ${previousYear}.`
-          : "No employees found for the selected year.");
-        setError(previousReport
-          ? `No matching employees found for ${monthNames[previousMonth - 1]} ${previousYear}.`
-          : "No employees found for the selected year.");
-        return;
-      }
-      setPreviewMembers(sortPagibigPreviewMembers(employeesToAdd));
-      setSelectedReportEmployees(sortPagibigPreviewMembers(employeesToAdd));
-      setPreviewYear(targetYear);
-    } catch (loadError) {
-      if (requestId === previewRequestRef.current) {
-        const message = loadError instanceof Error ? loadError.message : "Unable to load employee Pag-IBIG accounts";
-        setPreviewError(message);
-        setError(message);
-      }
-    } finally {
-      if (requestId === previewRequestRef.current) setPreviewLoading(false);
-    }
-    setPreviewFilter("ALL");
-  };
-
-  const resumeReportDraft = async (draft: ReportDraft) => {
-    setDraftsOpen(false);
-    setReportDraftId(draft.id);
-    setReportMonth(String(draft.applicableMonth));
-    setReportYear(String(draft.applicableYear));
-    setReportPin(draft.pin);
-    setReportKind(draft.kind === "LOAN" ? "LOAN" : "CONTRIBUTION");
-    setReportFormOpen(true);
-    setSelectedReportEmployees([]);
-    setPreviewMembers([]);
-    setReportEmployeeId("");
-    setReportEmployeePickerOpen(false);
-    // Do not auto-load the entire year roster when resuming a draft; employees
-    // are added explicitly via Add All / Add Employee to avoid loading all accounts.
-    setPreviewYear(String(draft.applicableYear));
-  };
+    openAddAccount(String(requestedNewEmployeeId), handleAddAccountRoster);
+  }, [accountYear, loadedContext, loading, openAddAccount, paymentsView, requestedNewEmployeeId, router, selectedEmployerId, handleAddAccountRoster]);
 
   const saveAccount = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -678,14 +301,13 @@ function PagIbigReportsContent() {
       setLoanEditorBackup(null);
       if (returnToReportPreview) {
         setReportFormOpen(true);
-        setReturnToReportPreview(false);
       } else {
-      setSearch("");
-      setMemberStatusFilter("ACTIVE");
-      setMemberPage(1);
-      setError("");
-      setNotice("");
-      requestRefresh();
+        setSearch("");
+        setMemberStatusFilter("ACTIVE");
+        setMemberPage(1);
+        setError("");
+        setNotice("");
+        requestRefresh();
       }
     } catch (saveError) {
       // Restore the old loan type's data if a type switch was in progress
@@ -702,32 +324,29 @@ function PagIbigReportsContent() {
     }
   };
 
-  const handleGenerateReport = (event?: FormEvent<HTMLFormElement>) =>
-    saveGeneratedReport(event, {
-      employerId: selectedEmployerId,
-      reportDraftId,
-      setReports,
-      setReportDrafts,
-      setSelectedReport,
-      setError,
-      setNotice,
-    });
+  const deleteReport = async () => {
+    if (!deleteReportTarget) return;
+    setError("");
+    try {
+      const response = await fetch(`/api/reports/pagibig/${deleteReportTarget.id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error((data as { error?: string } | null)?.error || "Unable to delete Pag-IBIG report");
+      const deletedId = deleteReportTarget.id;
+      setReports((current) => current.filter((report) => report.id !== deletedId));
+      if (selectedReport?.id === deletedId) setSelectedReport(null);
+      if (paymentReport?.id === deletedId) setPaymentReport(null);
+      setDeleteReportTarget(null);
+      setNotice("Pag-IBIG report deleted.");
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete Pag-IBIG report");
+    }
+  };
+
   const reportEmployeeOptions = allEmployees.filter((employee) => !previewMembers.some((member) => member.id === employee.id));
   const createEmployeeHref = getPagibigCreateEmployeeHref(selectedEmployerId, accountYear);
-  const handleReportYearChange = (year: string) => {
-    setReportYear(year);
-    previewRequestRef.current += 1;
-    setPreviewLoading(false);
-    setPreviewError("");
-    setPreviewYear("");
-    setPreviewMembers([]);
-    setSelectedReportEmployees([]);
-  };
-  const toggleReportEmployeePicker = () => {
-    if (!reportEmployeeRosterLoadedRef.current && !allEmployeesLoading && !allEmployeesError) {
-      void loadReportEmployeeOptions();
-    }
-    setReportEmployeePickerOpen((current) => !current);
+  const closeReportForm = () => {
+    form.setUpdatingReportId(null);
+    setReportFormOpen(false);
   };
 
   return (
@@ -742,7 +361,7 @@ function PagIbigReportsContent() {
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Benefits reports</p>
               <h1 className="benefit-report-title">{paymentsView ? "Payments" : "Employee List"}</h1>
               {reportEmployer?.id === Number(selectedEmployerId) && <p className="truncate text-sm font-semibold text-slate-700" title={`${reportEmployer.name} · ${reportEmployer.pagibigNumber || "-"}`}>{reportEmployer.name} · {reportEmployer.pagibigNumber || "-"}</p>}
-              </div>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {paymentsView ? (
@@ -771,40 +390,31 @@ function PagIbigReportsContent() {
               </div>
             </>
           ) : (
-            <button type="button" onClick={() => openAddAccount()} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />Add</button>
+            <button type="button" onClick={() => openAddAccount("", handleAddAccountRoster)} className="benefit-report-primary whitespace-nowrap"><PlusIcon className="h-4 w-4" />Add</button>
           ))}
           <input id="pagibig-search" aria-label="Search Pag-IBIG records" value={search} onChange={(event) => { setSearch(event.target.value); if (!paymentsView) setMemberPage(1); }} placeholder={paymentsView ? "Search period or employee" : "Search employee, code, or MID"} className={`${inputClass} min-w-[14rem] flex-[2_1_16rem]`} />
-          {!paymentsView ? (
+          {paymentsView ? (
             <>
-              <select id="pagibig-member-status" aria-label="Filter employee accounts by status" value={memberStatusFilter} onChange={(event) => {
-                const status = event.target.value;
-                if (status === "ALL" || status === "ACTIVE" || status === "INACTIVE") setMemberStatusFilter(status);
-                setMemberPage(1);
-              }} className={`${inputClass} flex-[0_0_10rem]`}>
-                <option value="ALL">All statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
+              <select id="pagibig-year" aria-label="Filter reports by year" value={yearFilter} onChange={(event) => { setYearFilter(event.target.value); setReportPage(1); }} className={`${inputClass} flex-[0_0_8rem]`}>
+                <option value="">All years</option>{view.years.map((year) => <option key={year} value={year}>{year}</option>)}
+              </select>
+              <select id="pagibig-payment-status" aria-label="Filter reports by payment status" value={paymentStatusFilter} onChange={(event) => { const value = event.target.value; if (value === "ALL" || value === "PAID" || value === "UNPAID") setPaymentStatusFilter(value); setReportPage(1); }} className={`${inputClass} flex-[0_0_8rem]`}>
+                <option value="ALL">All statuses</option><option value="UNPAID">Unpaid</option><option value="PAID">Paid</option>
               </select>
             </>
-          ) : <>
-            <select id="pagibig-year" aria-label="Filter reports by year" value={yearFilter} onChange={(event) => { setYearFilter(event.target.value); setReportPage(1); }} className={`${inputClass} flex-[0_0_8rem]`}>
-              <option value="">All years</option>{years.map((year) => <option key={year} value={year}>{year}</option>)}
+          ) : (
+            <select id="pagibig-member-status" aria-label="Filter employee accounts by status" value={memberStatusFilter} onChange={(event) => {
+              const status = event.target.value;
+              if (status === "ALL" || status === "ACTIVE" || status === "INACTIVE") setMemberStatusFilter(status);
+              setMemberPage(1);
+            }} className={`${inputClass} flex-[0_0_10rem]`}>
+              <option value="ALL">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
             </select>
-            <select id="pagibig-payment-status" aria-label="Filter reports by payment status" value={paymentStatusFilter} onChange={(event) => { const value = event.target.value; if (value === "ALL" || value === "PAID" || value === "UNPAID") setPaymentStatusFilter(value); setReportPage(1); }} className={`${inputClass} flex-[0_0_8rem]`}>
-              <option value="ALL">All statuses</option><option value="UNPAID">Unpaid</option><option value="PAID">Paid</option>
-
-            </select>
-            <button type="button" onClick={refresh} disabled={refreshing} aria-label="Refresh Pag-IBIG records" title="Refresh" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"><ArrowPathIcon className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} /></button>
-          </>}
-          {!paymentsView && <button type="button" onClick={refresh} disabled={refreshing} aria-label="Refresh Pag-IBIG records" title="Refresh" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"><ArrowPathIcon className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} /></button>}
-          {selectedEmployerId && paymentsView && <DraftsMenu
-            open={draftsOpen}
-            drafts={reportDrafts}
-            menuRef={draftsMenuRef}
-            onToggle={() => setDraftsOpen((open) => !open)}
-            onResume={(draft) => { void resumeReportDraft(draft); }}
-            onDelete={(draft) => { void deleteReportDraft(draft); }}
-          />}
+          )}
+          <button type="button" onClick={refresh} disabled={refreshing} aria-label="Refresh Pag-IBIG records" title="Refresh" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"><ArrowPathIcon className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} /></button>
+          {selectedEmployerId && paymentsView && <DraftsMenu open={draftsOpen} drafts={reportDrafts} onToggle={() => setDraftsOpen((open) => !open)} onResume={(draft) => void resumeReportDraft(draft)} onDelete={(draft) => void deleteReportDraft(draft)} />}
         </div>
       </section>
 
@@ -813,57 +423,49 @@ function PagIbigReportsContent() {
       {notice && <div role="status" className="benefit-report-notice benefit-report-notice-success shrink-0"><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Dismiss confirmation" className="shrink-0 rounded-md p-1 text-emerald-800 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"><XMarkIcon className="h-4 w-4" /></button></div>}
 
       {selectedEmployerId && <section className="benefit-report-panel flex min-h-0 flex-1 flex-col">
-      {loading || loadedContext !== `${selectedEmployerId}:${paymentsView ? "payments" : `members:${accountYear}`}` ? <div className="flex flex-1 flex-col items-center justify-center p-10 text-center text-sm text-slate-700"><ArrowPathIcon className="mb-3 h-5 w-5 animate-spin text-slate-400" /><p>Loading Pag-IBIG records...</p></div>
-        : paymentsView ? (
-          <ReportsTable
-            displayedPagibigReports={displayedPagibigReports}
-            pagedReports={pagedReports}
-            reportPageSize={reportPageSize}
-            currentReportPage={currentReportPage}
-            reportPageCount={reportPageCount}
-            canEditPayments={canEditPayments}
-            reportMenuOpen={reportMenuOpen}
-            setReportMenuOpen={setReportMenuOpen}
-            reportMenuRef={reportMenuRef}
-            openUpdateReport={openUpdateReport}
-            setDeleteReportTarget={setDeleteReportTarget}
-            openPayment={openPayment}
-            onViewReport={(report) => {
-              if (!report.manual) {
-                setSelectedReport(report);
-                return;
-              }
-              const siblings = reports
-                .filter((item) => item.manual && item.employerId === report.employerId
-                  && item.applicableMonth === report.applicableMonth && item.applicableYear === report.applicableYear)
-                .sort((left, right) => (left.kind === "CONTRIBUTION" ? 0 : 1) - (right.kind === "CONTRIBUTION" ? 0 : 1));
-              setSelectedManualReports(siblings.length ? siblings : [report]);
-            }}
-            setReportPage={setReportPage}
-          />
-        ) : (
-          <MembersTable
-            visibleMembers={visibleMembers}
-            filteredMembers={filteredMembers}
-            memberTotals={memberTotals}
-            memberSavingsTotal={memberSavingsTotal}
-            memberOverallTotal={memberOverallTotal}
-            memberFirstResult={memberFirstResult}
-            memberLastResult={memberLastResult}
-            currentMemberPage={currentMemberPage}
-            memberPageCount={memberPageCount}
-            onPrevPage={() => setMemberPage(currentMemberPage - 1)}
-            onNextPage={() => setMemberPage(currentMemberPage + 1)}
-            onOpenAccount={openEditAccount}
-          />
-        )}
+        {dataReady ? <div className="flex flex-1 flex-col items-center justify-center p-10 text-center text-sm text-slate-700"><ArrowPathIcon className="mb-3 h-5 w-5 animate-spin text-slate-400" /><p>Loading Pag-IBIG records...</p></div>
+          : paymentsView ? (
+            <ReportsTable
+              displayedPagibigReports={view.displayedPagibigReports}
+              pagedReports={view.pagedReports}
+              currentReportPage={view.currentReportPage}
+              reportPageCount={view.reportPageCount}
+              canEditPayments={canEditPayments}
+              reportMenuOpen={reportMenuOpen}
+              setReportMenuOpen={setReportMenuOpen}
+              reportMenuRef={reportMenuRef}
+              openUpdateReport={(report) => void openUpdateReport(report)}
+              setDeleteReportTarget={setDeleteReportTarget}
+              openPayment={openPayment}
+              setSelectedManualReports={setSelectedManualReports}
+              setSelectedReport={setSelectedReport}
+              setManualViewReturnReports={setManualViewReturnReports}
+              setReportPage={setReportPage}
+            />
+          ) : (
+            <MembersTable
+              visibleMembers={view.visibleMembers}
+              filteredMembers={view.filteredMembers}
+              memberTotals={view.memberTotals}
+              memberSavingsTotal={view.memberSavingsTotal}
+              memberOverallTotal={view.memberOverallTotal}
+              memberFirstResult={view.memberFirstResult}
+              memberLastResult={view.memberLastResult}
+              currentMemberPage={view.currentMemberPage}
+              memberPageCount={view.memberPageCount}
+              onPrevPage={() => setMemberPage(view.currentMemberPage - 1)}
+              onNextPage={() => setMemberPage(view.currentMemberPage + 1)}
+              onEditAccount={(member) => openEditAccount(member)}
+              onAddAccount={(employeeId) => openAddAccount(employeeId, handleAddAccountRoster)}
+            />
+          )}
       </section>}
 
       <AccountFormDialog
         open={accountFormOpen}
         editingMember={editingMember}
         accountForm={accountForm}
-        setAccountForm={setAccountForm}
+        setAccountForm={account.setAccountForm}
         allEmployees={allEmployees}
         allEmployeesError={allEmployeesError}
         allEmployeesLoading={allEmployeesLoading}
@@ -871,30 +473,20 @@ function PagIbigReportsContent() {
         savingAccount={savingAccount}
         createEmployeeHref={createEmployeeHref}
         loanEditorType={loanEditorType}
-        setLoanEditorType={setLoanEditorType}
+        setLoanEditorType={account.setLoanEditorType}
         loanEditorDetail={loanEditorDetail}
-        setLoanEditorDetail={setLoanEditorDetail}
+        setLoanEditorDetail={account.setLoanEditorDetail}
         loanEditorReason={loanEditorReason}
-        setLoanEditorReason={setLoanEditorReason}
+        setLoanEditorReason={account.setLoanEditorReason}
         loanEditorSourceType={loanEditorSourceType}
-        setLoanEditorSourceType={setLoanEditorSourceType}
+        setLoanEditorSourceType={account.setLoanEditorSourceType}
         loanEditorBackup={loanEditorBackup}
         setLoanEditorBackup={setLoanEditorBackup}
         loanStatusFilter={loanStatusFilter}
-        setLoanStatusFilter={setLoanStatusFilter}
+        setLoanStatusFilter={account.setLoanStatusFilter}
         onClose={closeAccountForm}
         onSubmit={saveAccount}
-        onSelectEmployee={(employeeId) => {
-          const picked = allEmployees.find((employee) => String(employee.id) === employeeId);
-          setAccountForm((current) => ({
-            ...current,
-            employeeId,
-            midNumber: picked?.pagIbigNumber ?? current.midNumber,
-            year: accountYear,
-            excludedFromReport: false,
-          }));
-          setAccountError("");
-        }}
+        onSelectEmployee={(employeeId) => onSelectEmployeeForAccount(employeeId, allEmployees)}
         onOpenLoanEditor={openLoanEditor}
         onSaveLoanDetail={saveLoanDetail}
         onDeleteLoanDetail={deleteLoanDetail}
@@ -908,7 +500,7 @@ function PagIbigReportsContent() {
           pin: reportPin,
           month: reportMonth,
           year: reportYear,
-          draftId: reportDraftId,
+          draftId: currentDraftId,
           updatingReportId,
           pickerOpen: reportEmployeePickerOpen,
           employeeId: reportEmployeeId,
@@ -918,102 +510,52 @@ function PagIbigReportsContent() {
         reports={reports}
         reportDrafts={reportDrafts}
         monthNames={monthNames}
-        employees={{
-          loading: allEmployeesLoading,
-          error: allEmployeesError,
-          options: reportEmployeeOptions,
-        }}
+        employees={{ loading: allEmployeesLoading, error: allEmployeesError, options: reportEmployeeOptions }}
         preview={{
           loading: previewLoading,
           error: previewError,
           year: previewYear,
           filter: previewFilter,
-          filteredMembers: filteredPreviewMembers,
-          entryCount: previewEntries.length,
-          showSavingsColumns,
-          showLoanColumns,
-          columnCount: previewColumnCount,
-          total: previewTotal,
-          overall: previewOverall,
+          filteredMembers: view.filteredPreviewMembers,
+          entryCount: view.previewEntries.length,
+          showSavingsColumns: view.showSavingsColumns,
+          showLoanColumns: view.showLoanColumns,
+          columnCount: view.previewColumnCount,
+          total: view.previewTotal,
+          overall: view.previewOverall,
         }}
         savingDraft={savingDraft}
         generating={generating}
-        onClose={() => {
-          setUpdatingReportId(null);
-          setReportFormOpen(false);
-        }}
+        onClose={closeReportForm}
         onCancel={() => setReportFormOpen(false)}
-        onSubmit={handleGenerateReport}
+        onSubmit={generateReport}
         onSetKind={setReportKind}
         onSetPin={setReportPin}
         onSetMonth={setReportMonth}
         onSetEmployeePickerOpen={setReportEmployeePickerOpen}
         onSetEmployeeId={setReportEmployeeId}
-        onYearChange={handleReportYearChange}
+        onYearChange={(year) => {
+          setReportYear(year);
+          resetReportYearPreview();
+        }}
         onAddAllEmployees={() => void addAllReportEmployees()}
-        onToggleEmployeePicker={toggleReportEmployeePicker}
+        onToggleEmployeePicker={() => {
+          if (!reportEmployeeRosterLoadedRef.current && !allEmployeesLoading && !allEmployeesError) void loadReportEmployeeOptions();
+          setReportEmployeePickerOpen((current) => !current);
+        }}
         onAddEmployee={(employeeId) => void addReportEmployee(employeeId)}
-        onSaveDraft={() =>
-          void saveReportDraft({
-            reports,
-            employerId: selectedEmployerId,
-            month: reportMonth,
-            year: reportYear,
-            pin: reportPin,
-            manual: manualReport,
-            kind: reportKind,
-          })
-        }
-        onGenerateReport={() => void handleGenerateReport()}
-        onEditAccount={openEditAccount}
+        onSaveDraft={() => void saveReportDraft()}
+        onGenerateReport={() => void generateReport()}
+        onEditAccount={(member, fromPreview) => openEditAccount(member, fromPreview)}
         onRemoveEmployee={removeReportEmployee}
       />
+
       {selectedReport && <ReportDetails report={selectedReport} onClose={() => { setSelectedReport(null); if (manualViewReturnReports) { setSelectedManualReports(manualViewReturnReports); setManualViewReturnReports(null); } }} onPayment={(paidReport) => { setSelectedReport(null); if (manualViewReturnReports) { setSelectedManualReports(manualViewReturnReports); setManualViewReturnReports(null); } openPayment(paidReport); }} employerAddress={reportEmployer?.address ?? null} />}
-     {selectedManualReports && (
-       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6">
-         <section className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
-           <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-             <div>
-               <h2 className="text-lg font-bold text-slate-900">Manual Reports - {monthNames[selectedManualReports[0].applicableMonth - 1]} {selectedManualReports[0].applicableYear}</h2>
-               <p className="text-xs text-slate-600">{selectedManualReports[0].employerName}</p>
-             </div>
-             <button type="button" onClick={() => setSelectedManualReports(null)} aria-label="Close" className="rounded-full p-2 text-slate-600 hover:bg-slate-100"><XMarkIcon className="h-5 w-5" /></button>
-           </header>
-           <div className="max-h-[70vh] overflow-auto p-5 space-y-4">
-             {selectedManualReports.map((report) => (
-               <div key={report.id} className="rounded-xl border border-slate-200 p-4">
-                 <div className="flex items-center justify-between">
-                   <h3 className="text-base font-bold text-slate-900">{report.kind === 'CONTRIBUTION' ? 'Contribution' : 'Loan'} Manual Report</h3>
-                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${report.amountPaid !== null && report.payDate !== null ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{report.amountPaid !== null && report.payDate !== null ? 'Paid' : 'Unpaid'}</span>
-                 </div>
-                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                   <p className="font-semibold text-slate-500">Invoice No.</p>
-                   <p className="font-bold text-slate-900">{report.pin}</p>
-                   <p className="font-semibold text-slate-500">Amount Due</p>
-                   <p className="font-bold text-slate-900">{formatMoney(report.amountDue)}</p>
-                   <p className="font-semibold text-slate-500">Members</p>
-                   <p className="font-bold text-slate-900">{report.entries.length}</p>
-                 </div>
-                 <div className="mt-3 flex gap-2">
-                   <button type="button" onClick={() => { setManualViewReturnReports(selectedManualReports); setSelectedManualReports(null); setSelectedReport(report); }} className="h-9 rounded-lg border border-violet-300 bg-white px-3 text-sm font-semibold text-violet-800 hover:bg-violet-50">View Details</button>
-{(!(report.amountPaid !== null && report.payDate !== null) || canEditPayments) &&                    <button type="button" onClick={() => { setSelectedManualReports(null); openPayment(report); }} className="h-9 rounded-lg bg-violet-700 px-3 text-sm font-semibold text-white hover:bg-violet-800">{report.amountPaid !== null && report.payDate !== null ? 'Update Payment' : 'Record Payment'}</button>}
-                 </div>
-               </div>
-             ))}
-           </div>
-           <footer className="flex justify-end border-t border-slate-200 px-5 py-4">
-             <button type="button" onClick={() => setSelectedManualReports(null)} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>
-           </footer>
-         </section>
-       </div>
-     )}
-      {deleteReportTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6">
-        <section className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
-          <h2 className="text-lg font-bold text-slate-900">Delete Pag-IBIG Report?</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">Delete the report for <strong>{deleteReportTarget.employerName}</strong> covering <strong>{monthNames[deleteReportTarget.applicableMonth - 1]} {deleteReportTarget.applicableYear}</strong>? Its {deleteReportTarget.entries.length} employee {deleteReportTarget.entries.length === 1 ? "entry" : "entries"} and any recorded payment details will also be removed. This action cannot be undone.</p>
-          <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setDeleteReportTarget(null)} disabled={deletingReport} className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 disabled:opacity-50">Cancel</button><button type="button" onClick={() => void deleteReport()} disabled={deletingReport} className="h-10 rounded-lg bg-rose-600 px-4 text-sm font-semibold text-white disabled:opacity-50">{deletingReport ? "Deleting..." : "Delete Report"}</button></div>
-        </section>
-      </div>}
+
+      {selectedManualReports && <ManualReportsDialog reports={selectedManualReports} canEditPayments={canEditPayments} onClose={() => setSelectedManualReports(null)} onViewDetails={(report) => { setManualViewReturnReports(selectedManualReports); setSelectedManualReports(null); setSelectedReport(report); }} onOpenPayment={(report) => { setSelectedManualReports(null); openPayment(report); }} />}
+
+      {deleteReportTarget && <DeleteReportDialog report={deleteReportTarget} deleting={deletingReport} onCancel={() => setDeleteReportTarget(null)} onDelete={() => void deleteReport()} />}
+
       <PaymentDialog
         report={paymentReport}
         reports={reports}

@@ -1,4 +1,4 @@
-heck how the ALTER TABLE "SssReport"
+ALTER TABLE "SssReport"
 ADD COLUMN "createdBy" INTEGER;
 
 CREATE INDEX "SssReport_createdBy_idx" ON "SssReport"("createdBy");

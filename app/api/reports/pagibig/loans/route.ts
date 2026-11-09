@@ -61,3 +61,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unable to load Pag-IBIG loans" }, { status: 500 });
   }
 }
+
+

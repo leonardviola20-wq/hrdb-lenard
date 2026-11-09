@@ -6,15 +6,14 @@ import type { ReportDraft } from "./types";
 type Props = {
   open: boolean;
   drafts: ReportDraft[];
-  menuRef: React.RefObject<HTMLDivElement | null>;
   onToggle: () => void;
   onResume: (draft: ReportDraft) => void;
   onDelete: (draft: ReportDraft) => void;
 };
 
-export function DraftsMenu({ open, drafts, menuRef, onToggle, onResume, onDelete }: Props) {
+export function DraftsMenu({ open, drafts, onToggle, onResume, onDelete }: Props) {
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative">
       <button
         type="button"
         aria-expanded={open}

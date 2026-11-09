@@ -1,0 +1,375 @@
+{
+  "currency": "₱",
+  "categories": [
+    {
+      "name": "Appetizer",
+      "items": [
+        {
+          "name": "Falafel",
+          "desc": "",
+          "price": 388
+        },
+        {
+          "name": "Shirmal / Roti",
+          "desc": "",
+          "price": 373
+        },
+        {
+          "name": "Sambuseh",
+          "desc": "",
+          "price": 398
+        },
+        {
+          "name": "Sizzling Ox Brain",
+          "desc": "",
+          "price": 398
+        },
+        {
+          "name": "Onion Fritters",
+          "desc": "",
+          "price": 396
+        },
+        {
+          "name": "Flaming Cheese",
+          "desc": "",
+          "price": 428
+        }
+      ]
+    },
+    {
+      "name": "Salads",
+      "items": [
+        {
+          "name": "Fattoush",
+          "desc": "",
+          "price": 398
+        },
+        {
+          "name": "Shirazi",
+          "desc": "",
+          "price": 318
+        },
+        {
+          "name": "Shirazi Salad with Yogurt",
+          "desc": "",
+          "price": 348
+        },
+        {
+          "name": "Tabulleh",
+          "desc": "",
+          "price": 358
+        },
+        {
+          "name": "Greek Salad",
+          "desc": "",
+          "price": 398
+        },
+        {
+          "name": "House Mediterranean Salad",
+          "desc": "",
+          "price": 798
+        },
+        {
+          "name": "Watermelon and Arugula Salad",
+          "desc": "",
+          "price": 568
+        },
+        {
+          "name": "Arya Salad (Single)",
+          "desc": "",
+          "price": 398
+        },
+        {
+          "name": "Arya Salad (Share)",
+          "desc": "",
+          "price": 528
+        },
+        {
+          "name": "Arya Salad (Family)",
+          "desc": "",
+          "price": 688
+        }
+      ]
+    },
+    {
+      "name": "Soup",
+      "items": [
+        {
+          "name": "Soup of the Day",
+          "desc": "",
+          "price": 198
+        }
+      ]
+    },
+    {
+      "name": "Hummus",
+      "items": [
+        {
+          "name": "Hummus Plain",
+          "desc": "",
+          "price": 278
+        },
+        {
+          "name": "Hummus Roasted Bell Pepper",
+          "desc": "",
+          "price": 298
+        },
+        {
+          "name": "Hummus Sugar Beet",
+          "desc": "",
+          "price": 298
+        },
+        {
+          "name": "Shahi Hummus / Motabal",
+          "desc": "",
+          "price": 468
+        },
+        {
+          "name": "Hummus Platter",
+          "desc": "",
+          "price": 787
+        },
+        {
+          "name": "Hummus Pesto",
+          "desc": "",
+          "price": 298
+        },
+        {
+          "name": "Rashti Hummus / Motabal",
+          "desc": "",
+          "price": 448
+        },
+        {
+          "name": "Hummus with Keema",
+          "desc": "",
+          "price": 494
+        }
+      ]
+    },
+    {
+      "name": "Dips",
+      "items": [
+        {
+          "name": "Plain Yogurt",
+          "desc": "",
+          "price": 328
+        },
+        {
+          "name": "Motabal / BaBa Ghannuj",
+          "desc": "",
+          "price": 278
+        },
+        {
+          "name": "Cucumber Yogurt Salad",
+          "desc": "",
+          "price": 348
+        },
+        {
+          "name": "Tzatziki",
+          "desc": "",
+          "price": 328
+        },
+        {
+          "name": "Arya Dip Platter",
+          "desc": "",
+          "price": 767
+        },
+        {
+          "name": "Mirza Ghasemi",
+          "desc": "",
+          "price": 328
+        }
+      ]
+    },
+    {
+      "name": "Rice",
+      "items": [
+        {
+          "name": "Basmati Rice (Single)",
+          "desc": "",
+          "price": 149
+        },
+        {
+          "name": "Basmati Rice (Share)",
+          "desc": "",
+          "price": 239
+        },
+        {
+          "name": "Biryani Rice (Single)",
+          "desc": "",
+          "price": 159
+        },
+        {
+          "name": "Biryani Rice (Share)",
+          "desc": "",
+          "price": 249
+        },
+        {
+          "name": "Chives Rice",
+          "desc": "Best for seafood dishes and kebabs",
+          "price": 299
+        },
+        {
+          "name": "Dill Rice",
+          "desc": "Best for seafood dishes and kebabs",
+          "price": 299
+        },
+        {
+          "name": "Garlic Rice",
+          "desc": "Good for all dishes",
+          "price": 299
+        },
+        {
+          "name": "Zereshk Rice",
+          "desc": "Good for lamb dishes and kebabs",
+          "price": 299
+        },
+        {
+          "name": "Raisin Rice",
+          "desc": "Good for beef and lamb dishes and kebabs",
+          "price": 299
+        },
+        {
+          "name": "Caramelized Onion Rice",
+          "desc": "Good for beef and lamb dishes and kebabs",
+          "price": 299
+        },
+        {
+          "name": "Lobia Polo",
+          "desc": "Good on its own as a sharing dish",
+          "price": 499
+        }
+      ]
+    },
+    {
+      "name": "Mains - Lamb",
+      "items": [
+        {
+          "name": "Lamb Biryani (Regular)",
+          "desc": "",
+          "price": 748
+        },
+        {
+          "name": "Lamb Biryani (Large)",
+          "desc": "",
+          "price": 988
+        },
+        {
+          "name": "Lamb Biryani (XL)",
+          "desc": "",
+          "price": 1088
+        },
+        {
+          "name": "Lamb Biryani (XXL)",
+          "desc": "",
+          "price": 1198
+        },
+        {
+          "name": "Saffron Single",
+          "desc": "",
+          "price": 688
+        },
+        {
+          "name": "Lamb Rack (Full Rack)",
+          "desc": "",
+          "price": 3975
+        },
+        {
+          "name": "Gourmeh Sabzi",
+          "desc": "",
+          "price": 548
+        }
+      ]
+    },
+    {
+      "name": "Mains - Beef",
+      "items": [
+        {
+          "name": "Beef Biryani",
+          "desc": "",
+          "price": 748
+        },
+        {
+          "name": "Beef Curry",
+          "desc": "",
+          "price": 588
+        },
+        {
+          "name": "Keema",
+          "desc": "",
+          "price": 348
+        },
+        {
+          "name": "Sizzling Tenderloin Steak",
+          "desc": "",
+          "price": 3888
+        }
+      ]
+    },
+    {
+      "name": "Mains - Chicken",
+      "items": [
+        {
+          "name": "Chicken Biryani",
+          "desc": "",
+          "price": 648
+        },
+        {
+          "name": "Chicken Curry",
+          "desc": "",
+          "price": 548
+        },
+        {
+          "name": "Saffron Chicken",
+          "desc": "",
+          "price": 638
+        },
+        {
+          "name": "Limoo Chicken (Lemon Chicken)",
+          "desc": "",
+          "price": 988
+        }
+      ]
+    },
+    {
+      "name": "Mains - Seafood",
+      "items": [
+        {
+          "name": "Mahi Polo",
+          "desc": "",
+          "price": 696
+        },
+        {
+          "name": "Migu Curry",
+          "desc": "",
+          "price": 698
+        },
+        {
+          "name": "Qalye Mahi",
+          "desc": "",
+          "price": 678
+        },
+        {
+          "name": "Qalye Migu",
+          "desc": "",
+          "price": 588
+        }
+      ]
+    },
+    {
+      "name": "Mains - Vegetables",
+      "items": [
+        {
+          "name": "Veggie Biryani",
+          "desc": "",
+          "price": 668
+        },
+        {
+          "name": "Veggie Curry",
+          "desc": "",
+          "price": 585
+        }
+      ]
+    }
+  ]
+}
