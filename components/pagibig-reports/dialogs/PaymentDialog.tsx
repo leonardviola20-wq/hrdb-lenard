@@ -2,10 +2,10 @@
 
 import type { FormEvent } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { inputClass, labelClass, monthNames, paymentTypes } from "./constants";
-import { formatMoney } from "./format";
-import { MoneyInput } from "./MoneyInput";
-import type { PaymentForm, Report } from "./types";
+import { inputClass, labelClass, monthNames, paymentTypes } from '@/components/pagibig-reports/shared/constants';
+import { formatMoney } from '@/components/pagibig-reports/shared/format';
+import { MoneyInput } from '@/components/pagibig-reports/shared/MoneyInput';
+import type { PaymentForm, Report } from '@/components/pagibig-reports/shared/types';
 
 type Props = {
   report: Report | null;

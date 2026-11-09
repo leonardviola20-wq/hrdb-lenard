@@ -7,9 +7,9 @@ import {
   sortPagibigPreviewMembers,
   type PagibigPreviewFilter,
 } from "@/lib/pagibigReportPreview";
-import { memberPageSize, monthNames } from "./constants";
-import { formatEmployeeName, memberAmountColumns } from "./format";
-import type { Account, Member, Report, ReportEmployer } from "./types";
+import { memberPageSize, monthNames } from '@/components/pagibig-reports/shared/constants';
+import { formatEmployeeName, memberAmountColumns } from '@/components/pagibig-reports/shared/format';
+import type { Account, Member, Report, ReportEmployer } from '@/components/pagibig-reports/shared/types';
 
 type UsePagibigReportViewOptions = {
   members: Member[];

@@ -2,9 +2,9 @@
 
 import { useCallback } from "react";
 import { PAGIBIG_LOAN_TYPES, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
-import { emptyAccountForm, emptyLoanDetail, loanLabels } from "./format";
-import type { LoanDetail, Member } from "./types";
-import type { usePagibigAccountForm } from "./usePagibigAccountForm";
+import { emptyAccountForm, emptyLoanDetail, loanLabels } from '@/components/pagibig-reports/shared/format';
+import type { LoanDetail, Member } from '@/components/pagibig-reports/shared/types';
+import type { usePagibigAccountForm } from '@/components/pagibig-reports/hooks/usePagibigAccountForm';
 
 // Account-modal actions extracted from PagIbigReportsPage: open/close the
 // Add/Edit account dialog, manage the inline loan editor, and save accounts.

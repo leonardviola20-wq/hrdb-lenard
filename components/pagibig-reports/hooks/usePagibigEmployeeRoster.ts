@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { Member } from "./types";
+import type { Member } from '@/components/pagibig-reports/shared/types';
 
 /**
  * Loads the full employee roster used by the account form and the

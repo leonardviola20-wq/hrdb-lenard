@@ -8,14 +8,14 @@ import {
   ReportDetails,
   ReportGenerationDialog,
 } from "../index";
-import { monthNames } from "../constants";
-import type { usePagibigAccountActions } from "../usePagibigAccountActions";
-import type { usePagibigAccountForm } from "../usePagibigAccountForm";
-import type { usePagibigReportActions } from "../usePagibigReportActions";
-import type { usePagibigReportForm } from "../usePagibigReportForm";
-import type { usePagibigReportView } from "../usePagibigReportView";
-import type { usePagibigPayments } from "../usePagibigPayments";
-import type { Member, Report, ReportDraft, ReportEmployer } from "../types";
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import type { usePagibigAccountActions } from '@/components/pagibig-reports/hooks/usePagibigAccountActions';
+import type { usePagibigAccountForm } from '@/components/pagibig-reports/hooks/usePagibigAccountForm';
+import type { usePagibigReportActions } from '@/components/pagibig-reports/hooks/usePagibigReportActions';
+import type { usePagibigReportForm } from '@/components/pagibig-reports/hooks/usePagibigReportForm';
+import type { usePagibigReportView } from '@/components/pagibig-reports/hooks/usePagibigReportView';
+import type { usePagibigPayments } from '@/components/pagibig-reports/hooks/usePagibigPayments';
+import type { Member, Report, ReportDraft, ReportEmployer } from '@/components/pagibig-reports/shared/types';
 
 type AccountActions = ReturnType<typeof usePagibigAccountActions>;
 type AccountFormControls = ReturnType<typeof usePagibigAccountForm>;

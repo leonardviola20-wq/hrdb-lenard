@@ -1,6 +1,6 @@
 "use client";
 
-import { inputClass, labelClass } from "./constants";
+import { inputClass, labelClass } from '@/components/pagibig-reports/shared/constants';
 
 export function MoneyInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (

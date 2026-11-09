@@ -1,9 +1,9 @@
 "use client";
 
 import { PencilSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { formatAmount, formatEmployeeName, formatMoney } from "./format";
-import { memberAmountColumns } from "./format";
-import type { Member } from "./types";
+import { formatAmount, formatEmployeeName, formatMoney } from '@/components/pagibig-reports/shared/format';
+import { memberAmountColumns } from '@/components/pagibig-reports/shared/format';
+import type { Member } from '@/components/pagibig-reports/shared/types';
 
 type Props = {
   visibleMembers: Member[];

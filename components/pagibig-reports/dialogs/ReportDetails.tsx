@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { monthNames } from "./constants";
-import { formatMoney } from "./format";
-import type { Report } from "./types";
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import { formatMoney } from '@/components/pagibig-reports/shared/format';
+import type { Report } from '@/components/pagibig-reports/shared/types';
 
 function ReportDetails({ report, onClose, onPayment, employerAddress }: { report: Report; onClose: () => void; onPayment: (report: Report) => void; employerAddress?: string | null }) {
   const totalSavings = report.entries.reduce((sum, entry) => sum + Number(entry.employeeSavings) + Number(entry.employerSavings), 0);

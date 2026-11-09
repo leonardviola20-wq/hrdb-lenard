@@ -1,8 +1,8 @@
 "use client";
 
 import { PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { formatMoney, formatEmployeeName } from "./format";
-import type { Account, Member } from "./types";
+import { formatMoney, formatEmployeeName } from '@/components/pagibig-reports/shared/format';
+import type { Account, Member } from '@/components/pagibig-reports/shared/types';
 
 type Props = {
   filteredPreviewMembers: Member[];

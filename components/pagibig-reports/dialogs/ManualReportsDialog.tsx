@@ -1,7 +1,7 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { monthNames } from "./constants";
-import { formatMoney } from "./format";
-import type { Report } from "./types";
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import { formatMoney } from '@/components/pagibig-reports/shared/format';
+import type { Report } from '@/components/pagibig-reports/shared/types';
 
 export function ManualReportsDialog({
   reports,

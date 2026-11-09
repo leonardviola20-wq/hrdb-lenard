@@ -1,4 +1,4 @@
-import type { Report } from "@/components/pagibig-reports/types";
+import type { Report } from "@/components/pagibig-reports/shared/types";
 
 export type PagibigReportView = "PIF" | "MANUAL";
 

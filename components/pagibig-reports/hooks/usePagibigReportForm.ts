@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer } from "react";
-import type { Member } from "@/components/pagibig-reports/types";
+import type { Member } from '@/components/pagibig-reports/shared/types';
 import type { PagibigPreviewFilter } from "@/lib/pagibigReportPreview";
 
 // Report-form related state consolidated into a reducer (Tier 4 pilot).

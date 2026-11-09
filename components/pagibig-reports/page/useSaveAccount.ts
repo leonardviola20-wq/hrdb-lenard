@@ -2,9 +2,9 @@
 
 import type { FormEvent } from "react";
 import { sortPagibigPreviewMembers } from "@/lib/pagibigReportPreview";
-import type { usePagibigAccountForm } from "../usePagibigAccountForm";
-import type { usePagibigReportForm } from "../usePagibigReportForm";
-import type { Account, Member } from "../types";
+import type { usePagibigAccountForm } from '@/components/pagibig-reports/hooks/usePagibigAccountForm';
+import type { usePagibigReportForm } from '@/components/pagibig-reports/hooks/usePagibigReportForm';
+import type { Account, Member } from '@/components/pagibig-reports/shared/types';
 
 type AccountFormControls = ReturnType<typeof usePagibigAccountForm>;
 type ReportFormControls = ReturnType<typeof usePagibigReportForm>;

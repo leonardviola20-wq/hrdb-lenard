@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PaymentForm, Report } from "./types";
+import type { PaymentForm, Report } from '@/components/pagibig-reports/shared/types';
 
 export function usePagibigPayments(selectedEmployerId: string, setReports: (updater: (current: Report[]) => Report[]) => void) {
   const [paymentReport, setPaymentReport] = useState<Report | null>(null);

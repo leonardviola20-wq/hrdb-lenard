@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import type { Member } from "../components/pagibig-reports/types";
+import type { Member } from "../components/pagibig-reports/shared/types";
 import { filterAndSortPagibigMembers, paginateMembers } from "./pagibigReportMembers";
 
 function makeMember(overrides: Partial<Member>): Member {

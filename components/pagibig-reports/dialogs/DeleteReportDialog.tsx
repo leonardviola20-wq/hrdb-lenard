@@ -1,5 +1,5 @@
-import { monthNames } from "./constants";
-import type { Report } from "./types";
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import type { Report } from '@/components/pagibig-reports/shared/types';
 
 export function DeleteReportDialog({
   report,

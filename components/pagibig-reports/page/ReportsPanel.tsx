@@ -3,8 +3,8 @@
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import type { RefObject, Dispatch, SetStateAction } from "react";
 import { MembersTable, ReportsTable } from "../index";
-import type { usePagibigReportView } from "../usePagibigReportView";
-import type { Member, Report } from "../types";
+import type { usePagibigReportView } from '@/components/pagibig-reports/hooks/usePagibigReportView';
+import type { Member, Report } from '@/components/pagibig-reports/shared/types';
 
 type ViewControls = ReturnType<typeof usePagibigReportView>;
 

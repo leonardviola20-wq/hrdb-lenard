@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { ArrowPathIcon, ChevronLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
-import { inputClass } from "./constants";
-import { useDismissableMenu } from "./useDismissableMenu";
-import type { DraftsMenuProps } from "./DraftsMenu";
-import { DraftsMenu } from "./DraftsMenu";
-import type { ReportEmployer } from "./types";
+import { inputClass } from '@/components/pagibig-reports/shared/constants';
+import { useDismissableMenu } from '@/components/pagibig-reports/shared/useDismissableMenu';
+import type { DraftsMenuProps } from '@/components/pagibig-reports/shared/DraftsMenu';
+import { DraftsMenu } from '@/components/pagibig-reports/shared/DraftsMenu';
+import type { ReportEmployer } from '@/components/pagibig-reports/shared/types';
 
 export type PagIbigReportsHeaderProps = {
   selectedEmployerId: string;

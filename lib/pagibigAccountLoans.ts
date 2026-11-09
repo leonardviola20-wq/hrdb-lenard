@@ -1,4 +1,4 @@
-import type { LoanDetail } from "@/components/pagibig-reports/types";
+import type { LoanDetail } from "@/components/pagibig-reports/shared/types";
 import { PAGIBIG_LOAN_TYPES, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
 
 export type PagibigLoanDetails = Record<PagibigLoanType, LoanDetail>;

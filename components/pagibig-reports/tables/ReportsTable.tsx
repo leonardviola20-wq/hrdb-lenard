@@ -1,9 +1,9 @@
 "use client";
 
 import { BanknotesIcon, EllipsisVerticalIcon, EyeIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { formatMoney } from "./format";
-import { monthNames } from "./constants";
-import type { Report } from "./types";
+import { formatMoney } from '@/components/pagibig-reports/shared/format';
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import type { Report } from '@/components/pagibig-reports/shared/types';
 
 type Props = {
   displayedPagibigReports: Report[];

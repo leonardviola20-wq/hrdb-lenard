@@ -2,10 +2,10 @@
 
 import type { Dispatch, FormEventHandler, SetStateAction } from "react";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { EmployeePicker } from "@/components/pagibig-reports/EmployeePicker";
-import { ReportPreviewTable } from "@/components/pagibig-reports/ReportPreviewTable";
-import { inputClass, labelClass } from "@/components/pagibig-reports/constants";
-import type { Account, Member, Report, ReportDraft, ReportEmployer } from "@/components/pagibig-reports/types";
+import { EmployeePicker } from '@/components/pagibig-reports/shared/EmployeePicker';
+import { ReportPreviewTable } from '@/components/pagibig-reports/tables/ReportPreviewTable';
+import { inputClass, labelClass } from '@/components/pagibig-reports/shared/constants';
+import type { Account, Member, Report, ReportDraft, ReportEmployer } from '@/components/pagibig-reports/shared/types';
 import type { PagibigPreviewFilter } from "@/lib/pagibigReportPreview";
 
 type ReportGenerationDialogProps = {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useReducer } from "react";
-import type { Member } from "@/components/pagibig-reports/types";
-import type { AccountForm, LoanDetail } from "@/components/pagibig-reports/types";
+import type { Member } from '@/components/pagibig-reports/shared/types';
+import type { AccountForm, LoanDetail } from '@/components/pagibig-reports/shared/types';
 import type { PagibigLoanType } from "@/lib/pagibigLoanTypes";
-import { emptyAccountForm, emptyLoanDetail } from "@/components/pagibig-reports/format";
+import { emptyAccountForm, emptyLoanDetail } from '@/components/pagibig-reports/shared/format';
 
 export type PagibigAccountFormState = {
   accountFormOpen: boolean;

@@ -3,11 +3,11 @@
 import { validPagibigYear } from "@/lib/pagibigYear";
 import { PAGIBIG_LOAN_TYPES } from "@/lib/pagibigLoanTypes";
 import { mergePagibigPreviewMembers, sortPagibigPreviewMembers } from "@/lib/pagibigReportPreview";
-import { monthNames } from "./constants";
-import { emptyLoanDetail } from "./format";
-import type { usePagibigDrafts } from "./usePagibigDrafts";
-import type { usePagibigReportForm } from "./usePagibigReportForm";
-import type { Account, Member, Report, ReportDraft } from "./types";
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import { emptyLoanDetail } from '@/components/pagibig-reports/shared/format';
+import type { usePagibigDrafts } from '@/components/pagibig-reports/hooks/usePagibigDrafts';
+import type { usePagibigReportForm } from '@/components/pagibig-reports/hooks/usePagibigReportForm';
+import type { Account, Member, Report, ReportDraft } from '@/components/pagibig-reports/shared/types';
 
 // Report-generation actions extracted from PagIbigReportsPage: open/update the
 // report form, manage the employee preview, save/resume drafts, and generate

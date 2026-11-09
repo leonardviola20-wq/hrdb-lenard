@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { inputClass } from "./constants";
-import { formatEmployeeName } from "./format";
-import type { Member } from "./types";
+import { inputClass } from '@/components/pagibig-reports/shared/constants';
+import { formatEmployeeName } from '@/components/pagibig-reports/shared/format';
+import type { Member } from '@/components/pagibig-reports/shared/types';
 
 export function EmployeePicker({
   options,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Member, Report, ReportEmployer } from "@/components/pagibig-reports/types";
+import type { Member, Report, ReportEmployer } from '@/components/pagibig-reports/shared/types';
 
 export function usePagibigReportData({
   accountYear,

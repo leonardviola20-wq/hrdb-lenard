@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Report } from "../types";
+import type { Report } from '@/components/pagibig-reports/shared/types';
 
 /**
  * Manages the details/manual-reports drill-through stack: a report can be

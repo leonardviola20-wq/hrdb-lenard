@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import type { Report } from "../components/pagibig-reports/types";
+import type { Report } from "../components/pagibig-reports/shared/types";
 import { computePagibigYears, filterPagibigReports, mergeManualPagibigReports } from "./pagibigReportList";
 
 function makeReport(overrides: Partial<Report>): Report {

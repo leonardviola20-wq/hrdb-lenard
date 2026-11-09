@@ -1,7 +1,7 @@
 "use client";
 
-import { monthNames } from "./constants";
-import type { ReportDraft } from "./types";
+import { monthNames } from '@/components/pagibig-reports/shared/constants';
+import type { ReportDraft } from '@/components/pagibig-reports/shared/types';
 
 export type DraftsMenuProps = {
   open: boolean;

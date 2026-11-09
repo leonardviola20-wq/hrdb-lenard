@@ -1,6 +1,6 @@
 "use client";
 
-import type { Report } from "../types";
+import type { Report } from '@/components/pagibig-reports/shared/types';
 
 /**
  * Deletes the pending report target, syncing the reports list and closing any

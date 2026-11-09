@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { ReportDraft } from "@/components/pagibig-reports/types";
+import type { ReportDraft } from '@/components/pagibig-reports/shared/types';
 
 // Draft-related state + handlers extracted from PagIbigReportsPage (Tier 6 PR 1 slice).
 

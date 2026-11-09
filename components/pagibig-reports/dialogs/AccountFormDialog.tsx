@@ -8,16 +8,16 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { EmployeePicker } from "@/components/pagibig-reports/EmployeePicker";
-import { MoneyInput } from "@/components/pagibig-reports/MoneyInput";
-import { inputClass, labelClass } from "@/components/pagibig-reports/constants";
+import { EmployeePicker } from '@/components/pagibig-reports/shared/EmployeePicker';
+import { MoneyInput } from '@/components/pagibig-reports/shared/MoneyInput';
+import { inputClass, labelClass } from '@/components/pagibig-reports/shared/constants';
 import {
   emptyLoanDetail,
   formatAmount,
   formatEmployeeName,
   loanLabels,
-} from "@/components/pagibig-reports/format";
-import type { AccountForm, LoanDetail, Member } from "@/components/pagibig-reports/types";
+} from '@/components/pagibig-reports/shared/format';
+import type { AccountForm, LoanDetail, Member } from '@/components/pagibig-reports/shared/types';
 import { PAGIBIG_LOAN_TYPES, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
 
 type AccountStatus = "ACTIVE" | "INACTIVE";

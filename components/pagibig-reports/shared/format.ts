@@ -1,5 +1,5 @@
 import { PAGIBIG_LOAN_TYPES, type PagibigLoanType } from "@/lib/pagibigLoanTypes";
-import type { AccountForm, LoanDetail, Member } from "./types";
+import type { AccountForm, LoanDetail, Member } from '@/components/pagibig-reports/shared/types';
 
 export const formatMoney = (value: number | string | null | undefined) => `₱${(Number(value) || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 

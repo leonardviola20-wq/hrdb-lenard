@@ -1,5 +1,5 @@
-import { memberAmountColumns } from "@/components/pagibig-reports/format";
-import type { Account, Member } from "@/components/pagibig-reports/types";
+import { memberAmountColumns } from "@/components/pagibig-reports/shared/format";
+import type { Account, Member } from "@/components/pagibig-reports/shared/types";
 
 export function computeMemberTotals(filteredMembers: Member[]): number[] {
   return memberAmountColumns.map((column) =>
