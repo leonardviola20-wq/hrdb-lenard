@@ -41,7 +41,8 @@ const STATUS_OPTIONS = [
 
 export default function PagIbigLoansPage() {
   const params = useParams();
-  const employeeId = params?.id ?? "";
+  const rawId = params?.id;
+  const employeeId = typeof rawId === "string" ? rawId : Array.isArray(rawId) ? rawId[0] ?? "" : "";
 
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(false);

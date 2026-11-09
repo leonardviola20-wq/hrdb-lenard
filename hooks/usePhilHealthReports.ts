@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPhilHealthShares } from "@/lib/philHealthReportTotals";
+import type { Employee } from "@/components/philhealth-reports/types";
 
 type Report = {
   id: number;

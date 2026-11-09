@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
       termEndDate: loan.termEndDate.toISOString().slice(0, 10),
       amount: loan.amount?.toString() ?? "0",
       status: loan.status,
-      certifyingEmployer: loan.certifyingEmployer,
     }));
     return NextResponse.json(
       { employer: employer ? { id: employer.id, name: employer.name, pagibigNumber: employer.hdmf } : null, loans: items },

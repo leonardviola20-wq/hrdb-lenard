@@ -29,10 +29,16 @@ export function isJsonRecord(value: unknown): value is JsonRecord {
 }
 
 export class ChatApiError extends Error {
-  constructor(message: string) {
+  status?: number;
+  constructor(message: string, status?: number) {
     super(message);
     this.name = "ChatApiError";
+    if (status !== undefined) this.status = status;
   }
+}
+
+export function isChatAuthenticationError(error: unknown): boolean {
+  return error instanceof ChatApiError && error.status === 401;
 }
 
 export async function requestChatJson(url: string, init?: RequestInit): Promise<unknown> {
@@ -41,13 +47,14 @@ export async function requestChatJson(url: string, init?: RequestInit): Promise<
   try {
     payload = response.status === 204 ? null : await response.json();
   } catch {
-    throw new ChatApiError("The chat service returned an unreadable response.");
+    throw new ChatApiError("The chat service returned an unreadable response.", response.status);
   }
   if (!response.ok) {
     throw new ChatApiError(
       isJsonRecord(payload) && typeof payload.error === "string"
         ? payload.error
         : "Unable to update chat.",
+      response.status,
     );
   }
   return payload;

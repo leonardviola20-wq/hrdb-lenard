@@ -43,9 +43,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const existing = await prisma.pagibigEmployeeLoan.findFirst({
       where: {
         id: loanId,
-        record: { employeeId },
+        PagibigEmployeeRecord: { employeeId },
       },
-      include: { record: { select: { employeeId: true } } },
+      include: { PagibigEmployeeRecord: { select: { employeeId: true } } },
     });
     if (!existing) return NextResponse.json({ error: "Loan not found for this employee" }, { status: 404 });
 

@@ -32,6 +32,7 @@ export function ReportsTable({
   onViewReport,
   onOpenPayment,
   onDeleteReport,
+  reportYearFilter,
   currentReportPage,
   reportPageCount,
   reportPageSize,
