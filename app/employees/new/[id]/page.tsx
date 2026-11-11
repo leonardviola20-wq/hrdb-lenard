@@ -1,1 +1,5 @@
-export { default } from "../page";
+import EmployeeProfileEditorPage from "@/components/employee-profile-editor";
+
+export default function UpdateEmployeePage() {
+  return <EmployeeProfileEditorPage />;
+}
