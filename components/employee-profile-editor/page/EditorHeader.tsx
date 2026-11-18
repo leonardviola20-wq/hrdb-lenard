@@ -2,18 +2,21 @@
 
 import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { activeStatuses, type EditorForm } from "../types";
+import BackButton from "@/components/BackButton";
 
 type EditorHeaderProps = {
   form: EditorForm;
   fullName: string;
   employeeId: number | null;
+  backHref: string;
+  backLabel: string;
   onPhotoSelected: (file: File) => void;
 };
 
 /** Photo upload plus the employee identity / status summary under the page title. */
-export function EditorHeader({ form, fullName, employeeId, onPhotoSelected }: EditorHeaderProps) {
+export function EditorHeader({ form, fullName, employeeId, backHref, backLabel, onPhotoSelected }: EditorHeaderProps) {
   return (
-    <header className="mt-1 flex flex-wrap items-center gap-4">
+    <header className="page-header-surface mt-1 flex flex-wrap items-center gap-4">
       <div className="group relative shrink-0">
         {form.photoUrl ? (
           <img src={form.photoUrl} alt={`${fullName} preview`} className="h-24 w-24 rounded-full border-2 border-gray-200 object-cover" />
@@ -31,7 +34,7 @@ export function EditorHeader({ form, fullName, employeeId, onPhotoSelected }: Ed
             <input
               id="employee-editor-photo-upload"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif"
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";
@@ -44,9 +47,10 @@ export function EditorHeader({ form, fullName, employeeId, onPhotoSelected }: Ed
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="break-words text-xl font-bold text-gray-950 sm:text-2xl">
+          <BackButton fallbackHref={backHref} label={backLabel} />
+          <h1 className="break-words text-xl font-bold text-gray-950 sm:text-2xl">
             {employeeId === null ? "Add New Employee" : `Editing: ${fullName}`}
-          </h2>
+          </h1>
         </div>
         <p className="mt-1 text-sm font-medium text-gray-700">
           {form.position || "Position not set"} <span className="px-1 text-gray-400">•</span> {form.branch || "Branch not set"}
@@ -59,5 +63,3 @@ export function EditorHeader({ form, fullName, employeeId, onPhotoSelected }: Ed
     </header>
   );
 }
-
-

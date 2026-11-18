@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { EyeIcon, PencilSquareIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import PageHeader from "@/components/PageHeader";
 
 type Employer = {
   id: number;
@@ -210,7 +211,8 @@ export default function EmployersPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="w-full">
-        <header className="mb-6 flex flex-wrap items-center gap-2">
+        <PageHeader title="Employers" subtitle="Manage employer, branch, and government information." />
+        <header className="page-header-surface mb-6 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => openForm()} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900"><PlusIcon className="h-4 w-4" />Add</button>
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search employers..." aria-label="Search employers" className={`${inputClass} h-10 min-w-[200px] flex-1`} />
         </header>
@@ -260,17 +262,17 @@ export default function EmployersPage() {
         {selectedEmployer && (
           <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setSelectedEmployer(null)}>
             <section role="dialog" aria-modal="true" aria-labelledby="employer-details-title" onClick={(event) => event.stopPropagation()} className="my-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
-              <header className="relative flex flex-wrap items-center gap-4 bg-gradient-to-r from-slate-950 via-blue-950 to-blue-900 p-5 text-white sm:p-7">
-                {selectedEmployer.logo ? <img src={selectedEmployer.logo} alt={`${selectedEmployer.name} logo`} className="h-20 w-20 shrink-0 rounded-2xl border border-white/30 bg-white object-contain p-1 shadow-lg" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-xs font-semibold text-blue-100">No logo</div>}
+              <header className="page-header-surface relative flex flex-wrap items-center gap-4 bg-white p-5 text-black sm:p-7">
+                {selectedEmployer.logo ? <img src={selectedEmployer.logo} alt={`${selectedEmployer.name} logo`} className="h-20 w-20 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1 shadow-lg" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-xs font-semibold">No logo</div>}
                 <div className="min-w-0 flex-1 pr-10 sm:pr-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 id="employer-details-title" className="break-words text-xl font-bold sm:text-2xl">{selectedEmployer.name}</h2>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${selectedEmployer.status.toLowerCase() === "active" ? "bg-emerald-400/15 text-emerald-100 ring-1 ring-inset ring-emerald-300/30" : "bg-white/10 text-slate-100 ring-1 ring-inset ring-white/20"}`}>{selectedEmployer.status}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${selectedEmployer.status.toLowerCase() === "active" ? "bg-emerald-50 ring-1 ring-inset ring-emerald-300" : "bg-slate-100 ring-1 ring-inset ring-slate-300"}`}>{selectedEmployer.status}</span>
                   </div>
-                  <p className="mt-1 break-words text-sm text-blue-100">{selectedEmployer.company || "No trade name"}</p>
-                  <p className="mt-3 text-xs font-medium text-blue-200">Employer profile <span aria-hidden="true">·</span> {selectedEmployer._count.employees} {selectedEmployer._count.employees === 1 ? "employee" : "employees"}</p>
+                  <p className="mt-1 break-words text-sm text-slate-700">{selectedEmployer.company || "No trade name"}</p>
+                  <p className="mt-3 text-xs font-medium text-slate-700">Employer profile <span aria-hidden="true">·</span> {selectedEmployer._count.employees} {selectedEmployer._count.employees === 1 ? "employee" : "employees"}</p>
                 </div>
-                <button type="button" onClick={() => setSelectedEmployer(null)} aria-label="Close employer details" className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-100 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/70">
+                <button type="button" onClick={() => setSelectedEmployer(null)} aria-label="Close employer details" className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <XMarkIcon className="h-5 w-5" />
                 </button>
               </header>

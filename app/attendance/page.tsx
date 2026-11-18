@@ -3,6 +3,7 @@
 import { type ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon, EyeIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AttendancePrintReport, { AttendancePrintAllReport, attendanceMinutes } from "@/components/AttendancePrintReport";
+import PageHeader from "@/components/PageHeader";
 
 type Punch = { time: string; deviceNumber: string; branch: string };
 type AttendanceEmployee = {
@@ -434,6 +435,7 @@ export default function AttendancePage() {
   return (
     <main className="flex min-h-[calc(100dvh-8rem)] w-full min-w-0 flex-col overflow-x-hidden bg-slate-50 p-4 sm:p-6">
       <div className="flex w-full min-w-0 flex-1 flex-col space-y-4">
+        <PageHeader title="Attendance" subtitle="Attendance tracking and records." />
         <div id="reports" className="flex w-full scroll-mt-24 flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
           <input ref={fileInputRef} type="file" multiple accept=".dat,.txt,.xls,.xlsx,application/vnd.ms-excel" onChange={uploadFile} className="hidden" />

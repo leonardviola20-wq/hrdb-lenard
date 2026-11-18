@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/sss-contributions"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SSS_CONTRIBUTIONS_DATABASE_URL")
+}
+
+model SssReport {
+  id                   Int              @id
+  kind                 String
+  employerId           Int
+  employerName         String
+  employerAddress      String?
+  employerSssNumber    String?
+  prn                  String
+  applicableMonth      Int
+  applicableYear       Int
+  amountDue            Decimal          @db.Decimal(12, 2)
+  amountPaid           Decimal?         @db.Decimal(12, 2)
+  paymentType          String?
+  payDate              DateTime?        @db.Date
+  sssBranch            String?
+  transactionReference String?
+  createdBy            Int?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  entries              SssReportEntry[]
+
+  @@index([employerId, applicableYear, applicableMonth])
+  @@index([kind, createdAt])
+}
+
+model SssReportEntry {
+  id                   Int       @id @default(autoincrement())
+  reportId             Int
+  employeeId           Int?
+  employeeName         String
+  employeeCode         String
+  employeeSssNumber    String?
+  sssLoanId            Int?
+  loanAccountNumber    String?
+  employeeEmployerId   Int?
+  employeeEmployerName String?
+  salaryRange          String?
+  monthlySalaryCredit  Decimal?  @db.Decimal(12, 2)
+  employeeSs           Decimal   @default(0) @db.Decimal(12, 2)
+  employerSs           Decimal   @default(0) @db.Decimal(12, 2)
+  employeeMpf          Decimal   @default(0) @db.Decimal(12, 2)
+  employerMpf          Decimal   @default(0) @db.Decimal(12, 2)
+  ec                   Decimal   @default(0) @db.Decimal(12, 2)
+  loanAmount           Decimal   @default(0) @db.Decimal(12, 2)
+  totalAmount          Decimal   @db.Decimal(12, 2)
+  report               SssReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, reportId])
+  @@index([sssLoanId])
+}
+
+model SssReportDraft {
+  id              Int      @id
+  createdBy       Int
+  kind            String
+  employerId      Int?
+  prn             String   @default("")
+  applicableMonth Int      @default(1)
+  applicableYear  Int
+  amountDue       String   @default("")
+  entries         Json
+  continuedBy     Int?
+  continuedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([createdBy, updatedAt])
+  @@index([continuedBy, updatedAt])
+}

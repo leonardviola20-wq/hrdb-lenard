@@ -9,19 +9,19 @@ datasource db {
 }
 
 model User {
-  id                       Int              @id @default(autoincrement())
-  email                    String           @unique
+  id                       Int                  @id @default(autoincrement())
+  email                    String               @unique
   username                 String?
   name                     String?
   password                 String
-  role                     String           @default("USER")
-  canAccessEmployees       Boolean          @default(false)
-  accessiblePages          String[]         @default(["/dashboard", "/tasks", "/settings"])
-  emailVerified            Boolean          @default(true)
-  verificationTokenHash    String?          @unique
+  role                     String               @default("USER")
+  canAccessEmployees       Boolean              @default(false)
+  accessiblePages          String[]             @default(["/dashboard", "/tasks", "/settings"])
+  emailVerified            Boolean              @default(true)
+  verificationTokenHash    String?              @unique
   verificationTokenExpires DateTime?
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
   posts                    Post[]
   tasks                    Task[]
   sssReportDrafts          SssReportDraft[]
@@ -29,6 +29,7 @@ model User {
   PagibigReport            PagibigReport[]
   PagibigReportDraft       PagibigReportDraft[]
   philHealthReports        PhilHealthReport[]
+  loanMonitorReports       LoanMonitorReport[]
 }
 
 model Post {
@@ -101,58 +102,59 @@ model TaskPrerequisiteItem {
 }
 
 model employee {
-  id                     Int                             @id @default(autoincrement())
-  status                 String?
-  dateStarted            DateTime?
-  employerId             Int?
-  address                String?
-  age                    Int?
-  biometricNo            String?                         @unique
-  branch                 String?
-  position               String?
-  createdAt              DateTime                        @default(now())
-  dateOfBirth            DateTime?
-  email                  String?
-  emergencyAddress       String?
-  emergencyName          String?
-  emergencyNumber        String?
-  emergencyRelation      String?
-  employeeCode           String                          @unique
-  endDate                DateTime?
-  firstName              String
-  gender                 String?
-  jobLevel               String?
-  lastName               String
-  maritalStatus          String?
-  middleName             String?
-  mobileNumber           String?
-  pagIbigNumber          String?
-  philHealth             String?
-  photoUrl               String?
-  remarks                String?
-  sssNumber              String?
-  tinNumber              String?
-  updatedAt              DateTime                        @updatedAt
-  supervisorId           Int?
-  assignedBy             String?
-  assignedAt             DateTime?
-  employer               employer?                       @relation(fields: [employerId], references: [id])
-  supervisor             employee?                       @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
-  directReports          employee[]                      @relation("EmployeeSupervisor")
-  attendanceRecords      Attendance[]
-  attendancePunches      AttendancePunch[]
-  officeContacts         OfficeContact[]
-  requirements           EmployeeRequirement[]
-  requirementAttachments EmployeeRequirementAttachment[]
-  bdoAccountNumbers      EmployeeBdoAccountNumber[]
-  sssReportEntries       SssReportEntry[]
-  sssLoans               SssLoan[]
-  pagibigEmployeeRecords PagibigEmployeeRecord[]
-  pagibigReportEntries   PagibigReportEntry[]
-  pagibigLoans           PagibigLoan[]
+  id                        Int                             @id @default(autoincrement())
+  status                    String?
+  dateStarted               DateTime?
+  employerId                Int?
+  address                   String?
+  age                       Int?
+  biometricNo               String?                         @unique
+  branch                    String?
+  position                  String?
+  createdAt                 DateTime                        @default(now())
+  dateOfBirth               DateTime?
+  email                     String?
+  emergencyAddress          String?
+  emergencyName             String?
+  emergencyNumber           String?
+  emergencyRelation         String?
+  employeeCode              String                          @unique
+  endDate                   DateTime?
+  firstName                 String
+  gender                    String?
+  jobLevel                  String?
+  lastName                  String
+  maritalStatus             String?
+  middleName                String?
+  mobileNumber              String?
+  pagIbigNumber             String?
+  philHealth                String?
+  photoUrl                  String?
+  remarks                   String?
+  sssNumber                 String?
+  tinNumber                 String?
+  updatedAt                 DateTime                        @updatedAt
+  supervisorId              Int?
+  assignedBy                String?
+  assignedAt                DateTime?
+  employer                  employer?                       @relation(fields: [employerId], references: [id])
+  supervisor                employee?                       @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  directReports             employee[]                      @relation("EmployeeSupervisor")
+  attendanceRecords         Attendance[]
+  attendancePunches         AttendancePunch[]
+  officeContacts            OfficeContact[]
+  requirements              EmployeeRequirement[]
+  requirementAttachments    EmployeeRequirementAttachment[]
+  bdoAccountNumbers         EmployeeBdoAccountNumber[]
+  sssReportEntries          SssReportEntry[]
+  sssLoans                  SssLoan[]
+  pagibigEmployeeRecords    PagibigEmployeeRecord[]
+  pagibigReportEntries      PagibigReportEntry[]
+  pagibigLoans              PagibigLoan[]
   philHealthEmployeeRecords PhilHealthEmployeeRecord[]
-  philHealthReportEntries  PhilHealthReportEntry[]
-  requirementsBypassed   Boolean                         @default(false)
+  philHealthReportEntries   PhilHealthReportEntry[]
+  requirementsBypassed      Boolean                         @default(false)
+  loans                     Loan[]
 
   @@index([employerId])
   @@index([supervisorId])
@@ -264,37 +266,37 @@ model AttendancePunch {
 }
 
 model employer {
-  id                     Int         @id @default(autoincrement())
-  name                   String
-  company                String?
-  branches               String?
-  status                 String      @default("Active")
-  email                  String?
-  contactNumber          String?
-  branchStatus           String      @default("Open")
-  president              String?
-  longAddress            String?
-  shortAddress           String?
-  logo                   String?
-  secDti                 String?     @unique
-  secDtiRegistrationDate DateTime?
-  tin                    String?
-  tinRegistrationDate    DateTime?
-  sss                    String?
-  sssRegistrationDate    DateTime?
-  hdmf                   String?
-  hdmfRegistrationDate   DateTime?
-  phic                   String?
-  phicRegistrationDate   DateTime?
-  employees              employee[]
-  sssReports             SssReport[]
-  sssLoans               SssLoan[]
-  pagibigEmployeeLoans   PagibigEmployeeLoan[]
-  pagibigEmployeeRecords PagibigEmployeeRecord[]
-  pagibigLoans           PagibigLoan[]
-  pagibigReports         PagibigReport[]
+  id                        Int                        @id @default(autoincrement())
+  name                      String
+  company                   String?
+  branches                  String?
+  status                    String                     @default("Active")
+  email                     String?
+  contactNumber             String?
+  branchStatus              String                     @default("Open")
+  president                 String?
+  longAddress               String?
+  shortAddress              String?
+  logo                      String?
+  secDti                    String?                    @unique
+  secDtiRegistrationDate    DateTime?
+  tin                       String?
+  tinRegistrationDate       DateTime?
+  sss                       String?
+  sssRegistrationDate       DateTime?
+  hdmf                      String?
+  hdmfRegistrationDate      DateTime?
+  phic                      String?
+  phicRegistrationDate      DateTime?
+  employees                 employee[]
+  sssReports                SssReport[]
+  sssLoans                  SssLoan[]
+  pagibigEmployeeLoans      PagibigEmployeeLoan[]
+  pagibigEmployeeRecords    PagibigEmployeeRecord[]
+  pagibigLoans              PagibigLoan[]
+  pagibigReports            PagibigReport[]
   philHealthEmployeeRecords PhilHealthEmployeeRecord[]
-  philHealthReports      PhilHealthReport[]
+  philHealthReports         PhilHealthReport[]
 }
 
 model SssLoan {
@@ -377,6 +379,58 @@ model SssReportEntry {
   @@index([sssLoanId])
 }
 
+model ImportedSssLoanReport {
+  sourceReportId       Int                              @id
+  sourceKind           String
+  sourceEmployerId     Int
+  employerName         String
+  employerAddress      String?
+  employerSssNumber    String?
+  prn                  String
+  applicableMonth      Int
+  applicableYear       Int
+  amountDue            Decimal                          @db.Decimal(12, 2)
+  amountPaid           Decimal?                         @db.Decimal(12, 2)
+  paymentType          String?
+  payDate              DateTime?                        @db.Date
+  sssBranch            String?
+  transactionReference String?
+  sourceCreatedBy      Int?
+  sourceCreatedAt      DateTime                         @db.Timestamp(3)
+  sourceUpdatedAt      DateTime                         @db.Timestamp(3)
+  importedAt           DateTime                         @default(now())
+  entries              ImportedSssLoanReportEntry[]
+
+  @@index([sourceEmployerId, applicableYear, applicableMonth])
+  @@index([importedAt])
+}
+
+model ImportedSssLoanReportEntry {
+  sourceEntryId              Int                    @id
+  sourceReportId             Int
+  sourceEmployeeId           Int?
+  employeeName               String
+  employeeCode               String
+  employeeSssNumber          String?
+  sourceSssLoanId            Int?
+  loanAccountNumber          String?
+  sourceEmployeeEmployerId   Int?
+  employeeEmployerName       String?
+  salaryRange                String?
+  monthlySalaryCredit        Decimal?               @db.Decimal(12, 2)
+  employeeSs                 Decimal                @db.Decimal(12, 2)
+  employerSs                 Decimal                @db.Decimal(12, 2)
+  employeeMpf                Decimal                @db.Decimal(12, 2)
+  employerMpf                Decimal                @db.Decimal(12, 2)
+  ec                         Decimal                @db.Decimal(12, 2)
+  loanAmount                 Decimal                @db.Decimal(12, 2)
+  totalAmount                Decimal                @db.Decimal(12, 2)
+  report                     ImportedSssLoanReport  @relation(fields: [sourceReportId], references: [sourceReportId], onDelete: Cascade)
+
+  @@index([sourceReportId])
+  @@index([loanAccountNumber])
+}
+
 model SssReportDraft {
   id              Int       @id @default(autoincrement())
   createdBy       Int
@@ -419,20 +473,20 @@ model PagibigEmployeeLoan {
 }
 
 model PagibigEmployeeRecord {
-  id                 Int                   @id @default(autoincrement())
-  employeeId         Int
-  employerId         Int
-  year               Int
-  eeShare            Decimal               @default(200) @db.Decimal(12, 2)
-  erShare            Decimal               @default(200) @db.Decimal(12, 2)
-  mp2AccountNo       String?
-  mp2Amount          Decimal               @default(0) @db.Decimal(12, 2)
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime
-  excludedFromReport Boolean               @default(false)
+  id                  Int                   @id @default(autoincrement())
+  employeeId          Int
+  employerId          Int
+  year                Int
+  eeShare             Decimal               @default(200) @db.Decimal(12, 2)
+  erShare             Decimal               @default(200) @db.Decimal(12, 2)
+  mp2AccountNo        String?
+  mp2Amount           Decimal               @default(0) @db.Decimal(12, 2)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  excludedFromReport  Boolean               @default(false)
   PagibigEmployeeLoan PagibigEmployeeLoan[]
-  employee           employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  employer           employer              @relation(fields: [employerId], references: [id])
+  employee            employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employer            employer              @relation(fields: [employerId], references: [id])
 
   @@unique([employeeId, employerId, year])
   @@index([employerId, year])
@@ -470,8 +524,8 @@ model PagibigReport {
   employerName          String
   employerPagibigNumber String?
   pin                   String
-  manual                Boolean               @default(false)
-  adjustments           Decimal?              @db.Decimal(12, 2)
+  manual                Boolean              @default(false)
+  adjustments           Decimal?             @db.Decimal(12, 2)
   applicableMonth       Int
   applicableYear        Int
   amountDue             Decimal              @db.Decimal(12, 2)
@@ -552,20 +606,20 @@ model PhilHealthEmployeeRecord {
 }
 
 model PhilHealthReport {
-  id                    Int                     @id @default(autoincrement())
-  employerId            Int
-  employerName          String
-  employerPhicNumber    String?
-  applicableMonth       Int
-  applicableYear        Int
-  amountDue             Decimal                 @db.Decimal(12, 2)
-  createdBy             Int?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  employer              employer                @relation(fields: [employerId], references: [id], onDelete: Cascade)
-  creator               User?                   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
-  entries                PhilHealthReportEntry[]
-  payment                PhilHealthPayment?
+  id                 Int                     @id @default(autoincrement())
+  employerId         Int
+  employerName       String
+  employerPhicNumber String?
+  applicableMonth    Int
+  applicableYear     Int
+  amountDue          Decimal                 @db.Decimal(12, 2)
+  createdBy          Int?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  employer           employer                @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  creator            User?                   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  entries            PhilHealthReportEntry[]
+  payment            PhilHealthPayment?
 
   @@unique([employerId, applicableYear, applicableMonth])
   @@index([employerId, applicableYear, applicableMonth])
@@ -587,23 +641,112 @@ model PhilHealthReportEntry {
 }
 
 model PhilHealthPayment {
-  id                             Int              @id @default(autoincrement())
-  reportId                       Int              @unique
-  payorName                      String
-  pen                            String
-  spa                            String?
-  applicablePeriod               String
-  amountPaid                     Decimal          @db.Decimal(12, 2)
-  accreditedCollectingAgent      String?
+  id                            Int              @id @default(autoincrement())
+  reportId                      Int              @unique
+  payorName                     String
+  pen                           String
+  spa                           String?
+  applicablePeriod              String
+  amountPaid                    Decimal          @db.Decimal(12, 2)
+  accreditedCollectingAgent     String?
   transactionConfirmationNumber String?
-  transactionDate                DateTime         @db.Date
-  eparNumber                     String?
-  eparDate                       DateTime?        @db.Date
-  createdAt                      DateTime         @default(now())
-  updatedAt                      DateTime         @updatedAt
-  report                         PhilHealthReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  transactionDate               DateTime         @db.Date
+  eparNumber                    String?
+  eparDate                      DateTime?        @db.Date
+  createdAt                     DateTime         @default(now())
+  updatedAt                     DateTime         @updatedAt
+  report                        PhilHealthReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([transactionDate])
+}
+
+enum LoanProvider {
+  SSS
+  PAGIBIG
+}
+
+enum LoanStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Loan {
+  id                  String        @id @default(uuid())
+  employeeId          Int?
+  provider            LoanProvider
+  loanType            String
+  loanAccountNumber   String        @unique
+  loanDate            DateTime?     @db.Date
+  terms               Int?
+  statusReason        String?
+  totalAmount         Decimal?      @db.Decimal(12, 2)
+  monthlyAmortization Decimal       @db.Decimal(12, 2)
+  outstandingBalance  Decimal?      @db.Decimal(12, 2)
+  status              LoanStatus    @default(ACTIVE)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  employee            employee?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  payments            LoanPayment[]
+
+  @@index([employeeId])
+  @@index([provider, status])
+}
+
+model LoanMonitorReport {
+  id                   String                   @id @default(uuid())
+  applicableDate       DateTime                 @db.Date
+  employerName         String?
+  employerSssNumber    String?
+  employerAddress      String?
+  totalMonthly         Decimal                  @db.Decimal(14, 2)
+  totalOutstanding     Decimal                  @db.Decimal(14, 2)
+  prn                  String?
+  paymentDate          DateTime?                @db.Date
+  amountPaid           Decimal?                 @db.Decimal(14, 2)
+  paymentBranch        String?
+  transactionReference String?
+  createdBy            Int?
+  createdAt            DateTime                 @default(now())
+  creator              User?                    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  entries              LoanMonitorReportEntry[]
+
+  @@index([applicableDate])
+}
+
+model LoanMonitorReportEntry {
+  id                  String            @id @default(uuid())
+  reportId            String
+  loanId              String
+  provider            String
+  loanType            String
+  loanAccountNumber   String
+  employeeName        String
+  loanDate            DateTime?         @db.Date
+  terms               Int?
+  totalAmount         Decimal           @db.Decimal(12, 2)
+  monthlyAmortization Decimal           @db.Decimal(12, 2)
+  outstandingBalance  Decimal           @db.Decimal(12, 2)
+  status              String
+  statusReason        String?
+  employerName        String
+  employerSssNumber   String?
+  employerAddress     String?
+  report              LoanMonitorReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model LoanPayment {
+  id              String   @id @default(uuid())
+  loanId          String
+  payrollPeriodId String
+  amountPaid      Decimal  @db.Decimal(12, 2)
+  paymentDate     DateTime @db.Date
+  source          String   @default("MANUAL_ENTRY")
+  createdAt       DateTime @default(now())
+  loan            Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId, paymentDate])
 }
 
 model OfficeContact {

@@ -1,6 +1,7 @@
-import { ChatBubbleLeftRightIcon, ChevronLeftIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChatBubbleLeftRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { FormEvent, ReactNode, RefObject } from "react";
 import type { DirectMessage, OnlineUser } from "@/lib/directChatClient";
+import BackButton from "@/components/BackButton";
 import { ChatMessageComposer } from "./ChatMessageComposer";
 import { ChatMessageList } from "./ChatMessageList";
 
@@ -60,16 +61,9 @@ export function ChatConversationPanel({
       aria-label="Team chat widget"
       className="fixed bottom-24 right-4 z-50 flex h-[min(36rem,calc(100dvh-8rem))] w-[min(23rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:right-6"
     >
-      <header className="flex shrink-0 items-center gap-3 bg-[#172554] px-4 py-3 text-white">
+      <header className="page-header-surface flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 text-black">
         {activeUser ? (
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Back to team chat"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-blue-100 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          >
-            <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <BackButton onClick={onBack} label="Back to team chat" />
         ) : (
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-300/20">
             <ChatBubbleLeftRightIcon className="h-5 w-5" aria-hidden="true" />
@@ -77,7 +71,7 @@ export function ChatConversationPanel({
         )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{activeUser?.name ?? "Team chat"}</span>
-          <span className="block text-xs text-blue-200">
+          <span className="block text-xs">
             {activeUser
               ? activeUser.role === "ADMIN" ? "Admin · Direct message" : "Direct message"
               : `${onlineCount} online`}
@@ -87,7 +81,7 @@ export function ChatConversationPanel({
           type="button"
           onClick={onMinimize}
           aria-label="Minimize chat widget"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-blue-100 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
         >
           <XMarkIcon className="h-5 w-5" aria-hidden="true" />
         </button>

@@ -5,6 +5,7 @@ import { parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
 import { normalizeSssLoanStatus } from "@/lib/sssLoanStatus";
 import { isSssLoanType } from "@/lib/sssLoanTypes";
 import { prisma } from "@/lib/prisma";
+import { getSssLoansPrisma } from "@/lib/sssReportPrisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -31,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   if (!normalizedStatus) return NextResponse.json({ error: "Choose a valid loan status and matching reason" }, { status: 400 });
 
   try {
-    const loan = await prisma.sssLoan.update({
+    const loan = await getSssLoansPrisma().sssLoan.update({
       where: { id },
       data: {
         status: normalizedStatus.status,
@@ -80,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const loan = await prisma.$transaction(async (transaction) => {
+    const loan = await getSssLoansPrisma().$transaction(async (transaction) => {
       await transaction.$queryRaw`WITH loan_account_lock AS MATERIALIZED (SELECT pg_advisory_xact_lock(hashtext(${loanAccountNumberKey})::bigint)) SELECT TRUE FROM loan_account_lock`;
       const duplicate = await transaction.sssLoan.findFirst({
         where: {
@@ -102,11 +103,12 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
           status: normalizedStatus.status,
           statusReason: normalizedStatus.reason,
         },
-        include: { employer: { select: { name: true } } },
       });
     });
     if (!loan) return NextResponse.json({ error: "This Loan Account Number already exists" }, { status: 409 });
-    return NextResponse.json({ loan }, { headers: { "Cache-Control": "private, no-store" } });
+    const employer = await prisma.employer.findUnique({ where: { id: loan.employerId }, select: { name: true } });
+    if (!employer) throw new Error("The SSS loan account references an employer that is missing from the central HR database.");
+    return NextResponse.json({ loan: { ...loan, employer }, }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
       return NextResponse.json({ error: "SSS loan not found" }, { status: 404 });
@@ -126,7 +128,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const id = Number((await params).id);
   if (!Number.isSafeInteger(id) || id <= 0) return NextResponse.json({ error: "Invalid SSS loan id" }, { status: 400 });
   try {
-    await prisma.sssLoan.delete({ where: { id } });
+    await getSssLoansPrisma().sssLoan.delete({ where: { id } });
     return NextResponse.json({ success: true }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025") {

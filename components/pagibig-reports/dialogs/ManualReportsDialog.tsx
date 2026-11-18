@@ -20,7 +20,7 @@ export function ManualReportsDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6">
       <section className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
-        <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <header className="page-header-surface flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Manual Reports - {first ? `${monthNames[first.applicableMonth - 1]} ${first.applicableYear}` : ""}</h2>
             <p className="text-xs text-slate-600">{first?.employerName}</p>

@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, BriefcaseIcon, BuildingOffice2Icon, CalendarDaysIcon, ChevronLeftIcon, ClipboardDocumentListIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, PencilSquareIcon, PlusIcon, TrashIcon, UserCircleIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, BriefcaseIcon, BuildingOffice2Icon, CalendarDaysIcon, CheckIcon, ClipboardDocumentListIcon, EyeIcon, EyeSlashIcon, IdentificationIcon, PencilSquareIcon, PlusIcon, TrashIcon, UserCircleIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { JOB_LEVELS } from "@/lib/employeePayload";
 import { getEmployeeServiceSummary } from "@/lib/employeeServiceDuration";
+import { calculateAge, formatDigits, formatMobile, readPhotoAsDataUrl } from "@/components/employee-profile-editor/utils";
+import { branchOptions, endedStatuses, positionOptions, statusOptions } from "@/components/employee-profile-editor/types";
 import {
   employeeRequirementGroups,
   employeeRequirements,
@@ -13,8 +16,7 @@ import {
   isSingleEmployee,
   type EmployeeRequirementKey,
 } from "@/lib/employeeRequirements";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
-import { useAppHeaderActions } from "@/components/Sidebar";
+import BackButton from "@/components/BackButton";
 import {
   employeeDirectoryHref,
   employeeProfileTabHref,
@@ -75,6 +77,9 @@ type Employee = {
   bdoAccountNumbers: BdoAccountNumber[];
   requirementsBypassed: boolean;
 };
+type EmployeeEditDraft = Employee & { employerId: number | null };
+type EmployerOption = { id: number; name: string };
+type SupervisorOption = { id: number; firstName: string; middleName: string | null; lastName: string; position: string | null };
 type RequirementAttachment = {
   id: number;
   requirementKey: EmployeeRequirementKey;
@@ -113,12 +118,6 @@ function cacheEmployeeProfile(id: string, employee: Employee) {
     if (oldestId === undefined) break;
     employeeProfileCache.delete(oldestId);
   }
-}
-
-function updateEmployeeProfileCache(employeeId: number, update: (employee: Employee) => Employee) {
-  const id = String(employeeId);
-  const cached = employeeProfileCache.get(id);
-  if (cached) cacheEmployeeProfile(id, update(cached.employee));
 }
 
 function fetchEmployeeProfile(id: string, includeNavigation: boolean) {
@@ -174,6 +173,47 @@ function dateText(value: string | null) {
     : "Not set";
 }
 
+function dateInputValue(value: string | null) {
+  return value?.slice(0, 10) ?? "";
+}
+
+function employeeUpdatePayload(employee: EmployeeEditDraft, previous?: Employee) {
+  const dateOfBirth = dateInputValue(employee.dateOfBirth);
+  return {
+    firstName: employee.firstName,
+    middleName: employee.middleName,
+    lastName: employee.lastName,
+    dateOfBirth,
+    age: previous && dateOfBirth === dateInputValue(previous.dateOfBirth)
+      ? previous.age
+      : calculateAge(dateOfBirth),
+    maritalStatus: employee.maritalStatus,
+    gender: employee.gender,
+    mobileNumber: employee.mobileNumber,
+    email: employee.email,
+    address: employee.address,
+    emergencyName: employee.emergencyName,
+    emergencyNumber: employee.emergencyNumber,
+    emergencyRelation: employee.emergencyRelation,
+    emergencyAddress: employee.emergencyAddress,
+    biometricNo: employee.biometricNo,
+    branch: employee.branch,
+    position: employee.position,
+    jobLevel: employee.jobLevel,
+    supervisorId: employee.supervisorId,
+    photoUrl: employee.photoUrl,
+    employerId: employee.employerId,
+    status: employee.status,
+    dateStarted: dateInputValue(employee.dateStarted),
+    endDate: dateInputValue(employee.endDate),
+    sssNumber: employee.sssNumber,
+    pagIbigNumber: employee.pagIbigNumber,
+    philHealth: employee.philHealth,
+    tinNumber: employee.tinNumber,
+    remarks: employee.remarks,
+  };
+}
+
 function Value({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="min-w-0">
@@ -183,10 +223,101 @@ function Value({ label, value }: { label: string; value: string | number | null 
   );
 }
 
-function ProfileSection({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
+function ProfileInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+}) {
+  return (
+    <label className="grid min-w-0 gap-1.5">
+      <span className="text-xs tracking-wide text-gray-500">{label}</span>
+      <input
+        type={type}
+        inputMode={inputMode}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+      />
+    </label>
+  );
+}
+
+function ProfileSelect({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+}) {
+  return (
+    <label className="grid min-w-0 gap-1.5">
+      <span className="text-xs tracking-wide text-gray-500">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function ProfileSection({
+  title,
+  icon: Icon,
+  cardKey,
+  editingCard,
+  saving,
+  onStartEdit,
+  onSave,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  cardKey?: string;
+  editingCard?: string | null;
+  saving?: boolean;
+  onStartEdit?: (cardKey: string) => void;
+  onSave?: (cardKey: string) => void;
+  children: React.ReactNode;
+}) {
+  const isEditing = cardKey !== undefined && editingCard === cardKey;
   return (
     <section className="h-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="flex items-center gap-2 border-b border-gray-100 pb-3 text-base font-semibold text-gray-900"><Icon aria-hidden="true" className="h-5 w-5 text-blue-700" />{title}</h2>
+      <h2 className="flex items-center gap-2 border-b border-gray-100 pb-3 text-base font-semibold text-gray-900">
+        <Icon aria-hidden="true" className="h-5 w-5 text-blue-700" />
+        {title}
+        {cardKey && (
+          <button
+            type="button"
+            onClick={() => isEditing ? onSave?.(cardKey) : onStartEdit?.(cardKey)}
+            disabled={saving || (editingCard != null && !isEditing)}
+            aria-label={isEditing ? `Save ${title}; press Escape to cancel` : `Edit ${title}`}
+            title={isEditing ? "Save changes (press Escape to cancel)" : `Edit ${title}`}
+            className={`ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 ${isEditing ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
+          >
+            {isEditing
+              ? <CheckIcon aria-hidden="true" className={`h-4 w-4 ${saving ? "animate-pulse" : ""}`} />
+              : <PencilSquareIcon aria-hidden="true" className="h-4 w-4" />}
+          </button>
+        )}
+      </h2>
       <div className="mt-4 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2">{children}</div>
     </section>
   );
@@ -204,7 +335,6 @@ function EmployeeProfileContent() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const setAppHeaderActions = useAppHeaderActions();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const filters = useMemo(() => readNavigationFilters(searchParams), [searchParams]);
   const [loadedEmployeeId, setLoadedEmployeeId] = useState<string | null>(null);
@@ -220,6 +350,15 @@ function EmployeeProfileContent() {
   const [revealedAccountNumbers, setRevealedAccountNumbers] = useState<Set<number>>(() => new Set());
   const [accountNumberDraft, setAccountNumberDraft] = useState("");
   const [savingAccountNumber, setSavingAccountNumber] = useState(false);
+  const [editingCard, setEditingCard] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<EmployeeEditDraft | null>(null);
+  const [savingCard, setSavingCard] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editOptionsLoading, setEditOptionsLoading] = useState(false);
+  const [employerOptions, setEmployerOptions] = useState<EmployerOption[]>([]);
+  const [supervisorOptions, setSupervisorOptions] = useState<SupervisorOption[]>([]);
+  const editOptionsRequest = useRef(0);
   const [activeTab, setActiveTab] = useState<(typeof profileTabs)[number]["label"]>(
     () => resolveProfileTabLabel(searchParams.get("tab")) ?? profileTabs[0].label,
   );
@@ -277,6 +416,9 @@ function EmployeeProfileContent() {
   const displayedEmployee = loadedEmployeeId === id
     ? employee
     : employeeProfileCache.get(id)?.employee ?? null;
+  const profileDraft = editDraft ?? (displayedEmployee
+    ? { ...displayedEmployee, employerId: displayedEmployee.employer?.id ?? null }
+    : null);
   const fullName = displayedEmployee
     ? [displayedEmployee.firstName, displayedEmployee.middleName, displayedEmployee.lastName].filter(Boolean).join(" ")
     : "Employee Profile";
@@ -308,9 +450,138 @@ function EmployeeProfileContent() {
     : false;
   const requirementsToggleOn = bulkRequirementsToggle ?? requirementsAllMarkableComplete;
   const updateDisplayedEmployee = useCallback((employeeId: number, update: (current: Employee) => Employee) => {
-    updateEmployeeProfileCache(employeeId, update);
-    setEmployee((current) => current?.id === employeeId ? update(current) : current);
+    const source = employee?.id === employeeId
+      ? employee
+      : employeeProfileCache.get(String(employeeId))?.employee;
+    if (!source) return;
+    const updated = update(source);
+    cacheEmployeeProfile(String(employeeId), updated);
+    setEmployee(updated);
+  }, [employee]);
+
+  const updateEditDraft = useCallback(<K extends keyof EmployeeEditDraft>(field: K, value: EmployeeEditDraft[K]) => {
+    setEditDraft((current) => current ? { ...current, [field]: value } : current);
   }, []);
+
+  const cancelCardEdit = useCallback(() => {
+    if (savingCard) return;
+    editOptionsRequest.current += 1;
+    setEditOptionsLoading(false);
+    setEditingCard(null);
+    setEditDraft(null);
+    setEditError("");
+  }, [savingCard]);
+
+  useEffect(() => {
+    if (!editingCard) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !savingCard) {
+        event.preventDefault();
+        cancelCardEdit();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [cancelCardEdit, editingCard, savingCard]);
+
+  const startCardEdit = useCallback(async (cardKey: string) => {
+    if (!displayedEmployee || editingCard !== null || uploadingPhoto || savingCard !== null) return;
+    setEditingCard(cardKey);
+    setEditDraft({ ...displayedEmployee, employerId: displayedEmployee.employer?.id ?? null });
+    setEditError("");
+
+    if (cardKey !== "position" && cardKey !== "contract") return;
+    const requestId = ++editOptionsRequest.current;
+    setEditOptionsLoading(true);
+    try {
+      if (cardKey === "position") {
+        const response = await fetch("/api/employees", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load supervisor options");
+        if (editOptionsRequest.current === requestId) {
+          setSupervisorOptions(
+            (data.employees as SupervisorOption[])
+              .filter((employee) => employee.position === "Store In-charge" && employee.id !== displayedEmployee.id),
+          );
+        }
+      } else {
+        const response = await fetch("/api/employers", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to load employer options");
+        if (editOptionsRequest.current === requestId) setEmployerOptions(data.employers as EmployerOption[]);
+      }
+    } catch (optionsError) {
+      if (editOptionsRequest.current === requestId) {
+        setEditError(optionsError instanceof Error ? optionsError.message : "Unable to load edit options");
+      }
+    } finally {
+      if (editOptionsRequest.current === requestId) setEditOptionsLoading(false);
+    }
+  }, [displayedEmployee, editingCard, savingCard, uploadingPhoto]);
+
+  const saveCardEdit = useCallback(async (cardKey: string) => {
+    if (!displayedEmployee || !editDraft || editingCard !== cardKey || savingCard) return;
+    const employeeId = displayedEmployee.id;
+    setSavingCard(cardKey);
+    setEditError("");
+    try {
+      const response = await fetch(`/api/employees/${employeeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(employeeUpdatePayload(editDraft, displayedEmployee)),
+      });
+      const data: { employee?: Partial<Employee>; error?: string } = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to save employee changes");
+      if (!data.employee) throw new Error("The employee update response was incomplete");
+
+      updateDisplayedEmployee(employeeId, (current) => ({
+        ...current,
+        ...data.employee,
+        officeContacts: current.officeContacts,
+        requirements: current.requirements,
+        bdoAccountNumbers: current.bdoAccountNumbers,
+      }));
+      setEditingCard(null);
+      setEditDraft(null);
+    } catch (saveError) {
+      setEditError(saveError instanceof Error ? saveError.message : "Unable to save employee changes");
+    } finally {
+      setSavingCard(null);
+    }
+  }, [displayedEmployee, editDraft, editingCard, savingCard, updateDisplayedEmployee]);
+
+  const uploadEmployeePhoto = useCallback(async (file: File) => {
+    if (!displayedEmployee || uploadingPhoto || savingCard || editingCard !== null) return;
+    setUploadingPhoto(true);
+    setEditError("");
+    try {
+      const photoUrl = await readPhotoAsDataUrl(file);
+      const updatedEmployee = { ...displayedEmployee, photoUrl };
+      const response = await fetch(`/api/employees/${displayedEmployee.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(employeeUpdatePayload(
+          { ...updatedEmployee, employerId: displayedEmployee.employer?.id ?? null },
+          displayedEmployee,
+        )),
+      });
+      const data: { employee?: Partial<Employee>; error?: string } = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to update employee photo");
+      if (!data.employee) throw new Error("The employee photo update response was incomplete");
+
+      updateDisplayedEmployee(displayedEmployee.id, (current) => ({
+        ...current,
+        ...data.employee,
+        officeContacts: current.officeContacts,
+        requirements: current.requirements,
+        bdoAccountNumbers: current.bdoAccountNumbers,
+      }));
+    } catch (uploadError) {
+      setEditError(uploadError instanceof Error ? uploadError.message : "Unable to update employee photo");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }, [displayedEmployee, editingCard, savingCard, updateDisplayedEmployee, uploadingPhoto]);
 
   const updateRequirement = useCallback(async (requirementKey: EmployeeRequirementKey, isComplete: boolean) => {
     if (!displayedEmployee) return;
@@ -573,15 +844,6 @@ function EmployeeProfileContent() {
     }
   }, [displayedEmployee, updateDisplayedEmployee]);
 
-  useEffect(() => {
-    if (!displayedEmployee || error) {
-      setAppHeaderActions(null);
-      return;
-    }
-    setAppHeaderActions({ actions: null, backHref: employeeDirectoryHref(filters), hideBack: true });
-    return () => setAppHeaderActions(null);
-  }, [displayedEmployee, error, filters, setAppHeaderActions]);
-
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
       <div className="flex w-full flex-1 flex-col">
@@ -591,23 +853,38 @@ function EmployeeProfileContent() {
           <p role="alert" className="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>
         ) : displayedEmployee ? (
           <>
-            <header className="mt-1 flex flex-wrap items-center gap-4">
-              {displayedEmployee.photoUrl ? (
-                <img src={displayedEmployee.photoUrl} alt={`${fullName} profile`} className="h-24 w-24 shrink-0 rounded-full border-2 border-gray-200 object-cover" />
-              ) : (
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500">No photo</div>
-              )}
+            <header className="page-header-surface mt-1 flex flex-wrap items-center gap-4">
+              <div className="group relative flex shrink-0 flex-col items-center">
+                <label
+                  aria-label="Upload employee photo (JPG, PNG, or GIF, up to 2 MB)"
+                  title="JPG, PNG, GIF. 2 MB."
+                  className={`absolute bottom-2 right-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 opacity-0 shadow-sm transition-opacity hover:bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 group-hover:opacity-100 group-focus-within:opacity-100 ${uploadingPhoto || savingCard || editingCard !== null ? "cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <ArrowUpTrayIcon aria-hidden="true" className={`h-4 w-4 ${uploadingPhoto ? "animate-pulse" : ""}`} />
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif"
+                    aria-label="Choose employee photo"
+                    disabled={uploadingPhoto || savingCard !== null || editingCard !== null}
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      event.currentTarget.value = "";
+                      if (file) void uploadEmployeePhoto(file);
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+                {displayedEmployee.photoUrl ? (
+                  <img src={displayedEmployee.photoUrl} alt={`${fullName} profile`} className="h-36 w-28 rounded-xl border-2 border-gray-200 object-cover" />
+                ) : (
+                  <div className="flex h-36 w-28 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">No photo</div>
+                )}
+                {uploadingPhoto && <span role="status" className="text-xs text-gray-600">Uploading...</span>}
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="break-words text-xl font-bold text-gray-950 sm:text-2xl">{fullName}</h2>
-                  <Link
-                    href={`/employees/new/${displayedEmployee.id}`}
-                    aria-label={`Edit ${fullName}`}
-                    title={`Edit ${fullName}`}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
-                  </Link>
+                  <BackButton fallbackHref={employeeDirectoryHref(filters)} label="Back to employee directory" />
+                  <h1 className="break-words text-xl font-bold text-gray-950 sm:text-2xl">{fullName}</h1>
                 </div>
                 <p className="mt-1 text-sm font-medium text-gray-700">{displayedEmployee.position || "Position not set"} <span className="px-1 text-gray-400">•</span> {displayedEmployee.branch || "Branch not set"}</p>
                 <p className="mt-1 text-sm text-gray-600">{displayedEmployee.biometricNo || "Not set"}</p>
@@ -623,14 +900,6 @@ function EmployeeProfileContent() {
 
             <div className="mt-5 flex flex-1 flex-col">
               <div className="flex shrink-0 items-center gap-1 border-b border-gray-200">
-                <HistoryBackLink
-                  fallbackHref={employeeDirectoryHref(filters)}
-                  aria-label="Back to employee directory"
-                  title="Back to employee directory"
-                  className="mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                >
-                  <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
-                </HistoryBackLink>
                 <div role="tablist" aria-label="Employee profile sections" className="min-w-0 overflow-x-auto">
                   <div className="flex min-w-max">
                   {profileTabs.map((tab, index) => {
@@ -672,66 +941,170 @@ function EmployeeProfileContent() {
                 </div>
               </div>
 
+              {editError && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{editError}</p>}
+              {editOptionsLoading && <p role="status" className="mt-3 text-sm text-gray-600">Loading edit options...</p>}
+
               <div id="employee-profile-panel" role="tabpanel" aria-labelledby={`employee-profile-tab-${activeTabIndex}`} className="mt-4 flex flex-1">
               {activeTab === "Personal Information" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
-                <ProfileSection title="Personal Information" icon={UserCircleIcon}>
+                <ProfileSection title="Personal Information" icon={UserCircleIcon} cardKey="personal" editingCard={editingCard} saving={savingCard === "personal" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
                   <div className="grid gap-5 sm:col-span-2">
                     <div className="grid gap-4 sm:grid-cols-3">
-                      <Value label="First Name" value={displayedEmployee.firstName} />
-                      <Value label="Middle Name" value={displayedEmployee.middleName} />
-                      <Value label="Last Name" value={displayedEmployee.lastName} />
+                      {editingCard === "personal" && profileDraft
+                        ? <>
+                          <ProfileInput label="First Name" value={profileDraft.firstName} onChange={(value) => updateEditDraft("firstName", value)} />
+                          <ProfileInput label="Middle Name" value={profileDraft.middleName ?? ""} onChange={(value) => updateEditDraft("middleName", value || null)} />
+                          <ProfileInput label="Last Name" value={profileDraft.lastName} onChange={(value) => updateEditDraft("lastName", value)} />
+                        </>
+                        : <>
+                          <Value label="First Name" value={displayedEmployee.firstName} />
+                          <Value label="Middle Name" value={displayedEmployee.middleName} />
+                          <Value label="Last Name" value={displayedEmployee.lastName} />
+                        </>}
                     </div>
                     <div className="grid gap-4 sm:grid-cols-3">
-                      <Value label="Date of Birth" value={dateText(displayedEmployee.dateOfBirth)} />
-                      <Value label="Age" value={displayedEmployee.age} />
+                      {editingCard === "personal" && profileDraft
+                        ? <>
+                          <ProfileInput label="Date of Birth" type="date" value={dateInputValue(profileDraft.dateOfBirth)} onChange={(value) => updateEditDraft("dateOfBirth", value || null)} />
+                          <Value
+                            label="Age"
+                            value={dateInputValue(profileDraft.dateOfBirth) === dateInputValue(displayedEmployee.dateOfBirth)
+                              ? displayedEmployee.age
+                              : calculateAge(dateInputValue(profileDraft.dateOfBirth))}
+                          />
+                        </>
+                        : <>
+                          <Value label="Date of Birth" value={dateText(displayedEmployee.dateOfBirth)} />
+                          <Value label="Age" value={displayedEmployee.age} />
+                        </>}
                     </div>
                     <div className="grid gap-4 sm:grid-cols-3">
-                      <Value label="Gender" value={displayedEmployee.gender} />
-                      <Value label="Marital Status" value={displayedEmployee.maritalStatus} />
+                      {editingCard === "personal" && profileDraft
+                        ? <>
+                          <ProfileSelect label="Gender" value={profileDraft.gender ?? ""} onChange={(value) => updateEditDraft("gender", value || null)} options={[...new Set(["Male", "Female", "Other", ...(profileDraft.gender ? [profileDraft.gender] : [])])]} placeholder="Select gender" />
+                          <ProfileSelect label="Marital Status" value={profileDraft.maritalStatus ?? ""} onChange={(value) => updateEditDraft("maritalStatus", value || null)} options={[...new Set(["Single", "Married", "Widowed", "Separated", ...(profileDraft.maritalStatus ? [profileDraft.maritalStatus] : [])])]} placeholder="Select status" />
+                        </>
+                        : <>
+                          <Value label="Gender" value={displayedEmployee.gender} />
+                          <Value label="Marital Status" value={displayedEmployee.maritalStatus} />
+                        </>}
                     </div>
                   </div>
                 </ProfileSection>
-                <ProfileSection title="Contact Information" icon={IdentificationIcon}>
-                  <Value label="Mobile Number" value={displayedEmployee.mobileNumber} />
-                  <Value label="Email" value={displayedEmployee.email} />
-                  <div className="sm:col-span-2"><Value label="Address" value={displayedEmployee.address} /></div>
+                <ProfileSection title="Contact Information" icon={IdentificationIcon} cardKey="contact" editingCard={editingCard} saving={savingCard === "contact" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
+                  {editingCard === "contact" && profileDraft
+                    ? <>
+                      <ProfileInput label="Mobile Number" inputMode="numeric" value={profileDraft.mobileNumber ?? ""} onChange={(value) => updateEditDraft("mobileNumber", formatMobile(value) || null)} />
+                      <ProfileInput label="Email" type="email" value={profileDraft.email ?? ""} onChange={(value) => updateEditDraft("email", value || null)} />
+                      <label className="grid min-w-0 gap-1.5 sm:col-span-2">
+                        <span className="text-xs tracking-wide text-gray-500">Address</span>
+                        <textarea rows={3} value={profileDraft.address ?? ""} onChange={(event) => updateEditDraft("address", event.target.value || null)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+                      </label>
+                    </>
+                    : <>
+                      <Value label="Mobile Number" value={displayedEmployee.mobileNumber} />
+                      <Value label="Email" value={displayedEmployee.email} />
+                      <div className="sm:col-span-2"><Value label="Address" value={displayedEmployee.address} /></div>
+                    </>}
                 </ProfileSection>
-                <ProfileSection title="Emergency Information" icon={UsersIcon}>
-                  <Value label="Contact Person" value={displayedEmployee.emergencyName} />
-                  <Value label="Contact Number" value={displayedEmployee.emergencyNumber} />
-                  <Value label="Relation" value={displayedEmployee.emergencyRelation} />
-                  <div className="sm:col-span-2"><Value label="Address" value={displayedEmployee.emergencyAddress} /></div>
+                <ProfileSection title="Emergency Information" icon={UsersIcon} cardKey="emergency" editingCard={editingCard} saving={savingCard === "emergency" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
+                  {editingCard === "emergency" && profileDraft
+                    ? <>
+                      <ProfileInput label="Contact Person" value={profileDraft.emergencyName ?? ""} onChange={(value) => updateEditDraft("emergencyName", value || null)} />
+                      <ProfileInput label="Contact Number" inputMode="numeric" value={profileDraft.emergencyNumber ?? ""} onChange={(value) => updateEditDraft("emergencyNumber", formatMobile(value) || null)} />
+                      <ProfileSelect label="Relation" value={profileDraft.emergencyRelation ?? ""} onChange={(value) => updateEditDraft("emergencyRelation", value || null)} options={[...new Set(["Family", "Friend", "Work / Colleague", "Others", ...(profileDraft.emergencyRelation ? [profileDraft.emergencyRelation] : [])])]} placeholder="Select relation" />
+                      <label className="grid min-w-0 gap-1.5 sm:col-span-2">
+                        <span className="text-xs tracking-wide text-gray-500">Address</span>
+                        <textarea rows={3} value={profileDraft.emergencyAddress ?? ""} onChange={(event) => updateEditDraft("emergencyAddress", event.target.value || null)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+                      </label>
+                    </>
+                    : <>
+                      <Value label="Contact Person" value={displayedEmployee.emergencyName} />
+                      <Value label="Contact Number" value={displayedEmployee.emergencyNumber} />
+                      <Value label="Relation" value={displayedEmployee.emergencyRelation} />
+                      <div className="sm:col-span-2"><Value label="Address" value={displayedEmployee.emergencyAddress} /></div>
+                    </>}
                 </ProfileSection>
-                <ProfileSection title="Remarks" icon={ClipboardDocumentListIcon}>
-                  <div className="sm:col-span-2"><Value label="Remarks" value={displayedEmployee.remarks} /></div>
+                <ProfileSection title="Remarks" icon={ClipboardDocumentListIcon} cardKey="remarks" editingCard={editingCard} saving={savingCard === "remarks" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
+                  <div className="sm:col-span-2">
+                    {editingCard === "remarks" && profileDraft
+                      ? <label className="grid min-w-0 gap-1.5">
+                        <span className="text-xs tracking-wide text-gray-500">Remarks</span>
+                        <textarea rows={5} value={profileDraft.remarks ?? ""} onChange={(event) => updateEditDraft("remarks", event.target.value || null)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100" />
+                      </label>
+                      : <Value label="Remarks" value={displayedEmployee.remarks} />}
+                  </div>
                 </ProfileSection>
               </div>}
 
               {activeTab === "Employment" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
-                <ProfileSection title="Contract Duration" icon={CalendarDaysIcon}>
-                  <Value label="Date Started" value={dateText(displayedEmployee.dateStarted)} />
-                  <Value label="End Date" value={dateText(displayedEmployee.endDate)} />
+                <ProfileSection title="Contract Duration" icon={CalendarDaysIcon} cardKey="duration" editingCard={editingCard} saving={savingCard === "duration" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
+                  {editingCard === "duration" && profileDraft
+                    ? <>
+                      <ProfileSelect label="Status" value={profileDraft.status ?? ""} onChange={(value) => {
+                        updateEditDraft("status", value || null);
+                        if (!endedStatuses.has(value)) updateEditDraft("endDate", null);
+                      }} options={[...new Set([...statusOptions, ...(profileDraft.status ? [profileDraft.status] : [])])]} placeholder="Select status" />
+                      <ProfileInput label="Date Started" type="date" value={dateInputValue(profileDraft.dateStarted)} onChange={(value) => updateEditDraft("dateStarted", value || null)} />
+                      {endedStatuses.has(profileDraft.status ?? "") && <ProfileInput label="End Date" type="date" value={dateInputValue(profileDraft.endDate)} onChange={(value) => updateEditDraft("endDate", value || null)} />}
+                    </>
+                    : <>
+                      <Value label="Date Started" value={dateText(displayedEmployee.dateStarted)} />
+                      <Value label="End Date" value={dateText(displayedEmployee.endDate)} />
+                    </>}
                   <Value label="Service Duration" value={serviceDurationText} />
                   {serviceSummary.expiryDaysRemaining !== null && <Value label="Contract Expiry" value={serviceSummary.expiryDaysRemaining > 0 ? `${serviceSummary.expiryDaysRemaining} days remaining` : serviceSummary.expiryDaysRemaining === 0 ? "Expires today" : `Expired ${Math.abs(serviceSummary.expiryDaysRemaining)} days ago`} />}
-                  <Value label="Status" value={displayedEmployee.status} />
+                  {editingCard !== "duration" && <Value label="Status" value={displayedEmployee.status} />}
                 </ProfileSection>
-                <ProfileSection title="Contract Position Details" icon={BriefcaseIcon}>
-                  <Value label="Job Role" value={displayedEmployee.position} />
-                  <Value label="Job Level" value={displayedEmployee.jobLevel} />
+                <ProfileSection title="Contract Position Details" icon={BriefcaseIcon} cardKey="position" editingCard={editingCard} saving={savingCard === "position" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
+                  {editingCard === "position" && profileDraft
+                    ? <>
+                      <ProfileInput label="Biometric Number" inputMode="numeric" value={profileDraft.biometricNo ?? ""} onChange={(value) => updateEditDraft("biometricNo", value || null)} />
+                      <ProfileSelect label="Job Role" value={profileDraft.position ?? ""} onChange={(value) => updateEditDraft("position", value || null)} options={[...new Set([...positionOptions, ...(profileDraft.position ? [profileDraft.position] : [])])]} placeholder="Select position" />
+                      <ProfileSelect label="Job Level" value={profileDraft.jobLevel ?? ""} onChange={(value) => updateEditDraft("jobLevel", value || null)} options={[...new Set([...JOB_LEVELS, ...(profileDraft.jobLevel ? [profileDraft.jobLevel] : [])])]} placeholder="Select job level" />
+                      <label className="grid min-w-0 gap-1.5">
+                        <span className="text-xs tracking-wide text-gray-500">Supervisor</span>
+                        <select value={profileDraft.supervisorId ? String(profileDraft.supervisorId) : ""} onChange={(event) => updateEditDraft("supervisorId", event.target.value ? Number(event.target.value) : null)} className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                          <option value="">No supervisor assigned</option>
+                          {supervisorOptions.map((supervisor) => <option key={supervisor.id} value={supervisor.id}>{[supervisor.firstName, supervisor.middleName, supervisor.lastName].filter(Boolean).join(" ")}</option>)}
+                        </select>
+                      </label>
+                    </>
+                    : <>
+                      <Value label="Biometric Number" value={displayedEmployee.biometricNo} />
+                      <Value label="Job Role" value={displayedEmployee.position} />
+                      <Value label="Job Level" value={displayedEmployee.jobLevel} />
+                    </>}
                   <Value label="Expected Work Hours per Week" value="48 hours" />
-                  <Value label="Supervisor" value={displayedEmployee.supervisor ? [displayedEmployee.supervisor.firstName, displayedEmployee.supervisor.middleName, displayedEmployee.supervisor.lastName].filter(Boolean).join(" ") : "Not assigned"} />
+                  {editingCard !== "position" && <Value label="Supervisor" value={displayedEmployee.supervisor ? [displayedEmployee.supervisor.firstName, displayedEmployee.supervisor.middleName, displayedEmployee.supervisor.lastName].filter(Boolean).join(" ") : "Not assigned"} />}
                 </ProfileSection>
-                <ProfileSection title="Contract Details" icon={BuildingOffice2Icon}>
-                  <Value label="Employer" value={displayedEmployee.employer?.name} />
-                  <Value label="Branch" value={displayedEmployee.branch} />
-                  <Value label="Date Started" value={dateText(displayedEmployee.dateStarted)} />
+                <ProfileSection title="Contract Details" icon={BuildingOffice2Icon} cardKey="contract" editingCard={editingCard} saving={savingCard === "contract" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
+                  {editingCard === "contract" && profileDraft
+                    ? <>
+                      <label className="grid min-w-0 gap-1.5">
+                        <span className="text-xs tracking-wide text-gray-500">Employer</span>
+                        <select value={profileDraft.employerId ? String(profileDraft.employerId) : ""} onChange={(event) => updateEditDraft("employerId", event.target.value ? Number(event.target.value) : null)} className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                          <option value="">Select employer</option>
+                          {displayedEmployee.employer && !employerOptions.some((employer) => employer.id === displayedEmployee.employer?.id) && <option value={displayedEmployee.employer.id}>{displayedEmployee.employer.name}</option>}
+                          {employerOptions.map((employer) => <option key={employer.id} value={employer.id}>{employer.name}</option>)}
+                        </select>
+                      </label>
+                      <ProfileSelect label="Branch" value={profileDraft.branch ?? ""} onChange={(value) => updateEditDraft("branch", value || null)} options={[...new Set([...branchOptions, ...(profileDraft.branch ? [profileDraft.branch] : [])])]} placeholder="Select branch" />
+                      <ProfileInput label="Date Started" type="date" value={dateInputValue(profileDraft.dateStarted)} onChange={(value) => updateEditDraft("dateStarted", value || null)} />
+                    </>
+                    : <>
+                      <Value label="Employer" value={displayedEmployee.employer?.name} />
+                      <Value label="Branch" value={displayedEmployee.branch} />
+                      <Value label="Date Started" value={dateText(displayedEmployee.dateStarted)} />
+                    </>}
                 </ProfileSection>
               </div>}
 
               {activeTab === "Government" && <div className="grid flex-1 gap-5 xl:grid-cols-2">
-                <ProfileSection title="Government ID" icon={IdentificationIcon}>
+                <ProfileSection title="Government ID" icon={IdentificationIcon} cardKey="government" editingCard={editingCard} saving={savingCard === "government" || editOptionsLoading || uploadingPhoto} onStartEdit={startCardEdit} onSave={saveCardEdit}>
                   <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                    <Value label="SSS" value={displayedEmployee.sssNumber} />
+                    {editingCard === "government" && profileDraft
+                      ? <ProfileInput label="SSS" inputMode="numeric" value={profileDraft.sssNumber ?? ""} onChange={(value) => updateEditDraft("sssNumber", formatDigits(value, [2, 7, 1]) || null)} />
+                      : <Value label="SSS" value={displayedEmployee.sssNumber} />}
                     <Link
                       href={`/employees/${displayedEmployee.id}/sss-contributions`}
                       aria-label="View SSS contributions"
@@ -742,7 +1115,9 @@ function EmployeeProfileContent() {
                     </Link>
                   </div>
                   <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                    <Value label="Pag-IBIG" value={displayedEmployee.pagIbigNumber} />
+                    {editingCard === "government" && profileDraft
+                      ? <ProfileInput label="Pag-IBIG" inputMode="numeric" value={profileDraft.pagIbigNumber ?? ""} onChange={(value) => updateEditDraft("pagIbigNumber", formatDigits(value, [4, 4, 4]) || null)} />
+                      : <Value label="Pag-IBIG" value={displayedEmployee.pagIbigNumber} />}
                     <Link
                       href={displayedEmployee.employer?.id ? `/reports/pagibig?view=members&employerId=${displayedEmployee.employer.id}` : "/reports/pagibig?view=members"}
                       aria-label="View Pag-IBIG records"
@@ -753,7 +1128,9 @@ function EmployeeProfileContent() {
                     </Link>
                   </div>
                   <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                    <Value label="PhilHealth" value={displayedEmployee.philHealth} />
+                    {editingCard === "government" && profileDraft
+                      ? <ProfileInput label="PhilHealth" inputMode="numeric" value={profileDraft.philHealth ?? ""} onChange={(value) => updateEditDraft("philHealth", formatDigits(value, [2, 9, 1]) || null)} />
+                      : <Value label="PhilHealth" value={displayedEmployee.philHealth} />}
                     <Link
                       href={displayedEmployee.employer?.id ? `/reports/philhealth?view=employees&employerId=${displayedEmployee.employer.id}` : "/reports/philhealth?view=employees"}
                       aria-label="View PhilHealth records"
@@ -763,7 +1140,9 @@ function EmployeeProfileContent() {
                       <EyeIcon aria-hidden="true" className="h-5 w-5" />
                     </Link>
                   </div>
-                  <Value label="TIN" value={displayedEmployee.tinNumber} />
+                  {editingCard === "government" && profileDraft
+                    ? <ProfileInput label="TIN" inputMode="numeric" value={profileDraft.tinNumber ?? ""} onChange={(value) => updateEditDraft("tinNumber", formatDigits(value, [3, 3, 3, 5]) || null)} />
+                    : <Value label="TIN" value={displayedEmployee.tinNumber} />}
                 </ProfileSection>
               </div>}
 

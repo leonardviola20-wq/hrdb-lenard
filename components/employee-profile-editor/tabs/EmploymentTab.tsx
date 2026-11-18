@@ -6,7 +6,7 @@ import { branchOptions, endedStatuses, positionOptions, statusOptions, type Edit
 import { EditorField, EditorSection, inputClass } from "../shared/EditorSection";
 
 const isLocked = (controller: EditorController, cardKey: string) =>
-  controller.editingCard !== cardKey;
+  controller.canEditCards && controller.editingCard !== cardKey;
 
 /** Employment tab: contract duration, position details, and contract assignment cards. */
 export function EmploymentTab({ controller }: { controller: EditorController }) {

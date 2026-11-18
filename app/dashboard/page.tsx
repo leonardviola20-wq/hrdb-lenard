@@ -141,17 +141,17 @@ export default function DashboardPage() {
         <div className="mb-4 grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-3">
           <section className="col-span-2 rounded-lg border border-blue-200 bg-white p-3 shadow-sm sm:p-5 lg:col-span-1">
             <h2 className="text-sm font-semibold text-gray-900 sm:text-base">Quick Access</h2>
-            <div className="mt-3 grid grid-cols-3 items-start justify-items-start gap-x-2 gap-y-3 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-3 items-start justify-items-stretch gap-x-1 gap-y-3 sm:grid-cols-4 sm:gap-x-2 lg:grid-cols-3">
               {stats.canViewEmployees && (
-                <Link href="/employees/new" aria-label="Add Employee" title="Add Employee" className="group flex w-20 flex-col items-center gap-1">
-                  <span className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-gray-200 text-blue-700 transition group-hover:bg-blue-50"><UserPlusIcon className="h-7 w-7" /></span>
-                  <span className="text-center text-[11px] font-medium leading-tight text-gray-700">Add Employee</span>
+                <Link href="/employees/new" aria-label="Add Employee" title="Add Employee" className="group flex min-w-0 w-full flex-col items-center gap-1">
+                  <span className="mx-auto inline-flex aspect-square w-full max-w-16 items-center justify-center rounded-lg border border-gray-200 text-blue-700 transition group-hover:bg-blue-50"><UserPlusIcon className="h-6 w-6 sm:h-7 sm:w-7" /></span>
+                  <span className="w-full break-words text-center text-[11px] font-medium leading-tight text-gray-700">Add Employee</span>
                 </Link>
               )}
               {stats.canCreateTasks && (
-                <Link href="/tasks?create=1" aria-label="New Task" title="New Task" className="group flex w-20 flex-col items-center gap-1">
-                  <span className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-gray-200 text-green-700 transition group-hover:bg-green-50"><ClipboardDocumentListIcon className="h-7 w-7" /></span>
-                  <span className="text-center text-[11px] font-medium leading-tight text-gray-700">New Task</span>
+                <Link href="/tasks?create=1" aria-label="New Task" title="New Task" className="group flex min-w-0 w-full flex-col items-center gap-1">
+                  <span className="mx-auto inline-flex aspect-square w-full max-w-16 items-center justify-center rounded-lg border border-gray-200 text-green-700 transition group-hover:bg-green-50"><ClipboardDocumentListIcon className="h-6 w-6 sm:h-7 sm:w-7" /></span>
+                  <span className="w-full break-words text-center text-[11px] font-medium leading-tight text-gray-700">New Task</span>
                 </Link>
               )}
               {[
@@ -162,9 +162,9 @@ export default function DashboardPage() {
                 { label: "Contacts", href: "/contacts", icon: IdentificationIcon, visible: stats.canViewContacts, color: "text-fuchsia-700", hover: "group-hover:bg-fuchsia-50" },
                 { label: "Employers", href: "/employers", icon: BriefcaseIcon, visible: stats.canViewEmployers, color: "text-amber-700", hover: "group-hover:bg-amber-50" },
               ].filter((shortcut) => shortcut.visible).map((shortcut) => (
-                <Link key={shortcut.href} href={shortcut.href} aria-label={shortcut.label} title={shortcut.label} className="group flex w-20 flex-col items-center gap-1">
-                  <span className={`inline-flex h-16 w-16 items-center justify-center rounded-lg border border-gray-200 transition ${shortcut.color} ${shortcut.hover}`}><shortcut.icon className="h-7 w-7" /></span>
-                  <span className="text-center text-[11px] font-medium leading-tight text-gray-700">{shortcut.label}</span>
+                <Link key={shortcut.href} href={shortcut.href} aria-label={shortcut.label} title={shortcut.label} className="group flex min-w-0 w-full flex-col items-center gap-1">
+                  <span className={`mx-auto inline-flex aspect-square w-full max-w-16 items-center justify-center rounded-lg border border-gray-200 transition ${shortcut.color} ${shortcut.hover}`}><shortcut.icon className="h-6 w-6 sm:h-7 sm:w-7" /></span>
+                  <span className="w-full break-words text-center text-[11px] font-medium leading-tight text-gray-700">{shortcut.label}</span>
                 </Link>
               ))}
             </div>

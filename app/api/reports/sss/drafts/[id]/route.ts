@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authorizeSssReports } from "@/lib/sssReportAccess";
-import { prisma } from "@/lib/prisma";
+import { findSssDraftDatabase } from "@/lib/sssReportPrisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -19,25 +19,30 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
   const action = (payload as { action: unknown }).action;
   try {
+    if (action !== "continue" && action !== "release") {
+      return NextResponse.json({ error: "Unknown SSS report draft action" }, { status: 400 });
+    }
+    const draftDatabase = await findSssDraftDatabase(id);
+    if (!draftDatabase) return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });
     if (action === "continue") {
       const claimExpiry = new Date(Date.now() - 60 * 60 * 1000);
-      const claimed = await prisma.sssReportDraft.updateMany({
+      const claimed = await draftDatabase.sssReportDraft.updateMany({
         where: { id, OR: [{ continuedBy: null }, { continuedAt: { lt: claimExpiry } }] },
         data: { continuedBy: userId, continuedAt: new Date() },
       });
       if (claimed.count > 0) return NextResponse.json({ success: true });
-      const existing = await prisma.sssReportDraft.findUnique({ where: { id }, select: { continuedBy: true } });
+      const existing = await draftDatabase.sssReportDraft.findUnique({ where: { id }, select: { continuedBy: true } });
       if (!existing) return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });
       if (existing.continuedBy === userId) return NextResponse.json({ success: true });
       return NextResponse.json({ error: "Another user is currently continuing this draft" }, { status: 409 });
     }
     if (action === "release") {
-      const released = await prisma.sssReportDraft.updateMany({
+      const released = await draftDatabase.sssReportDraft.updateMany({
         where: { id, continuedBy: userId },
         data: { continuedBy: null, continuedAt: null },
       });
       if (released.count > 0) return NextResponse.json({ success: true });
-      const existing = await prisma.sssReportDraft.findUnique({ where: { id }, select: { id: true, continuedBy: true } });
+      const existing = await draftDatabase.sssReportDraft.findUnique({ where: { id }, select: { id: true, continuedBy: true } });
       if (!existing || existing.continuedBy === null) return NextResponse.json({ success: true });
       return NextResponse.json({ error: "This draft is being continued by another user" }, { status: 409 });
     }
@@ -58,7 +63,9 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   }
   try {
     const claimExpiry = new Date(Date.now() - 60 * 60 * 1000);
-    const deleted = await prisma.sssReportDraft.deleteMany({
+    const draftDatabase = await findSssDraftDatabase(id);
+    if (!draftDatabase) return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });
+    const deleted = await draftDatabase.sssReportDraft.deleteMany({
       where: { id, OR: [{ continuedBy: null }, { continuedAt: { lt: claimExpiry } }, { continuedBy: userId }] },
     });
     if (deleted.count === 0) return NextResponse.json({ error: "This draft is being continued by another user" }, { status: 409 });

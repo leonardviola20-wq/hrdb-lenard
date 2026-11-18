@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PencilSquareIcon, PlusIcon, Squares2X2Icon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ArrowPathIcon, ArrowUpTrayIcon, CheckCircleIcon, ChevronDownIcon, EyeIcon, ListBulletIcon, MagnifyingGlassIcon, PlusIcon, Squares2X2Icon, TrashIcon } from "@heroicons/react/24/outline";
 import { parseCsv, toCsv } from "@/lib/csv";
 import { JOB_LEVELS } from "@/lib/employeePayload";
 import { employeeProfileHref, matchesEmployeeStatus, sortNavigableEmployees } from "@/lib/employeeNavigation";
@@ -581,6 +582,7 @@ function EmployeesPageContent() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-5 sm:p-6">
       <div className="w-full">
+        <PageHeader title="201 File" subtitle="Employee directory and assignment details." />
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Link href="/employees/new" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
             <PlusIcon className="h-4 w-4" /> Add
@@ -957,14 +959,6 @@ function EmployeesPageContent() {
                               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <EyeIcon aria-hidden="true" className="h-5 w-5" />
-                            </Link>
-                            <Link
-                              href={`/employees/new/${employee.id}`}
-                              aria-label={`Edit ${fullName}`}
-                              title={`Edit ${fullName}`}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <PencilSquareIcon aria-hidden="true" className="h-5 w-5" />
                             </Link>
                           </div>
                         </td>

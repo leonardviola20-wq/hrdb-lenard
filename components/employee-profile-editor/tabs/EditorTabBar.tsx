@@ -1,29 +1,17 @@
 "use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
 import type { EditorTab } from "../types";
 
 type TabBarProps = {
   tabs: { label: EditorTab; icon: React.ElementType }[];
   activeTab: EditorTab;
   onSelectTab: (tab: EditorTab) => void;
-  backHref: string;
-  backLabel: string;
 };
 
-/** Back link plus the accessible (roving tabindex) section tab strip. */
-export function EditorTabBar({ tabs, activeTab, onSelectTab, backHref, backLabel }: TabBarProps) {
+/** Accessible (roving tabindex) section tab strip. */
+export function EditorTabBar({ tabs, activeTab, onSelectTab }: TabBarProps) {
   return (
-    <div className="flex shrink-0 items-center gap-1 border-b border-gray-200">
-      <HistoryBackLink
-        fallbackHref={backHref}
-        aria-label={backLabel}
-        title={backLabel}
-        className="mr-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-      >
-        <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
-      </HistoryBackLink>
+    <div className="flex shrink-0 items-center border-b border-gray-200">
       <div role="tablist" aria-label="Employee entry sections" className="min-w-0 overflow-x-auto">
         <div className="flex min-w-max">
           {tabs.map((tab, index) => {

@@ -4,6 +4,7 @@ export const PAGE_ACCESS_OPTIONS = [
   { href: "/employees", label: "Employees" },
   { href: "/attendance", label: "Attendance" },
   { href: "/reports/sss", label: "Reports" },
+  { href: "/loans/posted-reports", label: "Posted Reports" },
   { href: "/contacts", label: "Contacts" },
   { href: "/employers", label: "Employers" },
   { href: "/settings", label: "Account Settings" },

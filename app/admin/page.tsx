@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { PAGE_ACCESS_OPTIONS, type PageAccessHref } from "@/lib/pageAccess";
+import PageHeader from "@/components/PageHeader";
 
 type AdminUser = {
   id: number;
@@ -128,6 +129,7 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-6xl">
+        <PageHeader title="Admin Dashboard" subtitle="Manage user access and account verification." />
         {message && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p>}
         {notice && <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</p>}
 
@@ -182,7 +184,7 @@ export default function AdminPage() {
       {accessUser && (
         <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" onClick={() => setAccessUser(null)}>
           <section role="dialog" aria-modal="true" aria-labelledby="page-access-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-2xl">
-            <header className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+            <header className="page-header-surface flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
               <div className="min-w-0">
                 <h2 id="page-access-title" className="text-lg font-semibold text-gray-950">Page access</h2>
                 <p className="mt-1 truncate text-sm text-gray-500">{accessUser.name || accessUser.username || accessUser.email}</p>
@@ -192,7 +194,7 @@ export default function AdminPage() {
               </button>
             </header>
             <div className="px-5 py-4 sm:px-6">
-              <p className="mb-3 text-sm text-gray-600">Choose which sidebar pages this user can open. Chat is available to all signed-in users.</p>
+              <p className="mb-3 text-sm text-gray-600">Choose which sidebar pages this user can open. Posted Reports grants read-only report access; Chat is available to all signed-in users.</p>
               <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
                 {PAGE_ACCESS_OPTIONS.map(({ href, label }) => (
                   <label key={href} className="flex cursor-pointer items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50">

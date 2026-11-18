@@ -89,10 +89,10 @@ export default function SettingsPage() {
   return (
     <main className="min-h-[calc(100dvh-5rem)] bg-gradient-to-b from-slate-50 to-slate-100/70 px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto w-full max-w-6xl">
-        <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <header className="page-header-surface mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Account center</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Profile &amp; security</h2>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Account Settings</h1>
             <p className="mt-1 max-w-2xl text-sm text-slate-600">Manage your personal details, sign-in credentials, and workspace access.</p>
           </div>
           {user && <div className="flex items-center gap-3 rounded-2xl border border-white bg-white/80 px-4 py-3 shadow-sm">

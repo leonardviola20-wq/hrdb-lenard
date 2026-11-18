@@ -5,6 +5,12 @@ import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracketForYear, toSssMoney } from "@/lib/sssContributionTable";
 import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
+import {
+  findSssReportDatabase,
+  getSssLoanReportsPrisma,
+  getSssLoansPrisma,
+  getSssContributionsPrisma,
+} from "@/lib/sssReportPrisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 type ReportEntryInput = { employeeId: number; sssLoanId?: number | null; monthlySalaryCredit?: number; loanAmount?: string | number };
@@ -54,6 +60,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 
   const reportEntries = entries as ReportEntryInput[];
+  const reportDatabase = kind === "LOAN" ? getSssLoanReportsPrisma() : getSssContributionsPrisma();
   const employeeIds = reportEntries.map((entry) => entry.employeeId);
   const uniqueEmployeeIds = [...new Set(employeeIds)];
   const loanIds = reportEntries.map((entry) => entry.sssLoanId).filter((loanId): loanId is number => Number.isSafeInteger(loanId) && (loanId as number) > 0);
@@ -65,6 +72,11 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    const existingReport = await reportDatabase.sssReport.findUnique({ where: { id }, select: { kind: true } });
+    if (!existingReport) return NextResponse.json({ error: "SSS report not found" }, { status: 404 });
+    if (existingReport.kind !== kind) {
+      return NextResponse.json({ error: "An SSS report cannot be changed to a different report type" }, { status: 409 });
+    }
     const [employer, employees, loans] = await Promise.all([
       prisma.employer.findUnique({
         where: { id: employerId },
@@ -78,7 +90,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
         },
       }),
       kind === "LOAN"
-        ? prisma.sssLoan.findMany({
+        ? getSssLoansPrisma().sssLoan.findMany({
           where: { id: { in: loanIds } },
           select: { id: true, employeeId: true, loanAccountNumber: true },
         })
@@ -151,7 +163,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "The employee total does not match Amount Due. Recheck the breakdown before saving." }, { status: 409 });
     }
 
-    const report = await prisma.sssReport.update({
+    const report = await reportDatabase.sssReport.update({
       where: { id },
       data: {
         kind,
@@ -203,6 +215,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    const reportDatabase = await findSssReportDatabase(id);
+    if (!reportDatabase) return NextResponse.json({ error: "SSS report not found" }, { status: 404 });
     const data = {
       amountPaid: new Prisma.Decimal(amountPaid.toFixed(2)),
       paymentType,
@@ -212,21 +226,21 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     };
     let report;
     if (access.session?.role === "ADMIN") {
-      report = await prisma.sssReport.update({
+      report = await reportDatabase.sssReport.update({
         where: { id },
         data,
         include: { entries: { orderBy: { employeeName: "asc" } } },
       });
     } else {
-      const result = await prisma.sssReport.updateMany({ where: { id, amountPaid: null }, data });
+      const result = await reportDatabase.sssReport.updateMany({ where: { id, amountPaid: null }, data });
       if (result.count === 0) {
-        const exists = await prisma.sssReport.findUnique({ where: { id }, select: { id: true } });
+        const exists = await reportDatabase.sssReport.findUnique({ where: { id }, select: { id: true } });
         return NextResponse.json(
           { error: exists ? "Admin access is required to edit recorded payment details" : "SSS report not found" },
           { status: exists ? 403 : 404 },
         );
       }
-      report = await prisma.sssReport.findUniqueOrThrow({
+      report = await reportDatabase.sssReport.findUniqueOrThrow({
         where: { id },
         include: { entries: { orderBy: { employeeName: "asc" } } },
       });
@@ -252,10 +266,9 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   if (!Number.isSafeInteger(id) || id <= 0) return NextResponse.json({ error: "Invalid SSS report id" }, { status: 400 });
 
   try {
-    await prisma.$transaction([
-      prisma.sssReportEntry.deleteMany({ where: { reportId: id } }),
-      prisma.sssReport.delete({ where: { id } }),
-    ]);
+    const reportDatabase = await findSssReportDatabase(id);
+    if (!reportDatabase) return NextResponse.json({ error: "SSS report not found" }, { status: 404 });
+    await reportDatabase.sssReport.delete({ where: { id } });
     return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025") {

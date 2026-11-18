@@ -216,7 +216,7 @@ function PagIbigReportsContent() {
   };
 
   return (
-    <main className="benefit-report-page flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden p-0 sm:p-2 lg:p-4 md:h-[calc(100dvh-7.75rem)]">
+    <main className="benefit-report-page flex h-[calc(100dvh-8.5rem)] min-h-[24rem] w-full min-w-0 flex-1 flex-col gap-3 overflow-hidden p-0 sm:p-2 lg:p-4 md:h-[calc(100dvh-8.75rem)]">
       <PagIbigReportsHeader
         selectedEmployerId={selectedEmployerId}
         paymentsView={paymentsView}

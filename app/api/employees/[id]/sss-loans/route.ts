@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAuthenticatedSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSssLoansPrisma } from "@/lib/sssReportPrisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -30,8 +31,9 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     });
     if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
 
+    const sssLoans = getSssLoansPrisma();
     const [loans, entries] = await Promise.all([
-      prisma.sssLoan.findMany({
+      sssLoans.sssLoan.findMany({
         where: { employeeId },
         orderBy: [{ loanDate: "desc" }, { loanAccountNumber: "asc" }],
         select: {
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
           statusReason: true,
         },
       }),
-      prisma.sssReportEntry.findMany({
+      sssLoans.sssReportEntry.findMany({
         where: { employeeId, report: { kind: "LOAN" } },
         orderBy: [
           { report: { applicableYear: "desc" } },

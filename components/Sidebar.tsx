@@ -2,9 +2,9 @@
 
 import {
   ArrowRightOnRectangleIcon,
+  BanknotesIcon,
   BriefcaseIcon,
   CalendarDaysIcon,
-  ChatBubbleLeftRightIcon,
   ChartBarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -12,20 +12,16 @@ import {
   IdentificationIcon,
   Cog6ToothIcon,
   Squares2X2Icon,
+  UserCircleIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppNavigationHistoryTracker } from "@/components/AppNavigationHistoryTracker";
 import { DirectMessageWidget } from "@/components/chat/DirectMessageWidget";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
 import { resetAppRouteHistory } from "@/lib/appNavigationHistory";
 import { DEFAULT_PAGE_ACCESS, type PageAccessHref } from "@/lib/pageAccess";
-
-type AppHeaderActions = { actions: ReactNode; backHref?: string; hideBack?: boolean } | null;
-
-const AppHeaderActionsContext = createContext<(value: AppHeaderActions) => void>(() => {});
 
 function createPresenceSessionId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -37,10 +33,6 @@ function createPresenceSessionId() {
   });
 }
 
-export function useAppHeaderActions() {
-  return useContext(AppHeaderActionsContext);
-}
-
 type CurrentUser = {
   name: string | null;
   username: string | null;
@@ -49,16 +41,24 @@ type CurrentUser = {
   accessiblePages: PageAccessHref[];
 };
 
+function getProfileDisplayName(user: CurrentUser | null) {
+  return (user?.name || user?.username || user?.email || "Loading profile...").toUpperCase();
+}
+
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
-  { label: "Chat", href: "/chat", icon: ChatBubbleLeftRightIcon },
   { label: "Tasks", href: "/tasks", icon: ChartBarIcon },
-  { label: "Employees", href: "/employees", icon: UserGroupIcon },
+  { label: "201 File", href: "/employees", icon: UserGroupIcon },
   { label: "Attendance", href: "/attendance", icon: CalendarDaysIcon },
   { label: "Reports", href: "/reports", accessHref: "/reports/sss", icon: DocumentChartBarIcon },
   { label: "Contacts", href: "/contacts", icon: IdentificationIcon },
   { label: "Employers", href: "/employers", icon: BriefcaseIcon },
 ];
+
+const reportNavigation = [
+  { label: "Contributions", href: "/reports/contributions", kind: "CONTRIBUTION", icon: DocumentChartBarIcon },
+  { label: "Loan", href: "/reports/sss?kind=LOAN", kind: "LOAN", icon: BanknotesIcon },
+] as const;
 
 type SidebarProps = {
   collapsed: boolean;
@@ -73,12 +73,19 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [reportsExpandedOverride, setReportsExpandedOverride] = useState<boolean | null>(null);
+  const [settingsExpandedOverride, setSettingsExpandedOverride] = useState<boolean | null>(null);
   const isCollapsed = collapsed && !mobileOpen;
   const collapsedText = isCollapsed
     ? "md:hidden"
     : "whitespace-nowrap";
   const isAdmin = user?.role === "ADMIN";
   const accessiblePages = user?.accessiblePages || DEFAULT_PAGE_ACCESS;
+  const onReportsPage = pathname === "/reports" || pathname.startsWith("/reports/");
+  const reportsExpanded = reportsExpandedOverride ?? onReportsPage;
+  const onSettingsPage = pathname === "/settings" || pathname === "/management/system-configuration";
+  const settingsExpanded = settingsExpandedOverride ?? onSettingsPage;
+  const profileDisplayName = getProfileDisplayName(user);
 
   const logout = async () => {
     setLoggingOut(true);
@@ -130,9 +137,11 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
           Workspace
         </p>
         <div className="space-y-2">
-          {navigation.filter((item) => item.href === "/chat" || isAdmin || accessiblePages.includes(("accessHref" in item ? item.accessHref : item.href) as PageAccessHref)).map(({ label, href, icon: Icon }) => {
+          {navigation.filter((item) => ("adminOnly" in item && item.adminOnly ? isAdmin : isAdmin || accessiblePages.includes(("accessHref" in item ? item.accessHref : item.href) as PageAccessHref))).map(({ label, href, icon: Icon }) => {
             const active =
-              pathname === href || (href === "/tasks" && pathname.startsWith("/tasks/")) || (href === "/reports" && pathname.startsWith("/reports/"));
+              pathname === href ||
+              (href === "/tasks" && pathname.startsWith("/tasks/")) ||
+              (href === "/reports" && pathname.startsWith("/reports/"));
             const className = `group/item flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
               active
                 ? isCollapsed
@@ -142,71 +151,176 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
                   ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
                   : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
             }`;
-            const content = <><Icon className={`h-5 w-5 shrink-0 transition-transform ${active ? "text-blue-700" : "text-blue-300 group-hover:text-blue-100"} ${isCollapsed ? "group-hover/item:scale-110" : ""}`} /><span className={collapsedText}>{label}</span></>;
-            return <Link key={label} href={href} onClick={onMobileToggle} title={isCollapsed ? label : undefined} aria-current={active ? "page" : undefined} className={className}>{content}</Link>;
+            const content = <span className="flex min-w-0 items-center gap-3"><Icon className={`h-5 w-5 shrink-0 transition-transform ${active ? "text-blue-700" : "text-blue-300 group-hover:text-blue-100"} ${isCollapsed ? "group-hover/item:scale-110" : ""}`} /><span className={collapsedText}>{label}</span></span>;
+            if (href !== "/reports") {
+              return <Link key={label} href={href} onClick={onMobileToggle} title={isCollapsed ? label : undefined} aria-current={active ? "page" : undefined} className={className}>{content}</Link>;
+            }
+
+            return (
+              <div key={label} className="space-y-1">
+                <button
+                  type="button"
+                  title={isCollapsed ? label : undefined}
+                  aria-label={isCollapsed ? `${label}: ${reportsExpanded ? "collapse" : "expand"} links` : undefined}
+                  aria-expanded={reportsExpanded}
+                  aria-controls="reports-subnavigation"
+                  onClick={() => {
+                    if (pathname === "/reports") {
+                      setReportsExpandedOverride(!reportsExpanded);
+                      return;
+                    }
+                    setReportsExpandedOverride(true);
+                    router.push("/reports");
+                    onMobileToggle();
+                  }}
+                  className={`${className} ${isCollapsed ? "w-10 self-center" : "w-full justify-between"}`}
+                >
+                  {content}
+                  {!isCollapsed && (
+                    <ChevronRightIcon className={`h-4 w-4 shrink-0 transition-transform ${reportsExpanded ? "rotate-90" : ""}`} />
+                  )}
+                </button>
+                <div
+                  id="reports-subnavigation"
+                  hidden={!reportsExpanded}
+                  className={`space-y-1 ${isCollapsed ? "pl-1" : "ml-5 border-l border-white/15 pl-3"}`}
+                >
+                  {reportNavigation.map(({ label: reportLabel, href: reportHref, kind, icon: ReportIcon }) => {
+                    const reportActive = pathname === reportHref || pathname.startsWith(`${reportHref}/`);
+                    return (
+                      <Link
+                        key={kind}
+                        href={reportHref}
+                        onClick={onMobileToggle}
+                        title={isCollapsed ? reportLabel : undefined}
+                        aria-current={reportActive ? "page" : undefined}
+                        className={`flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition ${
+                          reportActive
+                            ? isCollapsed ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554]" : "bg-white/10 px-3 text-white"
+                            : isCollapsed
+                              ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                              : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <ReportIcon className="h-5 w-5 shrink-0 text-blue-300" />
+                        <span className={collapsedText}>{reportLabel}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
           })}
         </div>
 
-        {(isAdmin || accessiblePages.includes("/settings")) && <>
-          <p className={`mb-3 mt-8 overflow-hidden px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300 ${collapsedText}`}>
-            Settings &amp; Configuration
-          </p>
-          {isAdmin && <Link
-            href="/management/system-configuration"
-            onClick={onMobileToggle}
-            title={isCollapsed ? "System Configuration" : undefined}
-            aria-current={pathname === "/management/system-configuration" ? "page" : undefined}
-            className={`group/item flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
-              pathname === "/management/system-configuration"
-                ? isCollapsed
-                  ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
-                  : "px-3 bg-white text-[#172554] shadow-sm"
-                : isCollapsed
-                  ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
-                  : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
-            <span className={collapsedText}>System Configuration</span>
-          </Link>}
-          {(isAdmin || accessiblePages.includes("/settings")) && <Link
-            href="/settings"
-            onClick={onMobileToggle}
-            title={isCollapsed ? "Account Settings" : undefined}
-            className={`group/item flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
-              pathname === "/settings"
-                ? isCollapsed
-                  ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
-                  : "px-3 bg-white text-[#172554] shadow-sm"
-                : isCollapsed
-                  ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
-                  : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
-            <span className={collapsedText}>Account Settings</span>
-          </Link>}
-        </>}
+        {(isAdmin || accessiblePages.includes("/settings")) && (
+          <div className="mt-auto space-y-1 pt-8">
+            <button
+              type="button"
+              title={isCollapsed ? "Settings" : undefined}
+              aria-label={isCollapsed ? `Settings: ${settingsExpanded ? "collapse" : "expand"} links` : undefined}
+              aria-expanded={settingsExpanded}
+              aria-controls="settings-subnavigation"
+              aria-current={onSettingsPage ? "page" : undefined}
+              onClick={() => {
+                if (onSettingsPage) {
+                  setSettingsExpandedOverride(!settingsExpanded);
+                  return;
+                }
+                setSettingsExpandedOverride(true);
+                router.push("/settings");
+                onMobileToggle();
+              }}
+              className={`group/item flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition ${
+                onSettingsPage
+                  ? isCollapsed
+                    ? "mx-auto h-10 w-10 justify-center bg-white text-[#172554] shadow-lg shadow-blue-950/20"
+                    : "px-3 bg-white text-[#172554] shadow-sm"
+                  : isCollapsed
+                    ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                    : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+              } ${isCollapsed ? "w-10 self-center" : "w-full justify-between"}`}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300 group-hover:text-blue-100" />
+                <span className={collapsedText}>Settings</span>
+              </span>
+              {!isCollapsed && (
+                <ChevronRightIcon className={`h-4 w-4 shrink-0 transition-transform ${settingsExpanded ? "rotate-90" : ""}`} />
+              )}
+            </button>
+            <div
+              id="settings-subnavigation"
+              hidden={!settingsExpanded}
+              className={`space-y-1 ${isCollapsed ? "pl-1" : "ml-5 border-l border-white/15 pl-3"}`}
+            >
+              <Link
+                href="/settings"
+                onClick={onMobileToggle}
+                title={isCollapsed ? "Account" : undefined}
+                aria-current={pathname === "/settings" ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition ${
+                  pathname === "/settings"
+                    ? isCollapsed ? "mx-auto h-10 w-10 justify-center bg-white/10 text-white" : "bg-white/10 px-3 text-white"
+                    : isCollapsed
+                      ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                      : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <UserCircleIcon className="h-5 w-5 shrink-0 text-blue-300" />
+                <span className={collapsedText}>Account</span>
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/management/system-configuration"
+                  onClick={onMobileToggle}
+                  title={isCollapsed ? "System Config" : undefined}
+                  aria-current={pathname === "/management/system-configuration" ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition ${
+                    pathname === "/management/system-configuration"
+                      ? isCollapsed ? "mx-auto h-10 w-10 justify-center bg-white/10 text-white" : "bg-white/10 px-3 text-white"
+                      : isCollapsed
+                        ? "mx-auto h-10 w-10 justify-center text-blue-200 hover:bg-white/10 hover:text-white"
+                        : "px-3 text-blue-100 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Cog6ToothIcon className="h-5 w-5 shrink-0 text-blue-300" />
+                  <span className={collapsedText}>System Config</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
-      <div className={`${mobileOpen ? "block" : "hidden"} px-4 py-3 md:block ${isCollapsed ? "md:px-2" : ""}`}>
-        <div className={`mb-3 px-3 ${collapsedText}`}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-200">Welcome</p>
-          <p className="mt-1 truncate text-sm font-semibold text-white">{user?.name || user?.username || user?.email || "Loading profile..."}</p>
-          <p className="mt-0.5 text-xs text-blue-200">{user?.role === "ADMIN" ? "Admin" : user ? "User" : ""}</p>
-        </div>
-      </div>
       <div className={`${mobileOpen ? "block" : "hidden"} border-t border-white/10 p-4 md:block ${isCollapsed ? "md:p-3" : ""}`}>
-        <button
-          type="button"
-          onClick={logout}
-          disabled={loggingOut}
-          title={isCollapsed ? "Log-out" : undefined}
-          className={`group/item flex w-full items-center gap-3 rounded-xl py-3 text-left text-sm font-medium text-blue-100 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 ${isCollapsed ? "md:mx-auto md:h-10 md:w-10 md:justify-center md:px-0" : "px-3"}`}
-        >
-          <ArrowRightOnRectangleIcon className="h-5 w-5 shrink-0 text-blue-300" />
-          <span className={collapsedText}>{loggingOut ? "Logging out..." : "Log-out"}</span>
-        </button>
+        <div className={`flex items-center justify-between gap-3 rounded-xl border border-blue-300/20 bg-blue-400/10 px-3 py-3 shadow-inner shadow-blue-950/20 ${isCollapsed ? "md:mx-auto md:h-11 md:w-11 md:justify-center md:px-0 md:py-0" : ""}`}>
+          {!isCollapsed && (
+            <span className="min-w-0">
+              <span className="block truncate text-xs font-bold uppercase tracking-wide text-white">
+                {profileDisplayName}
+              </span>
+              {user && (
+                <span className="mt-1 flex items-center gap-1.5 text-[11px] text-blue-200">
+                  <span>{user.role === "ADMIN" ? "Administrator" : "User"}</span>
+                  <span className="rounded-full bg-blue-400/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-blue-100">
+                    {user.role === "ADMIN" ? "Admin" : "User"}
+                  </span>
+                </span>
+              )}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={logout}
+            disabled={loggingOut}
+            title="Log out"
+            aria-label={loggingOut ? "Logging out" : "Log out"}
+            className="group/item flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-blue-200 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ArrowRightOnRectangleIcon aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <button
@@ -224,18 +338,18 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileTogg
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const profileBackToDirectory = pathname === "/employees/new" || pathname.startsWith("/employees/");
   const publicRoute = pathname === "/" || pathname === "/login" || pathname === "/register";
+  const isLoansDashboard = pathname === "/loans";
+  const isSssLoansPage = pathname === "/loans/sss";
+  const isViewportBoundedLoansPage = isLoansDashboard || isSssLoansPage;
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
-  const [headerActions, setHeaderActions] = useState<AppHeaderActions>(null);
   const chatPresenceCleanupRef = useRef<(() => Promise<void>) | null>(null);
   const canUseChat = Boolean(user);
-  const pageTitle = getPageTitle(pathname);
-  const pageSubtitle = getPageSubtitle(pathname);
-  const showDashboardBack = pathname !== "/dashboard" && pathname !== "/attendance" && pathname !== "/settings" && pathname !== "/management/system-configuration" && !pathname.startsWith("/tasks") && pathname !== "/employees" && pathname !== "/contacts" && pathname !== "/employers" && !pathname.startsWith("/reports");
+  const profileDisplayName = getProfileDisplayName(user);
+  const profileRole = user?.role === "ADMIN" ? "ADMIN" : "USER";
   const dateTimeValue = currentDateTime?.toISOString();
   const dateLabel = currentDateTime?.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   const timeLabel = currentDateTime?.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -343,10 +457,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (publicRoute) return <><AppNavigationHistoryTracker />{children}</>;
 
   return (
-    <AppHeaderActionsContext.Provider value={setHeaderActions}>
+    <>
       <AppNavigationHistoryTracker />
-      <div className="flex min-h-screen flex-col bg-[#f8fafc] md:flex-row">
-        <header className="sticky top-0 z-50 flex h-[76px] shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:hidden" style={{ backgroundColor: "#172554" }}>
+      <div className={`flex ${isViewportBoundedLoansPage ? "h-dvh min-h-0 overflow-hidden" : "min-h-screen"} flex-col bg-[#f8fafc] md:flex-row`}>
+        <header className="page-header-surface z-50 flex h-[76px] shrink-0 items-center border-b border-slate-200 bg-white text-black shadow-sm md:hidden">
         <div className="flex h-full w-14 shrink-0 items-center justify-center">
           <button
             type="button"
@@ -358,20 +472,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {mobileOpen ? <ChevronLeftIcon className="h-5 w-5" /> : <ChevronRightIcon className="h-5 w-5" />}
           </button>
         </div>
-        {mobileOpen ? (
-          <div className="flex min-w-0 items-center gap-2 px-3">
-            <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-400 text-base font-bold text-[#172554]">H</span>
-            <span className="truncate text-base font-bold tracking-tight">HRDB-Lenard</span>
+        <div className="min-w-0 flex-1 px-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-400 text-sm font-bold text-black">H</span>
+            <div className="min-w-0">
+              <p className="truncate text-sm leading-tight text-slate-600">
+                <span className="text-base font-semibold">Welcome!</span>{" "}
+                <span className="text-base font-bold text-slate-950">{profileDisplayName}</span>
+                {user && (
+                  <span className="ml-2 inline-flex rounded-full bg-blue-100 px-2 py-0.5 align-middle text-[9px] font-bold uppercase tracking-wide text-blue-800">
+                    {profileRole}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
-        ) : (
-          <div className="min-w-0 flex-1 px-3">
-            <h1 className="truncate text-lg font-bold">{pageTitle}</h1>
-            {pageSubtitle && <p className="mt-0.5 truncate text-xs text-blue-100">{pageSubtitle}</p>}
-          </div>
-        )}
-        <time dateTime={dateTimeValue} className="hidden ml-auto shrink-0 px-2 text-right text-[10px] leading-tight text-blue-100">
+        </div>
+        <time dateTime={dateTimeValue} className="ml-auto hidden shrink-0 px-2 text-right text-[10px] leading-tight">
           {dateLabel && <span className="block">{dateLabel}</span>}
-          {timeLabel && <span className="mt-1 block text-xs font-semibold text-white">{timeLabel}</span>}
+          {timeLabel && <span className="mt-1 block text-xs font-semibold">{timeLabel}</span>}
         </time>
       </header>
       <Sidebar
@@ -382,34 +501,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onBeforeLogout={() => chatPresenceCleanupRef.current?.() ?? Promise.resolve()}
         user={user}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 hidden h-20 shrink-0 items-center border-b border-white/10 bg-[#172554] text-white shadow-sm md:flex">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="page-header-surface z-10 hidden h-20 shrink-0 items-center border-b border-slate-200 bg-white text-black shadow-sm md:flex">
           <div className="min-w-0 px-5 md:px-7">
-            <h1 className="truncate text-xl font-bold sm:text-2xl">{pageTitle}</h1>
-            {pageSubtitle && <p className="mt-0.5 max-w-full truncate text-xs text-blue-100 sm:text-sm">{pageSubtitle}</p>}
+            <p className="truncate text-sm leading-tight text-slate-600">
+              <span className="text-lg font-semibold">Welcome!</span>{" "}
+              <span className="text-lg font-bold text-slate-950">{profileDisplayName}</span>
+              {user && (
+                <span className="ml-2 inline-flex rounded-full bg-blue-100 px-2.5 py-1 align-middle text-[10px] font-bold uppercase tracking-wide text-blue-800">
+                  {profileRole}
+                </span>
+              )}
+            </p>
           </div>
-          <time dateTime={dateTimeValue} className="ml-auto shrink-0 px-5 text-right text-sm text-blue-100 md:px-7">
+          <time dateTime={dateTimeValue} className="ml-auto shrink-0 px-5 text-right text-sm md:px-7">
             {dateLabel && <span className="block">{dateLabel}</span>}
-            {timeLabel && <span className="mt-1 block text-base font-semibold text-white">{timeLabel}</span>}
+            {timeLabel && <span className="mt-1 block text-base font-semibold">{timeLabel}</span>}
           </time>
         </header>
-        {showDashboardBack && !headerActions?.hideBack && <div className="flex flex-wrap items-end gap-2 px-4 pt-6 sm:px-6">
-          <HistoryBackLink
-            fallbackHref={headerActions?.backHref ?? (profileBackToDirectory ? "/employees" : "/dashboard")}
-            onClick={(event) => {
-              if (!profileBackToDirectory && window.matchMedia("(max-width: 767px)").matches) {
-                event.preventDefault();
-                setMobileOpen(true);
-              }
-            }}
-            className="inline-flex h-10 scroll-mt-24 items-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:ring-2 hover:ring-blue-300 hover:ring-offset-2 hover:ring-offset-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#f8fafc]"
-          >
-            <ChevronLeftIcon className="h-4 w-4" />
-            <span>Back</span>
-          </HistoryBackLink>
-          {headerActions?.actions && <div className="flex min-w-0 flex-1 flex-wrap items-end gap-2">{headerActions.actions}</div>}
-        </div>}
-        {children}
+        <div id="app-page-card" className={`app-page-card mx-2 my-2 flex min-h-0 min-w-0 flex-1 flex-col rounded-xl border border-slate-200 bg-white shadow-sm sm:m-4 ${isViewportBoundedLoansPage ? "overflow-hidden" : ""}`}>
+          {children}
+        </div>
         <footer className={`${mobileOpen ? "hidden md:flex" : "flex"} sticky bottom-0 z-20 mt-auto items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-3 text-xs text-gray-500 shadow-[0_-3px_10px_rgba(15,23,42,0.04)] backdrop-blur sm:px-6`}>
           <span>© {new Date().getFullYear()} HRDB-Lenard</span>
           <span className="hidden sm:inline">Human Resources Management</span>
@@ -417,51 +529,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       {canUseChat && <DirectMessageWidget />}
-    </AppHeaderActionsContext.Provider>
+    </>
   );
-}
-
-function getPageTitle(pathname: string) {
-  if (pathname === "/chat") return "Chat";
-  if (pathname === "/reports") return "Reports Dashboard";
-  if (pathname === "/reports/sss") return "SSS Reports";
-  if (pathname.startsWith("/reports/pagibig")) return "Pag-IBIG Reports";
-  if (pathname.startsWith("/reports/philhealth")) return "Philhealth Reports";
-  if (pathname.startsWith("/tasks")) return "Tasks";
-  if (pathname === "/dashboard") return "Dashboard";
-  if (pathname.startsWith("/employees/new/")) return "Update Employee";
-  if (pathname === "/employees/new") return "Add New Employee";
-  if (pathname.startsWith("/employees/") && pathname.endsWith("/sss-contributions")) return "SSS Reports";
-  if (pathname.startsWith("/employees/")) return "Employee Profile";
-  if (pathname === "/employees") return "Employee Directory";
-  if (pathname === "/attendance") return "Attendance";
-  if (pathname === "/contacts") return "Contacts";
-  if (pathname === "/employers") return "Employers";
-  if (pathname === "/settings") return "Account Settings";
-  if (pathname === "/management/system-configuration") return "System Configuration";
-  if (pathname === "/admin/contacts") return "Manage Office Contacts";
-  if (pathname === "/admin") return "Admin Dashboard";
-  return "HRDB-Lenard";
-}
-
-function getPageSubtitle(pathname: string) {
-  if (pathname === "/chat") return "See who's online and start a direct conversation.";
-  if (pathname === "/reports") return "Choose a report type to manage payroll and compliance records.";
-  if (pathname === "/reports/sss") return "Monitor SSS employer contributions and loan payments.";
-  if (pathname.startsWith("/reports/pagibig")) return "Manage Pag-IBIG member accounts, savings, loans, and payments.";
-  if (pathname.startsWith("/reports/philhealth")) return "Manage PhilHealth employer contributions, reports, and payments.";
-  if (pathname.startsWith("/tasks")) return "Plan, prioritize, and keep your work moving.";
-  if (pathname === "/dashboard") return "Your personal workspace and task overview.";
-  if (pathname === "/employees/new") return "Create an employee profile and record their work information.";
-  if (pathname.startsWith("/employees/") && pathname.endsWith("/sss-contributions")) return "Saved SSS contribution and loan history by period.";
-  if (pathname.startsWith("/employees/")) return "Employee details and work information.";
-  if (pathname === "/employees") return "Employee directory and assignment details.";
-  if (pathname === "/attendance") return "Attendance tracking and records.";
-  if (pathname === "/contacts") return "Suppliers, contractors, and office service providers.";
-  if (pathname === "/employers") return "Manage employer, branch, and government information.";
-  if (pathname === "/settings") return "Profile details and account security.";
-  if (pathname === "/management/system-configuration") return "Manage branches, positions, and employment statuses.";
-  if (pathname === "/admin/contacts") return "Manage office contacts and service providers.";
-  if (pathname === "/admin") return "Manage user access and account verification.";
-  return "";
 }

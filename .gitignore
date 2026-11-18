@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
 
 # vercel
 .vercel
@@ -42,3 +43,8 @@ next-env.d.ts
 
 # local database dumps (contain production data)
 *.dump
+
+# generated reporting database clients
+/prisma/generated/sss-contributions/
+/prisma/generated/sss-loans/
+/prisma/generated/sss-reports/

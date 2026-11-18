@@ -37,8 +37,12 @@ export function proxy(req: NextRequest) {
         return NextResponse.redirect(new URL(fallback, req.url));
       }
       return NextResponse.next();
-    } catch {
-      return NextResponse.redirect(new URL("/login", req.url));
+    } catch (error) {
+      const loginUrl = new URL("/login", req.url);
+      if (error instanceof jwt.TokenExpiredError) {
+        loginUrl.searchParams.set("reason", "session-expired");
+      }
+      return NextResponse.redirect(loginUrl);
     }
   }
 

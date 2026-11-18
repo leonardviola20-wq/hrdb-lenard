@@ -13,7 +13,6 @@ export default function AuthPage() {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setError(""); // clear old error

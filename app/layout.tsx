@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/Sidebar";
+import SessionExpiredDialog from "@/components/SessionExpiredDialog";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,6 +28,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <AppShell>{children}</AppShell>
+        <Suspense fallback={null}>
+          <SessionExpiredDialog />
+        </Suspense>
       </body>
     </html>
   );

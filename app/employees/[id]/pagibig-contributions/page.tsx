@@ -2,9 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
+import BackButton from "@/components/BackButton";
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -74,9 +72,7 @@ export default function PagibigContributionsPage() {
     <div className="min-h-0 flex-1 bg-gray-50 p-4 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex items-center gap-3">
-          <HistoryBackLink fallbackHref={`/employees/${employeeId}?tab=Government`} aria-label="Back to employee profile" className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" /></svg>
-          </HistoryBackLink>
+          <BackButton fallbackHref={`/employees/${employeeId}?tab=Government`} label="Back to employee profile" />
           <div>
             <h1 className="text-xl font-bold text-gray-900">Pag-IBIG Contributions</h1>
             <p className="text-sm text-gray-600">{employee ? `${employee.lastName}, ${employee.firstName}${employee.middleName ? " " + employee.middleName.charAt(0) + "." : ""}` : ""} · {employee?.pagIbigNumber || "-"}</p>

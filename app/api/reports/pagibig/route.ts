@@ -33,15 +33,17 @@ export async function GET(request: NextRequest) {
 
     if (request.nextUrl.searchParams.get("view") === "payments") {
       const payments = await prisma.pagibigReport.findMany({
-        where: { employerId, payDate: { not: null }, amountPaid: { not: null } },
+        where: { employerId, kind: "CONTRIBUTION", payDate: { not: null }, amountPaid: { not: null } },
         select: {
           id: true,
           applicableMonth: true,
           applicableYear: true,
           amountDue: true,
+          amountPaid: true,
+          payDate: true,
         },
         orderBy: [{ payDate: "desc" }, { id: "desc" }],
-        take: 8,
+        take: request.nextUrl.searchParams.get("limit") === "12" ? 12 : 8,
       });
       return NextResponse.json({ employer: employerDetails, payments }, { headers: { "Cache-Control": "private, no-store" } });
     }

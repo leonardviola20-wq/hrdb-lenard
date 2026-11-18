@@ -24,18 +24,24 @@ export async function GET(request: NextRequest) {
   try {
     const employer = await prisma.employer.findUnique({
       where: { id: employerId },
-      select: { id: true, name: true, phic: true },
+      select: { id: true, name: true, phic: true, shortAddress: true, longAddress: true },
     });
     if (!employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
+    const employerDetails = {
+      id: employer.id,
+      name: employer.name,
+      providerNumber: employer.phic,
+      address: employer.longAddress || employer.shortAddress,
+    };
     if (request.nextUrl.searchParams.get("view") === "payments") {
       const payments = await prisma.philHealthReport.findMany({
         where: { employerId, payment: { isNot: null } },
         include: { entries: { orderBy: { employeeName: "asc" } }, payment: true },
         orderBy: [{ payment: { transactionDate: "desc" } }, { id: "desc" }],
-        take: 8,
+        take: request.nextUrl.searchParams.get("limit") === "12" ? 12 : 8,
       });
       return NextResponse.json({
-        employer,
+        employer: employerDetails,
         reports: payments.map(serializeReport),
         canEditPayments: access.session?.role === "ADMIN",
       }, { headers: { "Cache-Control": "private, no-store" } });
@@ -49,7 +55,7 @@ export async function GET(request: NextRequest) {
       orderBy: [{ applicableYear: "desc" }, { applicableMonth: "desc" }, { id: "desc" }],
     });
     const serialized = reports.map(serializeReport);
-    return NextResponse.json({ employer, reports: serialized, canEditPayments: access.session?.role === "ADMIN" }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ employer: employerDetails, reports: serialized, canEditPayments: access.session?.role === "ADMIN" }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Load PhilHealth reports error:", error);
     return NextResponse.json({ error: "Unable to load PhilHealth reports" }, { status: 500 });

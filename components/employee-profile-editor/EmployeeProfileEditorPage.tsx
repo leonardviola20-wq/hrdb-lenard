@@ -1,9 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { BriefcaseIcon, IdentificationIcon, UserCircleIcon } from "@heroicons/react/24/outline";
-import { useAppHeaderActions } from "@/components/Sidebar";
 import { useEmployeeEditorForm } from "./hooks/useEmployeeEditorForm";
 import { useCardEditing } from "./hooks/useCardEditing";
 import type { EditorTab } from "./types";
@@ -27,7 +25,6 @@ type ProfileEditorProps = {
 };
 
 function EmployeeProfileEditor({ employeeId }: ProfileEditorProps) {
-  const setAppHeaderActions = useAppHeaderActions();
   const [activeTab, setActiveTab] = useState<EditorTab>("Personal Information");
 
   const editor = useEmployeeEditorForm(employeeId);
@@ -50,11 +47,6 @@ function EmployeeProfileEditor({ employeeId }: ProfileEditorProps) {
     [form.firstName, form.lastName],
   );
 
-  useEffect(() => {
-    setAppHeaderActions(null);
-    return () => setAppHeaderActions(null);
-  }, [setAppHeaderActions]);
-
   const activeTabIndex = editorTabs.findIndex((tab) => tab.label === activeTab);
   const backHref = employeeId === null ? "/employees" : `/employees/${employeeId}`;
 
@@ -65,6 +57,8 @@ function EmployeeProfileEditor({ employeeId }: ProfileEditorProps) {
           form={form}
           fullName={fullName}
           employeeId={employeeId}
+          backHref={backHref}
+          backLabel={employeeId === null ? "Back to employee directory" : "Back to employee profile"}
           onPhotoSelected={(file) => readPhoto(file, (value) => editor.update("photoUrl", value), setError)}
         />
 
@@ -75,8 +69,6 @@ function EmployeeProfileEditor({ employeeId }: ProfileEditorProps) {
             tabs={editorTabs}
             activeTab={activeTab}
             onSelectTab={setActiveTab}
-            backHref={backHref}
-            backLabel={employeeId === null ? "Back to employee directory" : "Back to employee profile"}
           />
 
           {loadingEmployee ? (
@@ -108,11 +100,9 @@ function EmployeeProfileEditor({ employeeId }: ProfileEditorProps) {
 }
 
 export default function EmployeeProfileEditorPage() {
-  const params = useParams<{ id?: string }>();
-  const employeeId = params?.id ? Number(params.id) : null;
   return (
     <Suspense fallback={<main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6" />}>
-      <EmployeeProfileEditor employeeId={Number.isInteger(employeeId) ? employeeId : null} />
+      <EmployeeProfileEditor employeeId={null} />
     </Suspense>
   );
 }

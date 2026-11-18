@@ -387,6 +387,50 @@ exports.Prisma.SssReportEntryScalarFieldEnum = {
   totalAmount: 'totalAmount'
 };
 
+exports.Prisma.ImportedSssLoanReportScalarFieldEnum = {
+  sourceReportId: 'sourceReportId',
+  sourceKind: 'sourceKind',
+  sourceEmployerId: 'sourceEmployerId',
+  employerName: 'employerName',
+  employerAddress: 'employerAddress',
+  employerSssNumber: 'employerSssNumber',
+  prn: 'prn',
+  applicableMonth: 'applicableMonth',
+  applicableYear: 'applicableYear',
+  amountDue: 'amountDue',
+  amountPaid: 'amountPaid',
+  paymentType: 'paymentType',
+  payDate: 'payDate',
+  sssBranch: 'sssBranch',
+  transactionReference: 'transactionReference',
+  sourceCreatedBy: 'sourceCreatedBy',
+  sourceCreatedAt: 'sourceCreatedAt',
+  sourceUpdatedAt: 'sourceUpdatedAt',
+  importedAt: 'importedAt'
+};
+
+exports.Prisma.ImportedSssLoanReportEntryScalarFieldEnum = {
+  sourceEntryId: 'sourceEntryId',
+  sourceReportId: 'sourceReportId',
+  sourceEmployeeId: 'sourceEmployeeId',
+  employeeName: 'employeeName',
+  employeeCode: 'employeeCode',
+  employeeSssNumber: 'employeeSssNumber',
+  sourceSssLoanId: 'sourceSssLoanId',
+  loanAccountNumber: 'loanAccountNumber',
+  sourceEmployeeEmployerId: 'sourceEmployeeEmployerId',
+  employeeEmployerName: 'employeeEmployerName',
+  salaryRange: 'salaryRange',
+  monthlySalaryCredit: 'monthlySalaryCredit',
+  employeeSs: 'employeeSs',
+  employerSs: 'employerSs',
+  employeeMpf: 'employeeMpf',
+  employerMpf: 'employerMpf',
+  ec: 'ec',
+  loanAmount: 'loanAmount',
+  totalAmount: 'totalAmount'
+};
+
 exports.Prisma.SssReportDraftScalarFieldEnum = {
   id: 'id',
   createdBy: 'createdBy',
@@ -557,6 +601,70 @@ exports.Prisma.PhilHealthPaymentScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.LoanScalarFieldEnum = {
+  id: 'id',
+  employeeId: 'employeeId',
+  provider: 'provider',
+  loanType: 'loanType',
+  loanAccountNumber: 'loanAccountNumber',
+  loanDate: 'loanDate',
+  terms: 'terms',
+  statusReason: 'statusReason',
+  totalAmount: 'totalAmount',
+  monthlyAmortization: 'monthlyAmortization',
+  outstandingBalance: 'outstandingBalance',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LoanMonitorReportScalarFieldEnum = {
+  id: 'id',
+  applicableDate: 'applicableDate',
+  employerName: 'employerName',
+  employerSssNumber: 'employerSssNumber',
+  employerAddress: 'employerAddress',
+  totalMonthly: 'totalMonthly',
+  totalOutstanding: 'totalOutstanding',
+  prn: 'prn',
+  paymentDate: 'paymentDate',
+  amountPaid: 'amountPaid',
+  paymentBranch: 'paymentBranch',
+  transactionReference: 'transactionReference',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.LoanMonitorReportEntryScalarFieldEnum = {
+  id: 'id',
+  reportId: 'reportId',
+  loanId: 'loanId',
+  provider: 'provider',
+  loanType: 'loanType',
+  loanAccountNumber: 'loanAccountNumber',
+  employeeName: 'employeeName',
+  loanDate: 'loanDate',
+  terms: 'terms',
+  totalAmount: 'totalAmount',
+  monthlyAmortization: 'monthlyAmortization',
+  outstandingBalance: 'outstandingBalance',
+  status: 'status',
+  statusReason: 'statusReason',
+  employerName: 'employerName',
+  employerSssNumber: 'employerSssNumber',
+  employerAddress: 'employerAddress'
+};
+
+exports.Prisma.LoanPaymentScalarFieldEnum = {
+  id: 'id',
+  loanId: 'loanId',
+  payrollPeriodId: 'payrollPeriodId',
+  amountPaid: 'amountPaid',
+  paymentDate: 'paymentDate',
+  source: 'source',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.OfficeContactScalarFieldEnum = {
   id: 'id',
   employeeId: 'employeeId',
@@ -604,7 +712,15 @@ exports.Prisma.JsonNullValueFilter = {
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
 };
+exports.LoanProvider = exports.$Enums.LoanProvider = {
+  SSS: 'SSS',
+  PAGIBIG: 'PAGIBIG'
+};
 
+exports.LoanStatus = exports.$Enums.LoanStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -625,6 +741,8 @@ exports.Prisma.ModelName = {
   SssLoan: 'SssLoan',
   SssReport: 'SssReport',
   SssReportEntry: 'SssReportEntry',
+  ImportedSssLoanReport: 'ImportedSssLoanReport',
+  ImportedSssLoanReportEntry: 'ImportedSssLoanReportEntry',
   SssReportDraft: 'SssReportDraft',
   PagibigEmployeeLoan: 'PagibigEmployeeLoan',
   PagibigEmployeeRecord: 'PagibigEmployeeRecord',
@@ -636,6 +754,10 @@ exports.Prisma.ModelName = {
   PhilHealthReport: 'PhilHealthReport',
   PhilHealthReportEntry: 'PhilHealthReportEntry',
   PhilHealthPayment: 'PhilHealthPayment',
+  Loan: 'Loan',
+  LoanMonitorReport: 'LoanMonitorReport',
+  LoanMonitorReportEntry: 'LoanMonitorReportEntry',
+  LoanPayment: 'LoanPayment',
   OfficeContact: 'OfficeContact'
 };
 

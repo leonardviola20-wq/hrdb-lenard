@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getAuthenticatedSession } from "@/lib/auth";
 import { buildSssContributionHistory } from "@/lib/sssContributionHistory";
 import { prisma } from "@/lib/prisma";
+import { getSssContributionsPrisma } from "@/lib/sssReportPrisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     });
     if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
 
-    const entries = await prisma.sssReportEntry.findMany({
+    const entries = await getSssContributionsPrisma().sssReportEntry.findMany({
       where: { employeeId, report: { kind: "CONTRIBUTION" } },
       orderBy: [{ report: { applicableYear: "desc" } }, { report: { applicableMonth: "desc" } }, { id: "asc" }],
       select: {

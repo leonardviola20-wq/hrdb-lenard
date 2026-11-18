@@ -5,6 +5,8 @@ import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracketForYear } from "@/lib/sssContributionTable";
 import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
+import { getSssContributionsPrisma, getSssLoansPrisma, getSssLoanReportsPrisma, findSssDraftDatabase } from "@/lib/sssReportPrisma";
+import { nextSssReportDraftId } from "@/lib/sssReportIds";
 
 function employeeName(employee: { firstName: string; middleName: string | null; lastName: string }) {
   const middleInitial = employee.middleName?.trim().charAt(0);
@@ -22,10 +24,17 @@ export async function GET(request: NextRequest) {
   }
   try {
     const claimExpiry = new Date(Date.now() - 60 * 60 * 1000);
-    const drafts = await prisma.sssReportDraft.findMany({
-      where: { employerId, OR: [{ continuedBy: null }, { continuedAt: { lt: claimExpiry } }, { continuedBy: userId }] },
-      orderBy: { updatedAt: "desc" },
-    });
+    const [contributionDrafts, loanDrafts] = await Promise.all([
+      getSssContributionsPrisma().sssReportDraft.findMany({
+        where: { employerId, OR: [{ continuedBy: null }, { continuedAt: { lt: claimExpiry } }, { continuedBy: userId }] },
+        orderBy: { updatedAt: "desc" },
+      }),
+      getSssLoanReportsPrisma().sssReportDraft.findMany({
+        where: { employerId, OR: [{ continuedBy: null }, { continuedAt: { lt: claimExpiry } }, { continuedBy: userId }] },
+        orderBy: { updatedAt: "desc" },
+      }),
+    ]);
+    const drafts = [...contributionDrafts, ...loanDrafts].sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
     return NextResponse.json({ drafts }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Load SSS report drafts error:", error);
@@ -75,6 +84,14 @@ export async function POST(request: NextRequest) {
   if (employeeIds.length > 0 && !employerId) return NextResponse.json({ error: "Select an employer before saving employee entries" }, { status: 400 });
 
   try {
+    const draftDatabase = kind === "LOAN" ? getSssLoanReportsPrisma() : getSssContributionsPrisma();
+    if (draftId !== null) {
+      const currentDatabase = await findSssDraftDatabase(draftId);
+      if (!currentDatabase) return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });
+      if (currentDatabase !== draftDatabase) {
+        return NextResponse.json({ error: "An SSS report draft cannot be changed to a different report type" }, { status: 409 });
+      }
+    }
     const [employees, loans] = await Promise.all([
       employeeIds.length
         ? prisma.employee.findMany({
@@ -93,7 +110,7 @@ export async function POST(request: NextRequest) {
       })
         : Promise.resolve([]),
       hasAccountRows
-        ? prisma.sssLoan.findMany({
+        ? getSssLoansPrisma().sssLoan.findMany({
           where: { id: { in: loanIds as number[] } },
           select: { id: true, employeeId: true, loanAccountNumber: true },
         })
@@ -141,13 +158,15 @@ export async function POST(request: NextRequest) {
       ? { continuedBy: null, continuedAt: null }
       : { continuedBy: userId, continuedAt: new Date() };
     const draft = draftId === null
-      ? await prisma.sssReportDraft.create({ data: { ...data, ...continuation, createdBy: userId } })
-      : await prisma.sssReportDraft.updateMany({
+      ? await draftDatabase.sssReportDraft.create({
+        data: { id: await nextSssReportDraftId(), ...data, ...continuation, createdBy: userId },
+      })
+      : await draftDatabase.sssReportDraft.updateMany({
         where: { id: draftId, continuedBy: userId },
         data: { ...data, ...continuation },
       }).then(async (result) => {
         if (result.count === 0) return null;
-        return prisma.sssReportDraft.findUnique({ where: { id: draftId } });
+        return draftDatabase.sssReportDraft.findUnique({ where: { id: draftId } });
       });
     if (!draft) return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });
     return NextResponse.json({ draft }, { status: draftId === null ? 201 : 200, headers: { "Cache-Control": "private, no-store" } });

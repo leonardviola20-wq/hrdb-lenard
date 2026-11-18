@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateAge, formatDigits, formatMobile } from "./utils";
+import { calculateAge, formatDigits, formatMobile, getEmployeePhotoError, maxEmployeePhotoSize } from "./utils";
 
 describe("formatDigits", () => {
   it("groups digits with dashes", () => {
@@ -47,5 +47,21 @@ describe("calculateAge", () => {
   it("returns 0 for a birth date in the future", () => {
     const future = `${new Date().getFullYear() + 1}-01-01`;
     expect(calculateAge(future)).toBe(0);
+  });
+});
+
+describe("getEmployeePhotoError", () => {
+  it("accepts JPG, PNG, and GIF files up to 2 MB", () => {
+    expect(getEmployeePhotoError({ type: "image/jpeg", size: maxEmployeePhotoSize })).toBeNull();
+    expect(getEmployeePhotoError({ type: "image/png", size: 10 })).toBeNull();
+    expect(getEmployeePhotoError({ type: "image/gif", size: 10 })).toBeNull();
+  });
+
+  it("rejects unsupported image types", () => {
+    expect(getEmployeePhotoError({ type: "image/webp", size: 10 })).toBe("Please select a JPG, PNG, or GIF image.");
+  });
+
+  it("rejects files larger than 2 MB", () => {
+    expect(getEmployeePhotoError({ type: "image/jpeg", size: maxEmployeePhotoSize + 1 })).toBe("Photo must be 2 MB or smaller.");
   });
 });

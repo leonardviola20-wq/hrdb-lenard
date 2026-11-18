@@ -1,8 +1,9 @@
 "use client";
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { CheckIcon, ChevronLeftIcon, PencilSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
+import { CheckIcon, PencilSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/PageHeader";
 
 type CategoryType = "BRANCH" | "POSITION" | "EMPLOYMENT_STATUS";
 type EmployeeCategory = { id: number; type: CategoryType; name: string; active: boolean };
@@ -15,7 +16,7 @@ const categoryGroups: { type: CategoryType; title: string; description: string }
 
 const fieldClass = "min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
-export default function SystemConfigurationPage() {
+export function SystemConfigurationContent({ hidePageHeader = false }: { hidePageHeader?: boolean }) {
   const [categories, setCategories] = useState<EmployeeCategory[]>([]);
   const [drafts, setDrafts] = useState<Record<CategoryType, string>>({ BRANCH: "", POSITION: "", EMPLOYMENT_STATUS: "" });
   const [loading, setLoading] = useState(true);
@@ -159,8 +160,13 @@ export default function SystemConfigurationPage() {
   };
 
   return (
-    <main className="min-h-0 w-full bg-slate-50 p-4 sm:p-6">
+    <div className={hidePageHeader ? "w-full" : "min-h-0 w-full bg-slate-50 p-4 sm:p-6"}>
       <div className="w-full max-w-6xl">
+        {!hidePageHeader && <PageHeader
+          title="System Configuration"
+          subtitle="Manage branches, positions, and employment statuses."
+          leadingContent={authorized === true ? <BackButton fallbackHref="/dashboard" label="Back" /> : undefined}
+        />}
         {authorized === false && <section className="rounded-xl border border-red-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Access restricted</h2>
           <p role="alert" className="mt-2 text-sm text-red-700">{message || "Administrator access is required to manage employee categories."}</p>
@@ -168,14 +174,6 @@ export default function SystemConfigurationPage() {
         {authorized === null && <p role="status" className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-600 shadow-sm">Checking administrator access...</p>}
         {authorized === true && <>
         <div className="mb-5 flex items-center gap-3">
-          <HistoryBackLink
-            fallbackHref="/dashboard"
-            aria-label="Back"
-            title="Back"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </HistoryBackLink>
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-slate-900">Employee categories</h2>
             <p className="mt-1 text-sm text-slate-600">Add and manage the choices used in employee profiles.</p>
@@ -237,6 +235,14 @@ export default function SystemConfigurationPage() {
         <p className="mt-4 text-xs text-slate-500">Inactive categories are hidden from new selections. Existing employee records are kept as-is.</p>
         </>}
       </div>
+    </div>
+  );
+}
+
+export default function SystemConfigurationPage() {
+  return (
+    <main className="min-h-0 w-full bg-slate-50 p-4 sm:p-6">
+      <SystemConfigurationContent />
     </main>
   );
 }

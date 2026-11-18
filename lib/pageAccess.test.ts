@@ -15,6 +15,18 @@ describe("page access", () => {
     assert.equal(hasPageAccess("/reports/sss", ["/reports/sss"]), true);
   });
 
+  it("allows Posted Reports only when explicitly granted to a regular user", () => {
+    assert.equal(
+      canViewPage({ role: "USER", accessiblePages: ["/loans/posted-reports"] }, "/loans/posted-reports"),
+      true,
+    );
+    assert.equal(
+      canViewPage({ role: "USER", accessiblePages: ["/tasks"] }, "/loans/posted-reports"),
+      false,
+    );
+    assert.equal(canViewPage({ role: "ADMIN" }, "/loans/posted-reports"), true);
+  });
+
   it("allows Chat for any signed-in user regardless of page permissions", () => {
     assert.equal(hasPageAccess("/chat", []), true);
     assert.equal(hasPageAccess("/chat/settings", []), true);

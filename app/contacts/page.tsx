@@ -2,6 +2,8 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/PageHeader";
 
 type Contact = {
   id: number;
@@ -246,6 +248,7 @@ export default function ContactsPage() {
   return (
     <main className="min-h-screen w-full bg-gray-50 p-4 sm:p-6 [&>div]:!max-w-none">
       <div className="w-full max-w-6xl">
+        <PageHeader title="Contacts" subtitle="Suppliers, contractors, and office service providers." />
         <section aria-label="Contact directory tools" className="mb-4 flex flex-wrap items-center gap-2">
           {canManageContacts && (
           <button type="button" onClick={() => { setMessage(""); setNotice(""); setEditingContactId(null); setDraft(emptyContactDraft); setPhones([""]); setAddOpen(true); }} className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#172554] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-900">
@@ -417,7 +420,7 @@ export default function ContactsPage() {
                     </div>
                   </div>
               <div className="flex justify-end gap-2 sm:col-span-2">
-                <button type="button" onClick={() => setAddOpen(false)} disabled={adding} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Back to contacts</button>
+                <BackButton onClick={() => setAddOpen(false)} disabled={adding} label="Back to contacts" />
                 <button type="submit" disabled={adding} className="rounded-lg bg-[#172554] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900 disabled:opacity-50">{adding ? (editingContactId === null ? "Adding..." : "Updating...") : (editingContactId === null ? "Add contact" : "Update contact")}</button>
               </div>
             </form>

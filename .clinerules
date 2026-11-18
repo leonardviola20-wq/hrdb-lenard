@@ -78,6 +78,7 @@ my-next-app/
 * Utilize utility classes cleanly. Group layout utilities first (`flex`, `grid`), followed by sizing, spacing (`p-4`, `m-2`), typography, and colors.
 * Avoid raw CSS or style tags entirely unless dealing with third-party overrides.
 * Use Tailwind components or class consistency to ensure dark mode support (e.g., `bg-white dark:bg-slate-900`) if configured.
+* **Readable text contrast (mandatory):** All text the user must read uses readable dark slate tones — `text-slate-900` for primary values/headings and `text-slate-700` (or darker) for body/secondary/table text. Light grays such as `text-slate-400`/`text-slate-500`/`text-slate-600` are reserved for decorative hints, placeholders, and aria-label-like micro-copy only; never for data cells, names, numbers, or field labels. Table row bodies default to `text-slate-700` with `text-slate-900` for emphasized columns.
 
 ---
 
@@ -129,6 +130,7 @@ Before using any file-writing or editing tools (`write_to_file`, `replace_in_fil
 
 ### Safety
 * Never run destructive git commands (`reset --hard`, `push --force`, `clean -fdx`) without explicit user confirmation.
+* Before running any Git command, including read-only commands, ask the user for explicit approval and state the exact command(s) and purpose. Do not run Git until approved; approval applies only to the commands specified. To conserve token budget, avoid unnecessary Git commands and batch related checks into one approved invocation where practical.
 * Never commit secrets, `.env` files, or build artifacts. Respect `.gitignore`.
 * Always run `tsc --noEmit`, eslint, and the test suite before committing.
 * **Testing:** After executing changes on the backend, frontend components, or Prisma schemas, explicitly ask to run the appropriate tests or spin up local servers (`npm run dev`, database clients, etc.) to verify your work.

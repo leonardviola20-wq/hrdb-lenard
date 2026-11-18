@@ -17,7 +17,7 @@ function ReportDetails({ report, onClose, onPayment, employerAddress }: { report
   return (
     <div id="pagibig-report-print-overlay" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-2 sm:p-6">
       <section role="dialog" aria-modal="true" aria-labelledby="pagibig-report-title" className="pagibig-report-print-dialog flex max-h-[94vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5">
+        <header className="page-header-surface flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5">
           <div className="min-w-0 space-y-0.5">
             <h2 id="pagibig-report-title" className="text-xl font-bold text-slate-900">{report.employerName}</h2>
             <p className="text-sm font-normal text-slate-900">{report.employerPagibigNumber || "-"}</p>

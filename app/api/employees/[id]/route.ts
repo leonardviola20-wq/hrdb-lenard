@@ -163,6 +163,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ employee });
   } catch (error) {
     console.error("Update employee error:", error);
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: "This Biometric Number is already assigned to an employee" }, { status: 409 });
+    }
     return NextResponse.json({ error: "Unable to update employee" }, { status: 500 });
   }
 }

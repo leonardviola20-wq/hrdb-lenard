@@ -1,8 +1,9 @@
 "use client";
 
+import ScrollableListTable from "@/components/ScrollableListTable";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
+import BackButton from "@/components/BackButton";
 
 interface Loan {
   id: number;
@@ -104,9 +105,7 @@ function PagIbigLoansContent() {
     <div className="pagibig-loans-print-root flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full flex-col gap-3 overflow-hidden bg-gray-50 p-4 sm:p-6 md:h-[calc(100dvh-7.75rem)]">
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <div className="flex items-center gap-3">
-          <HistoryBackLink fallbackHref="/reports/pagibig" aria-label="Back" className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" /></svg>
-          </HistoryBackLink>
+          <BackButton fallbackHref="/reports/pagibig" label="Back to PagIBIG reports" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Pag-IBIG Employee Loans</h1>
           </div>
@@ -157,38 +156,39 @@ function PagIbigLoansContent() {
         )}
 
         {filteredLoans.length > 0 && (<>
-          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-gray-200 bg-white">
-            <table className="min-w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-gray-100 text-left font-bold text-gray-800">
-                <tr>
-                  <th className="px-3 py-1">Employee</th>
-                  <th className="px-3 py-1">Loan Type</th>
-                  <th className="px-3 py-1">Account No.</th>
-                  <th className="px-3 py-1">Start Term</th>
-                  <th className="px-3 py-1">End Term</th>
-                  <th className="px-3 py-1 text-right">Amount</th>
-                  <th className="px-3 py-1">Certified by</th>
-                  <th className="px-3 py-1 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {pagedLoans.map((loan) => (
-                  <tr key={loan.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-1 font-semibold text-gray-900">{loan.employeeName}<div className="text-xs text-gray-500">{loan.pagIbigNumber || "-"}</div></td>
-                    <td className="px-3 py-1 text-gray-700">{loan.loanType}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.applicationNo || "-"}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.loanTermDate}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.termEndDate}</td>
-                    <td className="px-3 py-1 text-right tabular-nums text-gray-900">{formatMoney(loan.amount)}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.certifyingEmployer || "-"}</td>
-                    <td className="px-3 py-1 text-center">
-                      <button onClick={() => { setEditingLoan(loan); setEditAppNo(loan.applicationNo); setEditTermDate(loan.loanTermDate); setEditTermYears(String(loan.termYears)); setEditAmount(loan.amount); setEditCertifyingEmployer(loan.certifyingEmployer ?? ""); setCertifyingEmployerMode(loan.certifyingEmployer && loan.certifyingEmployer !== employerName ? (["Mizan Food OPC","Basirat OPC","Imarak OPC"].includes(loan.certifyingEmployer) ? loan.certifyingEmployer : "other") : "employer"); setEditError(""); setEditOpen(true); }} className="inline-flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Edit</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ScrollableListTable
+            ariaLabel="Pag-IBIG loans"
+            className="min-h-0 flex-1 rounded-xl border border-gray-200 bg-white"
+            contentClassName="min-w-[980px] text-sm"
+            header={
+              <div role="row" className="grid grid-cols-[1.65fr_1fr_1.2fr_0.8fr_0.8fr_1fr_1.1fr_0.7fr] bg-gray-100 text-left font-bold text-gray-800">
+                <div role="columnheader" className="px-3 py-1">Employee</div>
+                <div role="columnheader" className="px-3 py-1">Loan Type</div>
+                <div role="columnheader" className="px-3 py-1">Account No.</div>
+                <div role="columnheader" className="px-3 py-1">Start Term</div>
+                <div role="columnheader" className="px-3 py-1">End Term</div>
+                <div role="columnheader" className="px-3 py-1 text-right">Amount</div>
+                <div role="columnheader" className="px-3 py-1">Certified by</div>
+                <div role="columnheader" className="px-3 py-1 text-center">Action</div>
+              </div>
+            }
+            rowsClassName="divide-y divide-gray-100"
+          >
+            {pagedLoans.map((loan) => (
+              <div key={loan.id} role="row" className="grid grid-cols-[1.65fr_1fr_1.2fr_0.8fr_0.8fr_1fr_1.1fr_0.7fr] hover:bg-gray-50">
+                <div role="cell" className="px-3 py-1 font-semibold text-gray-900">{loan.employeeName}<div className="text-xs text-gray-500">{loan.pagIbigNumber || "-"}</div></div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.loanType}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.applicationNo || "-"}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.loanTermDate}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.termEndDate}</div>
+                <div role="cell" className="px-3 py-1 text-right tabular-nums text-gray-900">{formatMoney(loan.amount)}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.certifyingEmployer || "-"}</div>
+                <div role="cell" className="px-3 py-1 text-center">
+                  <button onClick={() => { setEditingLoan(loan); setEditAppNo(loan.applicationNo); setEditTermDate(loan.loanTermDate); setEditTermYears(String(loan.termYears)); setEditAmount(loan.amount); setEditCertifyingEmployer(loan.certifyingEmployer ?? ""); setCertifyingEmployerMode(loan.certifyingEmployer && loan.certifyingEmployer !== employerName ? (["Mizan Food OPC","Basirat OPC","Imarak OPC"].includes(loan.certifyingEmployer) ? loan.certifyingEmployer : "other") : "employer"); setEditError(""); setEditOpen(true); }} className="inline-flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Edit</button>
+                </div>
+              </div>
+            ))}
+          </ScrollableListTable>
           <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600">
               <span>Showing {(safePage - 1) * pageSize + 1}-{Math.min(safePage * pageSize, filteredLoans.length)} of {filteredLoans.length}</span>
               <div className="flex items-center gap-2">

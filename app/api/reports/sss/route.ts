@@ -5,6 +5,8 @@ import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { getSssContributionBracketForYear, toSssMoney } from "@/lib/sssContributionTable";
 import { isLoanAccountLinkedToReportEmployee } from "@/lib/sssReportLoanEntry";
 import { prisma } from "@/lib/prisma";
+import { getSssContributionsPrisma, getSssLoansPrisma, getSssLoanReportsPrisma } from "@/lib/sssReportPrisma";
+import { nextSssReportId } from "@/lib/sssReportIds";
 
 type ReportEntryInput = { employeeId: number; sssLoanId?: number | null; monthlySalaryCredit?: number; loanAmount?: number };
 
@@ -56,33 +58,78 @@ export async function GET(request: NextRequest) {
       if (kind !== "CONTRIBUTION" && kind !== "LOAN") {
         return NextResponse.json({ error: "Select a valid SSS report type" }, { status: 400 });
       }
-      const payments = await prisma.sssReport.findMany({
+      const payments = kind === "LOAN"
+        ? await getSssLoanReportsPrisma().sssReport.findMany({
+          where: { employerId, kind, payDate: { not: null }, amountPaid: { not: null } },
+          select: { id: true, applicableMonth: true, applicableYear: true, amountDue: true, amountPaid: true, payDate: true },
+          orderBy: [{ payDate: "desc" }, { id: "desc" }],
+          take: 8,
+        })
+        : await getSssContributionsPrisma().sssReport.findMany({
         where: { employerId, kind, payDate: { not: null }, amountPaid: { not: null } },
         select: {
           id: true,
           applicableMonth: true,
           applicableYear: true,
           amountDue: true,
+          amountPaid: true,
+          payDate: true,
         },
         orderBy: [{ payDate: "desc" }, { id: "desc" }],
-        take: 8,
-      });
+        take: request.nextUrl.searchParams.get("limit") === "12" ? 12 : 8,
+        });
       return NextResponse.json({ payments }, { headers: { "Cache-Control": "private, no-store" } });
     }
-    const reports = await prisma.sssReport.findMany({
-      where: { employerId },
-      orderBy: [
-        { employerName: "asc" },
-        { applicableYear: "desc" },
-        { applicableMonth: "desc" },
-        { createdAt: "desc" },
-      ],
-      include: {
-        entries: { orderBy: { employeeName: "asc" } },
-        creator: { select: { name: true, email: true } },
-      },
+    const requestedKind = request.nextUrl.searchParams.get("kind");
+    if (requestedKind && requestedKind !== "CONTRIBUTION" && requestedKind !== "LOAN") {
+      return NextResponse.json({ error: "Select a valid SSS report type" }, { status: 400 });
+    }
+    const employer = await prisma.employer.findUnique({
+      where: { id: employerId },
+      select: { id: true, name: true, sss: true, shortAddress: true, longAddress: true },
     });
-    return NextResponse.json({ reports, canEditPayments: access.session?.role === "ADMIN" }, { headers: { "Cache-Control": "private, no-store" } });
+    if (!employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
+    const [contributionReports, loanReports] = await Promise.all([
+      requestedKind === "LOAN"
+        ? Promise.resolve([])
+        : getSssContributionsPrisma().sssReport.findMany({
+          where: { employerId },
+          orderBy: [{ employerName: "asc" }, { applicableYear: "desc" }, { applicableMonth: "desc" }, { createdAt: "desc" }],
+          include: { entries: { orderBy: { employeeName: "asc" } } },
+        }),
+      requestedKind === "CONTRIBUTION"
+        ? Promise.resolve([])
+        : getSssLoanReportsPrisma().sssReport.findMany({
+          where: { employerId },
+          orderBy: [{ employerName: "asc" }, { applicableYear: "desc" }, { applicableMonth: "desc" }, { createdAt: "desc" }],
+          include: { entries: { orderBy: { employeeName: "asc" } } },
+        }),
+    ]);
+    const combinedReports = [...contributionReports, ...loanReports].sort((left, right) =>
+      left.employerName.localeCompare(right.employerName)
+      || right.applicableYear - left.applicableYear
+      || right.applicableMonth - left.applicableMonth
+      || right.createdAt.getTime() - left.createdAt.getTime(),
+    );
+    const creatorIds = [...new Set(combinedReports.flatMap((report) => report.createdBy === null ? [] : [report.createdBy]))];
+    const creators = creatorIds.length
+      ? await prisma.user.findMany({ where: { id: { in: creatorIds } }, select: { id: true, name: true, email: true } })
+      : [];
+    const creatorById = new Map(creators.map((creator) => [creator.id, { name: creator.name, email: creator.email }]));
+    const reports = combinedReports.map((report) => ({
+      ...report,
+      creator: report.createdBy === null ? null : creatorById.get(report.createdBy) ?? null,
+    }));
+    return NextResponse.json({
+      employer: {
+        id: employer.id,
+        name: employer.name,
+        providerNumber: employer.sss,
+        address: employer.longAddress || employer.shortAddress,
+      },
+      reports,
+      canEditPayments: access.session?.role === "ADMIN",
+    }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Load SSS reports error:", error);
     return NextResponse.json({ error: "Unable to load SSS reports" }, { status: 500 });
@@ -146,7 +193,7 @@ export async function POST(request: NextRequest) {
         },
       }),
       kind === "LOAN"
-        ? prisma.sssLoan.findMany({
+        ? getSssLoansPrisma().sssLoan.findMany({
           where: { id: { in: loanIds } },
           select: { id: true, employeeId: true, loanAccountNumber: true },
         })
@@ -204,7 +251,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "The employee total does not match Amount Due. Recheck the breakdown before saving." }, { status: 409 });
     }
 
-    const report = await prisma.$transaction(async (transaction) => {
+    const reportsDb = kind === "LOAN" ? getSssLoanReportsPrisma() : getSssContributionsPrisma();
+    const reportId = await nextSssReportId();
+    const report = await reportsDb.$transaction(async (transaction) => {
       if (kind === "LOAN") {
         const reportPeriodKey = `sss-loan-report:${employerId}:${year}:${month}`;
         await transaction.$queryRaw`WITH report_period_lock AS MATERIALIZED (SELECT pg_advisory_xact_lock(hashtext(${reportPeriodKey})::bigint)) SELECT TRUE FROM report_period_lock`;
@@ -216,6 +265,7 @@ export async function POST(request: NextRequest) {
       }
       const saved = await transaction.sssReport.create({
         data: {
+          id: reportId,
           kind,
           employerId,
           employerName: employer.name,
@@ -228,10 +278,7 @@ export async function POST(request: NextRequest) {
           createdBy: creatorId ?? null,
           entries: { create: entryData },
         },
-        include: {
-          entries: { orderBy: { employeeName: "asc" } },
-          creator: { select: { name: true, email: true } },
-        },
+        include: { entries: { orderBy: { employeeName: "asc" } } },
       });
       if (draftId !== null) {
         const deletedDraft = await transaction.sssReportDraft.deleteMany({ where: { id: draftId, continuedBy: creatorId } });
@@ -239,7 +286,11 @@ export async function POST(request: NextRequest) {
       }
       return saved;
     });
-    return NextResponse.json({ report }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+    const creator = creatorId === undefined ? null : await prisma.user.findUnique({
+      where: { id: creatorId },
+      select: { name: true, email: true },
+    });
+    return NextResponse.json({ report: { ...report, creator }, }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error instanceof Error && error.message === "SSS_DRAFT_NOT_FOUND") {
       return NextResponse.json({ error: "SSS report draft not found" }, { status: 404 });

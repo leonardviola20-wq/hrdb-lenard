@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowPathIcon, ChevronLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { inputClass } from '@/components/pagibig-reports/shared/constants';
 import { useDismissableMenu } from '@/components/pagibig-reports/shared/useDismissableMenu';
 import type { DraftsMenuProps } from '@/components/pagibig-reports/shared/DraftsMenu';
@@ -64,12 +65,14 @@ export function PagIbigReportsHeader(props: PagIbigReportsHeaderProps) {
     <section className="benefit-report-header shrink-0 rounded-2xl p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Link href={`/reports?employerId=${encodeURIComponent(selectedEmployerId)}`} aria-label="Back to Reports" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
-            <ChevronLeftIcon className="h-5 w-5" />
-          </Link>
+          <BackButton
+            fallbackHref={`/reports?employerId=${encodeURIComponent(selectedEmployerId)}`}
+            label="Back to Reports"
+          />
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Benefits reports</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Pag-IBIG Reports</p>
             <h1 className="benefit-report-title">{paymentsView ? "Payments" : "Employee List"}</h1>
+            <p className="text-xs text-slate-600">Manage Pag-IBIG member accounts, savings, loans, and payments.</p>
             {employerLabel && <p className="truncate text-sm font-semibold text-slate-700" title={employerLabel}>{employerLabel}</p>}
           </div>
         </div>
@@ -131,5 +134,3 @@ export function PagIbigReportsHeader(props: PagIbigReportsHeaderProps) {
     </section>
   );
 }
-
-

@@ -104,6 +104,16 @@ export type SssReport = $Result.DefaultSelection<Prisma.$SssReportPayload>
  */
 export type SssReportEntry = $Result.DefaultSelection<Prisma.$SssReportEntryPayload>
 /**
+ * Model ImportedSssLoanReport
+ * 
+ */
+export type ImportedSssLoanReport = $Result.DefaultSelection<Prisma.$ImportedSssLoanReportPayload>
+/**
+ * Model ImportedSssLoanReportEntry
+ * 
+ */
+export type ImportedSssLoanReportEntry = $Result.DefaultSelection<Prisma.$ImportedSssLoanReportEntryPayload>
+/**
  * Model SssReportDraft
  * 
  */
@@ -159,10 +169,59 @@ export type PhilHealthReportEntry = $Result.DefaultSelection<Prisma.$PhilHealthR
  */
 export type PhilHealthPayment = $Result.DefaultSelection<Prisma.$PhilHealthPaymentPayload>
 /**
+ * Model Loan
+ * 
+ */
+export type Loan = $Result.DefaultSelection<Prisma.$LoanPayload>
+/**
+ * Model LoanMonitorReport
+ * 
+ */
+export type LoanMonitorReport = $Result.DefaultSelection<Prisma.$LoanMonitorReportPayload>
+/**
+ * Model LoanMonitorReportEntry
+ * 
+ */
+export type LoanMonitorReportEntry = $Result.DefaultSelection<Prisma.$LoanMonitorReportEntryPayload>
+/**
+ * Model LoanPayment
+ * 
+ */
+export type LoanPayment = $Result.DefaultSelection<Prisma.$LoanPaymentPayload>
+/**
  * Model OfficeContact
  * 
  */
 export type OfficeContact = $Result.DefaultSelection<Prisma.$OfficeContactPayload>
+
+/**
+ * Enums
+ */
+export namespace $Enums {
+  export const LoanProvider: {
+  SSS: 'SSS',
+  PAGIBIG: 'PAGIBIG'
+};
+
+export type LoanProvider = (typeof LoanProvider)[keyof typeof LoanProvider]
+
+
+export const LoanStatus: {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
+
+export type LoanStatus = (typeof LoanStatus)[keyof typeof LoanStatus]
+
+}
+
+export type LoanProvider = $Enums.LoanProvider
+
+export const LoanProvider: typeof $Enums.LoanProvider
+
+export type LoanStatus = $Enums.LoanStatus
+
+export const LoanStatus: typeof $Enums.LoanStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -468,6 +527,26 @@ export class PrismaClient<
   get sssReportEntry(): Prisma.SssReportEntryDelegate<ExtArgs>;
 
   /**
+   * `prisma.importedSssLoanReport`: Exposes CRUD operations for the **ImportedSssLoanReport** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ImportedSssLoanReports
+    * const importedSssLoanReports = await prisma.importedSssLoanReport.findMany()
+    * ```
+    */
+  get importedSssLoanReport(): Prisma.ImportedSssLoanReportDelegate<ExtArgs>;
+
+  /**
+   * `prisma.importedSssLoanReportEntry`: Exposes CRUD operations for the **ImportedSssLoanReportEntry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ImportedSssLoanReportEntries
+    * const importedSssLoanReportEntries = await prisma.importedSssLoanReportEntry.findMany()
+    * ```
+    */
+  get importedSssLoanReportEntry(): Prisma.ImportedSssLoanReportEntryDelegate<ExtArgs>;
+
+  /**
    * `prisma.sssReportDraft`: Exposes CRUD operations for the **SssReportDraft** model.
     * Example usage:
     * ```ts
@@ -576,6 +655,46 @@ export class PrismaClient<
     * ```
     */
   get philHealthPayment(): Prisma.PhilHealthPaymentDelegate<ExtArgs>;
+
+  /**
+   * `prisma.loan`: Exposes CRUD operations for the **Loan** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Loans
+    * const loans = await prisma.loan.findMany()
+    * ```
+    */
+  get loan(): Prisma.LoanDelegate<ExtArgs>;
+
+  /**
+   * `prisma.loanMonitorReport`: Exposes CRUD operations for the **LoanMonitorReport** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LoanMonitorReports
+    * const loanMonitorReports = await prisma.loanMonitorReport.findMany()
+    * ```
+    */
+  get loanMonitorReport(): Prisma.LoanMonitorReportDelegate<ExtArgs>;
+
+  /**
+   * `prisma.loanMonitorReportEntry`: Exposes CRUD operations for the **LoanMonitorReportEntry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LoanMonitorReportEntries
+    * const loanMonitorReportEntries = await prisma.loanMonitorReportEntry.findMany()
+    * ```
+    */
+  get loanMonitorReportEntry(): Prisma.LoanMonitorReportEntryDelegate<ExtArgs>;
+
+  /**
+   * `prisma.loanPayment`: Exposes CRUD operations for the **LoanPayment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LoanPayments
+    * const loanPayments = await prisma.loanPayment.findMany()
+    * ```
+    */
+  get loanPayment(): Prisma.LoanPaymentDelegate<ExtArgs>;
 
   /**
    * `prisma.officeContact`: Exposes CRUD operations for the **OfficeContact** model.
@@ -1045,6 +1164,8 @@ export namespace Prisma {
     SssLoan: 'SssLoan',
     SssReport: 'SssReport',
     SssReportEntry: 'SssReportEntry',
+    ImportedSssLoanReport: 'ImportedSssLoanReport',
+    ImportedSssLoanReportEntry: 'ImportedSssLoanReportEntry',
     SssReportDraft: 'SssReportDraft',
     PagibigEmployeeLoan: 'PagibigEmployeeLoan',
     PagibigEmployeeRecord: 'PagibigEmployeeRecord',
@@ -1056,6 +1177,10 @@ export namespace Prisma {
     PhilHealthReport: 'PhilHealthReport',
     PhilHealthReportEntry: 'PhilHealthReportEntry',
     PhilHealthPayment: 'PhilHealthPayment',
+    Loan: 'Loan',
+    LoanMonitorReport: 'LoanMonitorReport',
+    LoanMonitorReportEntry: 'LoanMonitorReportEntry',
+    LoanPayment: 'LoanPayment',
     OfficeContact: 'OfficeContact'
   };
 
@@ -1072,7 +1197,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "post" | "task" | "taskReschedule" | "taskDependency" | "taskPrerequisiteItem" | "employee" | "employeeRequirement" | "employeeRequirementAttachment" | "employeeBdoAccountNumber" | "employeeCategory" | "attendance" | "attendanceImport" | "attendancePunch" | "employer" | "sssLoan" | "sssReport" | "sssReportEntry" | "sssReportDraft" | "pagibigEmployeeLoan" | "pagibigEmployeeRecord" | "pagibigLoan" | "pagibigReport" | "pagibigReportDraft" | "pagibigReportEntry" | "philHealthEmployeeRecord" | "philHealthReport" | "philHealthReportEntry" | "philHealthPayment" | "officeContact"
+      modelProps: "user" | "post" | "task" | "taskReschedule" | "taskDependency" | "taskPrerequisiteItem" | "employee" | "employeeRequirement" | "employeeRequirementAttachment" | "employeeBdoAccountNumber" | "employeeCategory" | "attendance" | "attendanceImport" | "attendancePunch" | "employer" | "sssLoan" | "sssReport" | "sssReportEntry" | "importedSssLoanReport" | "importedSssLoanReportEntry" | "sssReportDraft" | "pagibigEmployeeLoan" | "pagibigEmployeeRecord" | "pagibigLoan" | "pagibigReport" | "pagibigReportDraft" | "pagibigReportEntry" | "philHealthEmployeeRecord" | "philHealthReport" | "philHealthReportEntry" | "philHealthPayment" | "loan" | "loanMonitorReport" | "loanMonitorReportEntry" | "loanPayment" | "officeContact"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2336,6 +2461,146 @@ export namespace Prisma {
           }
         }
       }
+      ImportedSssLoanReport: {
+        payload: Prisma.$ImportedSssLoanReportPayload<ExtArgs>
+        fields: Prisma.ImportedSssLoanReportFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ImportedSssLoanReportFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ImportedSssLoanReportFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>
+          }
+          findFirst: {
+            args: Prisma.ImportedSssLoanReportFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ImportedSssLoanReportFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>
+          }
+          findMany: {
+            args: Prisma.ImportedSssLoanReportFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>[]
+          }
+          create: {
+            args: Prisma.ImportedSssLoanReportCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>
+          }
+          createMany: {
+            args: Prisma.ImportedSssLoanReportCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ImportedSssLoanReportCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>[]
+          }
+          delete: {
+            args: Prisma.ImportedSssLoanReportDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>
+          }
+          update: {
+            args: Prisma.ImportedSssLoanReportUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>
+          }
+          deleteMany: {
+            args: Prisma.ImportedSssLoanReportDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ImportedSssLoanReportUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ImportedSssLoanReportUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportPayload>
+          }
+          aggregate: {
+            args: Prisma.ImportedSssLoanReportAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateImportedSssLoanReport>
+          }
+          groupBy: {
+            args: Prisma.ImportedSssLoanReportGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ImportedSssLoanReportGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ImportedSssLoanReportCountArgs<ExtArgs>
+            result: $Utils.Optional<ImportedSssLoanReportCountAggregateOutputType> | number
+          }
+        }
+      }
+      ImportedSssLoanReportEntry: {
+        payload: Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>
+        fields: Prisma.ImportedSssLoanReportEntryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ImportedSssLoanReportEntryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ImportedSssLoanReportEntryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>
+          }
+          findFirst: {
+            args: Prisma.ImportedSssLoanReportEntryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ImportedSssLoanReportEntryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>
+          }
+          findMany: {
+            args: Prisma.ImportedSssLoanReportEntryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>[]
+          }
+          create: {
+            args: Prisma.ImportedSssLoanReportEntryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>
+          }
+          createMany: {
+            args: Prisma.ImportedSssLoanReportEntryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ImportedSssLoanReportEntryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>[]
+          }
+          delete: {
+            args: Prisma.ImportedSssLoanReportEntryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>
+          }
+          update: {
+            args: Prisma.ImportedSssLoanReportEntryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>
+          }
+          deleteMany: {
+            args: Prisma.ImportedSssLoanReportEntryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ImportedSssLoanReportEntryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ImportedSssLoanReportEntryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ImportedSssLoanReportEntryPayload>
+          }
+          aggregate: {
+            args: Prisma.ImportedSssLoanReportEntryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateImportedSssLoanReportEntry>
+          }
+          groupBy: {
+            args: Prisma.ImportedSssLoanReportEntryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ImportedSssLoanReportEntryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ImportedSssLoanReportEntryCountArgs<ExtArgs>
+            result: $Utils.Optional<ImportedSssLoanReportEntryCountAggregateOutputType> | number
+          }
+        }
+      }
       SssReportDraft: {
         payload: Prisma.$SssReportDraftPayload<ExtArgs>
         fields: Prisma.SssReportDraftFieldRefs
@@ -3106,6 +3371,286 @@ export namespace Prisma {
           }
         }
       }
+      Loan: {
+        payload: Prisma.$LoanPayload<ExtArgs>
+        fields: Prisma.LoanFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LoanFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LoanFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>
+          }
+          findFirst: {
+            args: Prisma.LoanFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LoanFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>
+          }
+          findMany: {
+            args: Prisma.LoanFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>[]
+          }
+          create: {
+            args: Prisma.LoanCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>
+          }
+          createMany: {
+            args: Prisma.LoanCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LoanCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>[]
+          }
+          delete: {
+            args: Prisma.LoanDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>
+          }
+          update: {
+            args: Prisma.LoanUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>
+          }
+          deleteMany: {
+            args: Prisma.LoanDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LoanUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LoanUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPayload>
+          }
+          aggregate: {
+            args: Prisma.LoanAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLoan>
+          }
+          groupBy: {
+            args: Prisma.LoanGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LoanGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LoanCountArgs<ExtArgs>
+            result: $Utils.Optional<LoanCountAggregateOutputType> | number
+          }
+        }
+      }
+      LoanMonitorReport: {
+        payload: Prisma.$LoanMonitorReportPayload<ExtArgs>
+        fields: Prisma.LoanMonitorReportFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LoanMonitorReportFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LoanMonitorReportFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>
+          }
+          findFirst: {
+            args: Prisma.LoanMonitorReportFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LoanMonitorReportFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>
+          }
+          findMany: {
+            args: Prisma.LoanMonitorReportFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>[]
+          }
+          create: {
+            args: Prisma.LoanMonitorReportCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>
+          }
+          createMany: {
+            args: Prisma.LoanMonitorReportCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LoanMonitorReportCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>[]
+          }
+          delete: {
+            args: Prisma.LoanMonitorReportDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>
+          }
+          update: {
+            args: Prisma.LoanMonitorReportUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>
+          }
+          deleteMany: {
+            args: Prisma.LoanMonitorReportDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LoanMonitorReportUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LoanMonitorReportUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportPayload>
+          }
+          aggregate: {
+            args: Prisma.LoanMonitorReportAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLoanMonitorReport>
+          }
+          groupBy: {
+            args: Prisma.LoanMonitorReportGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LoanMonitorReportGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LoanMonitorReportCountArgs<ExtArgs>
+            result: $Utils.Optional<LoanMonitorReportCountAggregateOutputType> | number
+          }
+        }
+      }
+      LoanMonitorReportEntry: {
+        payload: Prisma.$LoanMonitorReportEntryPayload<ExtArgs>
+        fields: Prisma.LoanMonitorReportEntryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LoanMonitorReportEntryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LoanMonitorReportEntryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>
+          }
+          findFirst: {
+            args: Prisma.LoanMonitorReportEntryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LoanMonitorReportEntryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>
+          }
+          findMany: {
+            args: Prisma.LoanMonitorReportEntryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>[]
+          }
+          create: {
+            args: Prisma.LoanMonitorReportEntryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>
+          }
+          createMany: {
+            args: Prisma.LoanMonitorReportEntryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LoanMonitorReportEntryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>[]
+          }
+          delete: {
+            args: Prisma.LoanMonitorReportEntryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>
+          }
+          update: {
+            args: Prisma.LoanMonitorReportEntryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>
+          }
+          deleteMany: {
+            args: Prisma.LoanMonitorReportEntryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LoanMonitorReportEntryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LoanMonitorReportEntryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanMonitorReportEntryPayload>
+          }
+          aggregate: {
+            args: Prisma.LoanMonitorReportEntryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLoanMonitorReportEntry>
+          }
+          groupBy: {
+            args: Prisma.LoanMonitorReportEntryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LoanMonitorReportEntryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LoanMonitorReportEntryCountArgs<ExtArgs>
+            result: $Utils.Optional<LoanMonitorReportEntryCountAggregateOutputType> | number
+          }
+        }
+      }
+      LoanPayment: {
+        payload: Prisma.$LoanPaymentPayload<ExtArgs>
+        fields: Prisma.LoanPaymentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LoanPaymentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LoanPaymentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>
+          }
+          findFirst: {
+            args: Prisma.LoanPaymentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LoanPaymentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>
+          }
+          findMany: {
+            args: Prisma.LoanPaymentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>[]
+          }
+          create: {
+            args: Prisma.LoanPaymentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>
+          }
+          createMany: {
+            args: Prisma.LoanPaymentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LoanPaymentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>[]
+          }
+          delete: {
+            args: Prisma.LoanPaymentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>
+          }
+          update: {
+            args: Prisma.LoanPaymentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>
+          }
+          deleteMany: {
+            args: Prisma.LoanPaymentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LoanPaymentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LoanPaymentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LoanPaymentPayload>
+          }
+          aggregate: {
+            args: Prisma.LoanPaymentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLoanPayment>
+          }
+          groupBy: {
+            args: Prisma.LoanPaymentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LoanPaymentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LoanPaymentCountArgs<ExtArgs>
+            result: $Utils.Optional<LoanPaymentCountAggregateOutputType> | number
+          }
+        }
+      }
       OfficeContact: {
         payload: Prisma.$OfficeContactPayload<ExtArgs>
         fields: Prisma.OfficeContactFieldRefs
@@ -3344,6 +3889,7 @@ export namespace Prisma {
     PagibigReport: number
     PagibigReportDraft: number
     philHealthReports: number
+    loanMonitorReports: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3354,6 +3900,7 @@ export namespace Prisma {
     PagibigReport?: boolean | UserCountOutputTypeCountPagibigReportArgs
     PagibigReportDraft?: boolean | UserCountOutputTypeCountPagibigReportDraftArgs
     philHealthReports?: boolean | UserCountOutputTypeCountPhilHealthReportsArgs
+    loanMonitorReports?: boolean | UserCountOutputTypeCountLoanMonitorReportsArgs
   }
 
   // Custom InputTypes
@@ -3414,6 +3961,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountPhilHealthReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PhilHealthReportWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountLoanMonitorReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanMonitorReportWhereInput
   }
 
 
@@ -3494,6 +4048,7 @@ export namespace Prisma {
     pagibigLoans: number
     philHealthEmployeeRecords: number
     philHealthReportEntries: number
+    loans: number
   }
 
   export type EmployeeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3511,6 +4066,7 @@ export namespace Prisma {
     pagibigLoans?: boolean | EmployeeCountOutputTypeCountPagibigLoansArgs
     philHealthEmployeeRecords?: boolean | EmployeeCountOutputTypeCountPhilHealthEmployeeRecordsArgs
     philHealthReportEntries?: boolean | EmployeeCountOutputTypeCountPhilHealthReportEntriesArgs
+    loans?: boolean | EmployeeCountOutputTypeCountLoansArgs
   }
 
   // Custom InputTypes
@@ -3620,6 +4176,13 @@ export namespace Prisma {
    */
   export type EmployeeCountOutputTypeCountPhilHealthReportEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PhilHealthReportEntryWhereInput
+  }
+
+  /**
+   * EmployeeCountOutputType without action
+   */
+  export type EmployeeCountOutputTypeCountLoansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanWhereInput
   }
 
 
@@ -3882,6 +4445,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type ImportedSssLoanReportCountOutputType
+   */
+
+  export type ImportedSssLoanReportCountOutputType = {
+    entries: number
+  }
+
+  export type ImportedSssLoanReportCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    entries?: boolean | ImportedSssLoanReportCountOutputTypeCountEntriesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ImportedSssLoanReportCountOutputType without action
+   */
+  export type ImportedSssLoanReportCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportCountOutputType
+     */
+    select?: ImportedSssLoanReportCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ImportedSssLoanReportCountOutputType without action
+   */
+  export type ImportedSssLoanReportCountOutputTypeCountEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ImportedSssLoanReportEntryWhereInput
+  }
+
+
+  /**
    * Count Type PagibigEmployeeRecordCountOutputType
    */
 
@@ -4002,6 +4596,68 @@ export namespace Prisma {
    */
   export type PhilHealthReportCountOutputTypeCountEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PhilHealthReportEntryWhereInput
+  }
+
+
+  /**
+   * Count Type LoanCountOutputType
+   */
+
+  export type LoanCountOutputType = {
+    payments: number
+  }
+
+  export type LoanCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    payments?: boolean | LoanCountOutputTypeCountPaymentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * LoanCountOutputType without action
+   */
+  export type LoanCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanCountOutputType
+     */
+    select?: LoanCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * LoanCountOutputType without action
+   */
+  export type LoanCountOutputTypeCountPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanPaymentWhereInput
+  }
+
+
+  /**
+   * Count Type LoanMonitorReportCountOutputType
+   */
+
+  export type LoanMonitorReportCountOutputType = {
+    entries: number
+  }
+
+  export type LoanMonitorReportCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    entries?: boolean | LoanMonitorReportCountOutputTypeCountEntriesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * LoanMonitorReportCountOutputType without action
+   */
+  export type LoanMonitorReportCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportCountOutputType
+     */
+    select?: LoanMonitorReportCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * LoanMonitorReportCountOutputType without action
+   */
+  export type LoanMonitorReportCountOutputTypeCountEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanMonitorReportEntryWhereInput
   }
 
 
@@ -4274,6 +4930,7 @@ export namespace Prisma {
     PagibigReport?: boolean | User$PagibigReportArgs<ExtArgs>
     PagibigReportDraft?: boolean | User$PagibigReportDraftArgs<ExtArgs>
     philHealthReports?: boolean | User$philHealthReportsArgs<ExtArgs>
+    loanMonitorReports?: boolean | User$loanMonitorReportsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -4317,6 +4974,7 @@ export namespace Prisma {
     PagibigReport?: boolean | User$PagibigReportArgs<ExtArgs>
     PagibigReportDraft?: boolean | User$PagibigReportDraftArgs<ExtArgs>
     philHealthReports?: boolean | User$philHealthReportsArgs<ExtArgs>
+    loanMonitorReports?: boolean | User$loanMonitorReportsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4331,6 +4989,7 @@ export namespace Prisma {
       PagibigReport: Prisma.$PagibigReportPayload<ExtArgs>[]
       PagibigReportDraft: Prisma.$PagibigReportDraftPayload<ExtArgs>[]
       philHealthReports: Prisma.$PhilHealthReportPayload<ExtArgs>[]
+      loanMonitorReports: Prisma.$LoanMonitorReportPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -4717,6 +5376,7 @@ export namespace Prisma {
     PagibigReport<T extends User$PagibigReportArgs<ExtArgs> = {}>(args?: Subset<T, User$PagibigReportArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagibigReportPayload<ExtArgs>, T, "findMany"> | Null>
     PagibigReportDraft<T extends User$PagibigReportDraftArgs<ExtArgs> = {}>(args?: Subset<T, User$PagibigReportDraftArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagibigReportDraftPayload<ExtArgs>, T, "findMany"> | Null>
     philHealthReports<T extends User$philHealthReportsArgs<ExtArgs> = {}>(args?: Subset<T, User$philHealthReportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PhilHealthReportPayload<ExtArgs>, T, "findMany"> | Null>
+    loanMonitorReports<T extends User$loanMonitorReportsArgs<ExtArgs> = {}>(args?: Subset<T, User$loanMonitorReportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5210,6 +5870,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PhilHealthReportScalarFieldEnum | PhilHealthReportScalarFieldEnum[]
+  }
+
+  /**
+   * User.loanMonitorReports
+   */
+  export type User$loanMonitorReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    where?: LoanMonitorReportWhereInput
+    orderBy?: LoanMonitorReportOrderByWithRelationInput | LoanMonitorReportOrderByWithRelationInput[]
+    cursor?: LoanMonitorReportWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LoanMonitorReportScalarFieldEnum | LoanMonitorReportScalarFieldEnum[]
   }
 
   /**
@@ -10784,6 +11464,7 @@ export namespace Prisma {
     pagibigLoans?: boolean | employee$pagibigLoansArgs<ExtArgs>
     philHealthEmployeeRecords?: boolean | employee$philHealthEmployeeRecordsArgs<ExtArgs>
     philHealthReportEntries?: boolean | employee$philHealthReportEntriesArgs<ExtArgs>
+    loans?: boolean | employee$loansArgs<ExtArgs>
     _count?: boolean | EmployeeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["employee"]>
 
@@ -10884,6 +11565,7 @@ export namespace Prisma {
     pagibigLoans?: boolean | employee$pagibigLoansArgs<ExtArgs>
     philHealthEmployeeRecords?: boolean | employee$philHealthEmployeeRecordsArgs<ExtArgs>
     philHealthReportEntries?: boolean | employee$philHealthReportEntriesArgs<ExtArgs>
+    loans?: boolean | employee$loansArgs<ExtArgs>
     _count?: boolean | EmployeeCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type employeeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10910,6 +11592,7 @@ export namespace Prisma {
       pagibigLoans: Prisma.$PagibigLoanPayload<ExtArgs>[]
       philHealthEmployeeRecords: Prisma.$PhilHealthEmployeeRecordPayload<ExtArgs>[]
       philHealthReportEntries: Prisma.$PhilHealthReportEntryPayload<ExtArgs>[]
+      loans: Prisma.$LoanPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -11328,6 +12011,7 @@ export namespace Prisma {
     pagibigLoans<T extends employee$pagibigLoansArgs<ExtArgs> = {}>(args?: Subset<T, employee$pagibigLoansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagibigLoanPayload<ExtArgs>, T, "findMany"> | Null>
     philHealthEmployeeRecords<T extends employee$philHealthEmployeeRecordsArgs<ExtArgs> = {}>(args?: Subset<T, employee$philHealthEmployeeRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PhilHealthEmployeeRecordPayload<ExtArgs>, T, "findMany"> | Null>
     philHealthReportEntries<T extends employee$philHealthReportEntriesArgs<ExtArgs> = {}>(args?: Subset<T, employee$philHealthReportEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PhilHealthReportEntryPayload<ExtArgs>, T, "findMany"> | Null>
+    loans<T extends employee$loansArgs<ExtArgs> = {}>(args?: Subset<T, employee$loansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12018,6 +12702,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PhilHealthReportEntryScalarFieldEnum | PhilHealthReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * employee.loans
+   */
+  export type employee$loansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    where?: LoanWhereInput
+    orderBy?: LoanOrderByWithRelationInput | LoanOrderByWithRelationInput[]
+    cursor?: LoanWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LoanScalarFieldEnum | LoanScalarFieldEnum[]
   }
 
   /**
@@ -24050,6 +24754,2363 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SssReportEntryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ImportedSssLoanReport
+   */
+
+  export type AggregateImportedSssLoanReport = {
+    _count: ImportedSssLoanReportCountAggregateOutputType | null
+    _avg: ImportedSssLoanReportAvgAggregateOutputType | null
+    _sum: ImportedSssLoanReportSumAggregateOutputType | null
+    _min: ImportedSssLoanReportMinAggregateOutputType | null
+    _max: ImportedSssLoanReportMaxAggregateOutputType | null
+  }
+
+  export type ImportedSssLoanReportAvgAggregateOutputType = {
+    sourceReportId: number | null
+    sourceEmployerId: number | null
+    applicableMonth: number | null
+    applicableYear: number | null
+    amountDue: Decimal | null
+    amountPaid: Decimal | null
+    sourceCreatedBy: number | null
+  }
+
+  export type ImportedSssLoanReportSumAggregateOutputType = {
+    sourceReportId: number | null
+    sourceEmployerId: number | null
+    applicableMonth: number | null
+    applicableYear: number | null
+    amountDue: Decimal | null
+    amountPaid: Decimal | null
+    sourceCreatedBy: number | null
+  }
+
+  export type ImportedSssLoanReportMinAggregateOutputType = {
+    sourceReportId: number | null
+    sourceKind: string | null
+    sourceEmployerId: number | null
+    employerName: string | null
+    employerAddress: string | null
+    employerSssNumber: string | null
+    prn: string | null
+    applicableMonth: number | null
+    applicableYear: number | null
+    amountDue: Decimal | null
+    amountPaid: Decimal | null
+    paymentType: string | null
+    payDate: Date | null
+    sssBranch: string | null
+    transactionReference: string | null
+    sourceCreatedBy: number | null
+    sourceCreatedAt: Date | null
+    sourceUpdatedAt: Date | null
+    importedAt: Date | null
+  }
+
+  export type ImportedSssLoanReportMaxAggregateOutputType = {
+    sourceReportId: number | null
+    sourceKind: string | null
+    sourceEmployerId: number | null
+    employerName: string | null
+    employerAddress: string | null
+    employerSssNumber: string | null
+    prn: string | null
+    applicableMonth: number | null
+    applicableYear: number | null
+    amountDue: Decimal | null
+    amountPaid: Decimal | null
+    paymentType: string | null
+    payDate: Date | null
+    sssBranch: string | null
+    transactionReference: string | null
+    sourceCreatedBy: number | null
+    sourceCreatedAt: Date | null
+    sourceUpdatedAt: Date | null
+    importedAt: Date | null
+  }
+
+  export type ImportedSssLoanReportCountAggregateOutputType = {
+    sourceReportId: number
+    sourceKind: number
+    sourceEmployerId: number
+    employerName: number
+    employerAddress: number
+    employerSssNumber: number
+    prn: number
+    applicableMonth: number
+    applicableYear: number
+    amountDue: number
+    amountPaid: number
+    paymentType: number
+    payDate: number
+    sssBranch: number
+    transactionReference: number
+    sourceCreatedBy: number
+    sourceCreatedAt: number
+    sourceUpdatedAt: number
+    importedAt: number
+    _all: number
+  }
+
+
+  export type ImportedSssLoanReportAvgAggregateInputType = {
+    sourceReportId?: true
+    sourceEmployerId?: true
+    applicableMonth?: true
+    applicableYear?: true
+    amountDue?: true
+    amountPaid?: true
+    sourceCreatedBy?: true
+  }
+
+  export type ImportedSssLoanReportSumAggregateInputType = {
+    sourceReportId?: true
+    sourceEmployerId?: true
+    applicableMonth?: true
+    applicableYear?: true
+    amountDue?: true
+    amountPaid?: true
+    sourceCreatedBy?: true
+  }
+
+  export type ImportedSssLoanReportMinAggregateInputType = {
+    sourceReportId?: true
+    sourceKind?: true
+    sourceEmployerId?: true
+    employerName?: true
+    employerAddress?: true
+    employerSssNumber?: true
+    prn?: true
+    applicableMonth?: true
+    applicableYear?: true
+    amountDue?: true
+    amountPaid?: true
+    paymentType?: true
+    payDate?: true
+    sssBranch?: true
+    transactionReference?: true
+    sourceCreatedBy?: true
+    sourceCreatedAt?: true
+    sourceUpdatedAt?: true
+    importedAt?: true
+  }
+
+  export type ImportedSssLoanReportMaxAggregateInputType = {
+    sourceReportId?: true
+    sourceKind?: true
+    sourceEmployerId?: true
+    employerName?: true
+    employerAddress?: true
+    employerSssNumber?: true
+    prn?: true
+    applicableMonth?: true
+    applicableYear?: true
+    amountDue?: true
+    amountPaid?: true
+    paymentType?: true
+    payDate?: true
+    sssBranch?: true
+    transactionReference?: true
+    sourceCreatedBy?: true
+    sourceCreatedAt?: true
+    sourceUpdatedAt?: true
+    importedAt?: true
+  }
+
+  export type ImportedSssLoanReportCountAggregateInputType = {
+    sourceReportId?: true
+    sourceKind?: true
+    sourceEmployerId?: true
+    employerName?: true
+    employerAddress?: true
+    employerSssNumber?: true
+    prn?: true
+    applicableMonth?: true
+    applicableYear?: true
+    amountDue?: true
+    amountPaid?: true
+    paymentType?: true
+    payDate?: true
+    sssBranch?: true
+    transactionReference?: true
+    sourceCreatedBy?: true
+    sourceCreatedAt?: true
+    sourceUpdatedAt?: true
+    importedAt?: true
+    _all?: true
+  }
+
+  export type ImportedSssLoanReportAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ImportedSssLoanReport to aggregate.
+     */
+    where?: ImportedSssLoanReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReports to fetch.
+     */
+    orderBy?: ImportedSssLoanReportOrderByWithRelationInput | ImportedSssLoanReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ImportedSssLoanReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ImportedSssLoanReports
+    **/
+    _count?: true | ImportedSssLoanReportCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ImportedSssLoanReportAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ImportedSssLoanReportSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ImportedSssLoanReportMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ImportedSssLoanReportMaxAggregateInputType
+  }
+
+  export type GetImportedSssLoanReportAggregateType<T extends ImportedSssLoanReportAggregateArgs> = {
+        [P in keyof T & keyof AggregateImportedSssLoanReport]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateImportedSssLoanReport[P]>
+      : GetScalarType<T[P], AggregateImportedSssLoanReport[P]>
+  }
+
+
+
+
+  export type ImportedSssLoanReportGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ImportedSssLoanReportWhereInput
+    orderBy?: ImportedSssLoanReportOrderByWithAggregationInput | ImportedSssLoanReportOrderByWithAggregationInput[]
+    by: ImportedSssLoanReportScalarFieldEnum[] | ImportedSssLoanReportScalarFieldEnum
+    having?: ImportedSssLoanReportScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ImportedSssLoanReportCountAggregateInputType | true
+    _avg?: ImportedSssLoanReportAvgAggregateInputType
+    _sum?: ImportedSssLoanReportSumAggregateInputType
+    _min?: ImportedSssLoanReportMinAggregateInputType
+    _max?: ImportedSssLoanReportMaxAggregateInputType
+  }
+
+  export type ImportedSssLoanReportGroupByOutputType = {
+    sourceReportId: number
+    sourceKind: string
+    sourceEmployerId: number
+    employerName: string
+    employerAddress: string | null
+    employerSssNumber: string | null
+    prn: string
+    applicableMonth: number
+    applicableYear: number
+    amountDue: Decimal
+    amountPaid: Decimal | null
+    paymentType: string | null
+    payDate: Date | null
+    sssBranch: string | null
+    transactionReference: string | null
+    sourceCreatedBy: number | null
+    sourceCreatedAt: Date
+    sourceUpdatedAt: Date
+    importedAt: Date
+    _count: ImportedSssLoanReportCountAggregateOutputType | null
+    _avg: ImportedSssLoanReportAvgAggregateOutputType | null
+    _sum: ImportedSssLoanReportSumAggregateOutputType | null
+    _min: ImportedSssLoanReportMinAggregateOutputType | null
+    _max: ImportedSssLoanReportMaxAggregateOutputType | null
+  }
+
+  type GetImportedSssLoanReportGroupByPayload<T extends ImportedSssLoanReportGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ImportedSssLoanReportGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ImportedSssLoanReportGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ImportedSssLoanReportGroupByOutputType[P]>
+            : GetScalarType<T[P], ImportedSssLoanReportGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ImportedSssLoanReportSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    sourceReportId?: boolean
+    sourceKind?: boolean
+    sourceEmployerId?: boolean
+    employerName?: boolean
+    employerAddress?: boolean
+    employerSssNumber?: boolean
+    prn?: boolean
+    applicableMonth?: boolean
+    applicableYear?: boolean
+    amountDue?: boolean
+    amountPaid?: boolean
+    paymentType?: boolean
+    payDate?: boolean
+    sssBranch?: boolean
+    transactionReference?: boolean
+    sourceCreatedBy?: boolean
+    sourceCreatedAt?: boolean
+    sourceUpdatedAt?: boolean
+    importedAt?: boolean
+    entries?: boolean | ImportedSssLoanReport$entriesArgs<ExtArgs>
+    _count?: boolean | ImportedSssLoanReportCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["importedSssLoanReport"]>
+
+  export type ImportedSssLoanReportSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    sourceReportId?: boolean
+    sourceKind?: boolean
+    sourceEmployerId?: boolean
+    employerName?: boolean
+    employerAddress?: boolean
+    employerSssNumber?: boolean
+    prn?: boolean
+    applicableMonth?: boolean
+    applicableYear?: boolean
+    amountDue?: boolean
+    amountPaid?: boolean
+    paymentType?: boolean
+    payDate?: boolean
+    sssBranch?: boolean
+    transactionReference?: boolean
+    sourceCreatedBy?: boolean
+    sourceCreatedAt?: boolean
+    sourceUpdatedAt?: boolean
+    importedAt?: boolean
+  }, ExtArgs["result"]["importedSssLoanReport"]>
+
+  export type ImportedSssLoanReportSelectScalar = {
+    sourceReportId?: boolean
+    sourceKind?: boolean
+    sourceEmployerId?: boolean
+    employerName?: boolean
+    employerAddress?: boolean
+    employerSssNumber?: boolean
+    prn?: boolean
+    applicableMonth?: boolean
+    applicableYear?: boolean
+    amountDue?: boolean
+    amountPaid?: boolean
+    paymentType?: boolean
+    payDate?: boolean
+    sssBranch?: boolean
+    transactionReference?: boolean
+    sourceCreatedBy?: boolean
+    sourceCreatedAt?: boolean
+    sourceUpdatedAt?: boolean
+    importedAt?: boolean
+  }
+
+  export type ImportedSssLoanReportInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    entries?: boolean | ImportedSssLoanReport$entriesArgs<ExtArgs>
+    _count?: boolean | ImportedSssLoanReportCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ImportedSssLoanReportIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $ImportedSssLoanReportPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ImportedSssLoanReport"
+    objects: {
+      entries: Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      sourceReportId: number
+      sourceKind: string
+      sourceEmployerId: number
+      employerName: string
+      employerAddress: string | null
+      employerSssNumber: string | null
+      prn: string
+      applicableMonth: number
+      applicableYear: number
+      amountDue: Prisma.Decimal
+      amountPaid: Prisma.Decimal | null
+      paymentType: string | null
+      payDate: Date | null
+      sssBranch: string | null
+      transactionReference: string | null
+      sourceCreatedBy: number | null
+      sourceCreatedAt: Date
+      sourceUpdatedAt: Date
+      importedAt: Date
+    }, ExtArgs["result"]["importedSssLoanReport"]>
+    composites: {}
+  }
+
+  type ImportedSssLoanReportGetPayload<S extends boolean | null | undefined | ImportedSssLoanReportDefaultArgs> = $Result.GetResult<Prisma.$ImportedSssLoanReportPayload, S>
+
+  type ImportedSssLoanReportCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ImportedSssLoanReportFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ImportedSssLoanReportCountAggregateInputType | true
+    }
+
+  export interface ImportedSssLoanReportDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ImportedSssLoanReport'], meta: { name: 'ImportedSssLoanReport' } }
+    /**
+     * Find zero or one ImportedSssLoanReport that matches the filter.
+     * @param {ImportedSssLoanReportFindUniqueArgs} args - Arguments to find a ImportedSssLoanReport
+     * @example
+     * // Get one ImportedSssLoanReport
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ImportedSssLoanReportFindUniqueArgs>(args: SelectSubset<T, ImportedSssLoanReportFindUniqueArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ImportedSssLoanReport that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ImportedSssLoanReportFindUniqueOrThrowArgs} args - Arguments to find a ImportedSssLoanReport
+     * @example
+     * // Get one ImportedSssLoanReport
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ImportedSssLoanReportFindUniqueOrThrowArgs>(args: SelectSubset<T, ImportedSssLoanReportFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ImportedSssLoanReport that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportFindFirstArgs} args - Arguments to find a ImportedSssLoanReport
+     * @example
+     * // Get one ImportedSssLoanReport
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ImportedSssLoanReportFindFirstArgs>(args?: SelectSubset<T, ImportedSssLoanReportFindFirstArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ImportedSssLoanReport that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportFindFirstOrThrowArgs} args - Arguments to find a ImportedSssLoanReport
+     * @example
+     * // Get one ImportedSssLoanReport
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ImportedSssLoanReportFindFirstOrThrowArgs>(args?: SelectSubset<T, ImportedSssLoanReportFindFirstOrThrowArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ImportedSssLoanReports that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ImportedSssLoanReports
+     * const importedSssLoanReports = await prisma.importedSssLoanReport.findMany()
+     * 
+     * // Get first 10 ImportedSssLoanReports
+     * const importedSssLoanReports = await prisma.importedSssLoanReport.findMany({ take: 10 })
+     * 
+     * // Only select the `sourceReportId`
+     * const importedSssLoanReportWithSourceReportIdOnly = await prisma.importedSssLoanReport.findMany({ select: { sourceReportId: true } })
+     * 
+     */
+    findMany<T extends ImportedSssLoanReportFindManyArgs>(args?: SelectSubset<T, ImportedSssLoanReportFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ImportedSssLoanReport.
+     * @param {ImportedSssLoanReportCreateArgs} args - Arguments to create a ImportedSssLoanReport.
+     * @example
+     * // Create one ImportedSssLoanReport
+     * const ImportedSssLoanReport = await prisma.importedSssLoanReport.create({
+     *   data: {
+     *     // ... data to create a ImportedSssLoanReport
+     *   }
+     * })
+     * 
+     */
+    create<T extends ImportedSssLoanReportCreateArgs>(args: SelectSubset<T, ImportedSssLoanReportCreateArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ImportedSssLoanReports.
+     * @param {ImportedSssLoanReportCreateManyArgs} args - Arguments to create many ImportedSssLoanReports.
+     * @example
+     * // Create many ImportedSssLoanReports
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ImportedSssLoanReportCreateManyArgs>(args?: SelectSubset<T, ImportedSssLoanReportCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ImportedSssLoanReports and returns the data saved in the database.
+     * @param {ImportedSssLoanReportCreateManyAndReturnArgs} args - Arguments to create many ImportedSssLoanReports.
+     * @example
+     * // Create many ImportedSssLoanReports
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ImportedSssLoanReports and only return the `sourceReportId`
+     * const importedSssLoanReportWithSourceReportIdOnly = await prisma.importedSssLoanReport.createManyAndReturn({ 
+     *   select: { sourceReportId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ImportedSssLoanReportCreateManyAndReturnArgs>(args?: SelectSubset<T, ImportedSssLoanReportCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ImportedSssLoanReport.
+     * @param {ImportedSssLoanReportDeleteArgs} args - Arguments to delete one ImportedSssLoanReport.
+     * @example
+     * // Delete one ImportedSssLoanReport
+     * const ImportedSssLoanReport = await prisma.importedSssLoanReport.delete({
+     *   where: {
+     *     // ... filter to delete one ImportedSssLoanReport
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ImportedSssLoanReportDeleteArgs>(args: SelectSubset<T, ImportedSssLoanReportDeleteArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ImportedSssLoanReport.
+     * @param {ImportedSssLoanReportUpdateArgs} args - Arguments to update one ImportedSssLoanReport.
+     * @example
+     * // Update one ImportedSssLoanReport
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ImportedSssLoanReportUpdateArgs>(args: SelectSubset<T, ImportedSssLoanReportUpdateArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ImportedSssLoanReports.
+     * @param {ImportedSssLoanReportDeleteManyArgs} args - Arguments to filter ImportedSssLoanReports to delete.
+     * @example
+     * // Delete a few ImportedSssLoanReports
+     * const { count } = await prisma.importedSssLoanReport.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ImportedSssLoanReportDeleteManyArgs>(args?: SelectSubset<T, ImportedSssLoanReportDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ImportedSssLoanReports.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ImportedSssLoanReports
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ImportedSssLoanReportUpdateManyArgs>(args: SelectSubset<T, ImportedSssLoanReportUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ImportedSssLoanReport.
+     * @param {ImportedSssLoanReportUpsertArgs} args - Arguments to update or create a ImportedSssLoanReport.
+     * @example
+     * // Update or create a ImportedSssLoanReport
+     * const importedSssLoanReport = await prisma.importedSssLoanReport.upsert({
+     *   create: {
+     *     // ... data to create a ImportedSssLoanReport
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ImportedSssLoanReport we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ImportedSssLoanReportUpsertArgs>(args: SelectSubset<T, ImportedSssLoanReportUpsertArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ImportedSssLoanReports.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportCountArgs} args - Arguments to filter ImportedSssLoanReports to count.
+     * @example
+     * // Count the number of ImportedSssLoanReports
+     * const count = await prisma.importedSssLoanReport.count({
+     *   where: {
+     *     // ... the filter for the ImportedSssLoanReports we want to count
+     *   }
+     * })
+    **/
+    count<T extends ImportedSssLoanReportCountArgs>(
+      args?: Subset<T, ImportedSssLoanReportCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ImportedSssLoanReportCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ImportedSssLoanReport.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ImportedSssLoanReportAggregateArgs>(args: Subset<T, ImportedSssLoanReportAggregateArgs>): Prisma.PrismaPromise<GetImportedSssLoanReportAggregateType<T>>
+
+    /**
+     * Group by ImportedSssLoanReport.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ImportedSssLoanReportGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ImportedSssLoanReportGroupByArgs['orderBy'] }
+        : { orderBy?: ImportedSssLoanReportGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ImportedSssLoanReportGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetImportedSssLoanReportGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ImportedSssLoanReport model
+   */
+  readonly fields: ImportedSssLoanReportFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ImportedSssLoanReport.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ImportedSssLoanReportClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    entries<T extends ImportedSssLoanReport$entriesArgs<ExtArgs> = {}>(args?: Subset<T, ImportedSssLoanReport$entriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ImportedSssLoanReport model
+   */ 
+  interface ImportedSssLoanReportFieldRefs {
+    readonly sourceReportId: FieldRef<"ImportedSssLoanReport", 'Int'>
+    readonly sourceKind: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly sourceEmployerId: FieldRef<"ImportedSssLoanReport", 'Int'>
+    readonly employerName: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly employerAddress: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly employerSssNumber: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly prn: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly applicableMonth: FieldRef<"ImportedSssLoanReport", 'Int'>
+    readonly applicableYear: FieldRef<"ImportedSssLoanReport", 'Int'>
+    readonly amountDue: FieldRef<"ImportedSssLoanReport", 'Decimal'>
+    readonly amountPaid: FieldRef<"ImportedSssLoanReport", 'Decimal'>
+    readonly paymentType: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly payDate: FieldRef<"ImportedSssLoanReport", 'DateTime'>
+    readonly sssBranch: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly transactionReference: FieldRef<"ImportedSssLoanReport", 'String'>
+    readonly sourceCreatedBy: FieldRef<"ImportedSssLoanReport", 'Int'>
+    readonly sourceCreatedAt: FieldRef<"ImportedSssLoanReport", 'DateTime'>
+    readonly sourceUpdatedAt: FieldRef<"ImportedSssLoanReport", 'DateTime'>
+    readonly importedAt: FieldRef<"ImportedSssLoanReport", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ImportedSssLoanReport findUnique
+   */
+  export type ImportedSssLoanReportFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReport to fetch.
+     */
+    where: ImportedSssLoanReportWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReport findUniqueOrThrow
+   */
+  export type ImportedSssLoanReportFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReport to fetch.
+     */
+    where: ImportedSssLoanReportWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReport findFirst
+   */
+  export type ImportedSssLoanReportFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReport to fetch.
+     */
+    where?: ImportedSssLoanReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReports to fetch.
+     */
+    orderBy?: ImportedSssLoanReportOrderByWithRelationInput | ImportedSssLoanReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ImportedSssLoanReports.
+     */
+    cursor?: ImportedSssLoanReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ImportedSssLoanReports.
+     */
+    distinct?: ImportedSssLoanReportScalarFieldEnum | ImportedSssLoanReportScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReport findFirstOrThrow
+   */
+  export type ImportedSssLoanReportFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReport to fetch.
+     */
+    where?: ImportedSssLoanReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReports to fetch.
+     */
+    orderBy?: ImportedSssLoanReportOrderByWithRelationInput | ImportedSssLoanReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ImportedSssLoanReports.
+     */
+    cursor?: ImportedSssLoanReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ImportedSssLoanReports.
+     */
+    distinct?: ImportedSssLoanReportScalarFieldEnum | ImportedSssLoanReportScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReport findMany
+   */
+  export type ImportedSssLoanReportFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReports to fetch.
+     */
+    where?: ImportedSssLoanReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReports to fetch.
+     */
+    orderBy?: ImportedSssLoanReportOrderByWithRelationInput | ImportedSssLoanReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ImportedSssLoanReports.
+     */
+    cursor?: ImportedSssLoanReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReports.
+     */
+    skip?: number
+    distinct?: ImportedSssLoanReportScalarFieldEnum | ImportedSssLoanReportScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReport create
+   */
+  export type ImportedSssLoanReportCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ImportedSssLoanReport.
+     */
+    data: XOR<ImportedSssLoanReportCreateInput, ImportedSssLoanReportUncheckedCreateInput>
+  }
+
+  /**
+   * ImportedSssLoanReport createMany
+   */
+  export type ImportedSssLoanReportCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ImportedSssLoanReports.
+     */
+    data: ImportedSssLoanReportCreateManyInput | ImportedSssLoanReportCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ImportedSssLoanReport createManyAndReturn
+   */
+  export type ImportedSssLoanReportCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ImportedSssLoanReports.
+     */
+    data: ImportedSssLoanReportCreateManyInput | ImportedSssLoanReportCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ImportedSssLoanReport update
+   */
+  export type ImportedSssLoanReportUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ImportedSssLoanReport.
+     */
+    data: XOR<ImportedSssLoanReportUpdateInput, ImportedSssLoanReportUncheckedUpdateInput>
+    /**
+     * Choose, which ImportedSssLoanReport to update.
+     */
+    where: ImportedSssLoanReportWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReport updateMany
+   */
+  export type ImportedSssLoanReportUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ImportedSssLoanReports.
+     */
+    data: XOR<ImportedSssLoanReportUpdateManyMutationInput, ImportedSssLoanReportUncheckedUpdateManyInput>
+    /**
+     * Filter which ImportedSssLoanReports to update
+     */
+    where?: ImportedSssLoanReportWhereInput
+  }
+
+  /**
+   * ImportedSssLoanReport upsert
+   */
+  export type ImportedSssLoanReportUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ImportedSssLoanReport to update in case it exists.
+     */
+    where: ImportedSssLoanReportWhereUniqueInput
+    /**
+     * In case the ImportedSssLoanReport found by the `where` argument doesn't exist, create a new ImportedSssLoanReport with this data.
+     */
+    create: XOR<ImportedSssLoanReportCreateInput, ImportedSssLoanReportUncheckedCreateInput>
+    /**
+     * In case the ImportedSssLoanReport was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ImportedSssLoanReportUpdateInput, ImportedSssLoanReportUncheckedUpdateInput>
+  }
+
+  /**
+   * ImportedSssLoanReport delete
+   */
+  export type ImportedSssLoanReportDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+    /**
+     * Filter which ImportedSssLoanReport to delete.
+     */
+    where: ImportedSssLoanReportWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReport deleteMany
+   */
+  export type ImportedSssLoanReportDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ImportedSssLoanReports to delete
+     */
+    where?: ImportedSssLoanReportWhereInput
+  }
+
+  /**
+   * ImportedSssLoanReport.entries
+   */
+  export type ImportedSssLoanReport$entriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    where?: ImportedSssLoanReportEntryWhereInput
+    orderBy?: ImportedSssLoanReportEntryOrderByWithRelationInput | ImportedSssLoanReportEntryOrderByWithRelationInput[]
+    cursor?: ImportedSssLoanReportEntryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ImportedSssLoanReportEntryScalarFieldEnum | ImportedSssLoanReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReport without action
+   */
+  export type ImportedSssLoanReportDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReport
+     */
+    select?: ImportedSssLoanReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ImportedSssLoanReportEntry
+   */
+
+  export type AggregateImportedSssLoanReportEntry = {
+    _count: ImportedSssLoanReportEntryCountAggregateOutputType | null
+    _avg: ImportedSssLoanReportEntryAvgAggregateOutputType | null
+    _sum: ImportedSssLoanReportEntrySumAggregateOutputType | null
+    _min: ImportedSssLoanReportEntryMinAggregateOutputType | null
+    _max: ImportedSssLoanReportEntryMaxAggregateOutputType | null
+  }
+
+  export type ImportedSssLoanReportEntryAvgAggregateOutputType = {
+    sourceEntryId: number | null
+    sourceReportId: number | null
+    sourceEmployeeId: number | null
+    sourceSssLoanId: number | null
+    sourceEmployeeEmployerId: number | null
+    monthlySalaryCredit: Decimal | null
+    employeeSs: Decimal | null
+    employerSs: Decimal | null
+    employeeMpf: Decimal | null
+    employerMpf: Decimal | null
+    ec: Decimal | null
+    loanAmount: Decimal | null
+    totalAmount: Decimal | null
+  }
+
+  export type ImportedSssLoanReportEntrySumAggregateOutputType = {
+    sourceEntryId: number | null
+    sourceReportId: number | null
+    sourceEmployeeId: number | null
+    sourceSssLoanId: number | null
+    sourceEmployeeEmployerId: number | null
+    monthlySalaryCredit: Decimal | null
+    employeeSs: Decimal | null
+    employerSs: Decimal | null
+    employeeMpf: Decimal | null
+    employerMpf: Decimal | null
+    ec: Decimal | null
+    loanAmount: Decimal | null
+    totalAmount: Decimal | null
+  }
+
+  export type ImportedSssLoanReportEntryMinAggregateOutputType = {
+    sourceEntryId: number | null
+    sourceReportId: number | null
+    sourceEmployeeId: number | null
+    employeeName: string | null
+    employeeCode: string | null
+    employeeSssNumber: string | null
+    sourceSssLoanId: number | null
+    loanAccountNumber: string | null
+    sourceEmployeeEmployerId: number | null
+    employeeEmployerName: string | null
+    salaryRange: string | null
+    monthlySalaryCredit: Decimal | null
+    employeeSs: Decimal | null
+    employerSs: Decimal | null
+    employeeMpf: Decimal | null
+    employerMpf: Decimal | null
+    ec: Decimal | null
+    loanAmount: Decimal | null
+    totalAmount: Decimal | null
+  }
+
+  export type ImportedSssLoanReportEntryMaxAggregateOutputType = {
+    sourceEntryId: number | null
+    sourceReportId: number | null
+    sourceEmployeeId: number | null
+    employeeName: string | null
+    employeeCode: string | null
+    employeeSssNumber: string | null
+    sourceSssLoanId: number | null
+    loanAccountNumber: string | null
+    sourceEmployeeEmployerId: number | null
+    employeeEmployerName: string | null
+    salaryRange: string | null
+    monthlySalaryCredit: Decimal | null
+    employeeSs: Decimal | null
+    employerSs: Decimal | null
+    employeeMpf: Decimal | null
+    employerMpf: Decimal | null
+    ec: Decimal | null
+    loanAmount: Decimal | null
+    totalAmount: Decimal | null
+  }
+
+  export type ImportedSssLoanReportEntryCountAggregateOutputType = {
+    sourceEntryId: number
+    sourceReportId: number
+    sourceEmployeeId: number
+    employeeName: number
+    employeeCode: number
+    employeeSssNumber: number
+    sourceSssLoanId: number
+    loanAccountNumber: number
+    sourceEmployeeEmployerId: number
+    employeeEmployerName: number
+    salaryRange: number
+    monthlySalaryCredit: number
+    employeeSs: number
+    employerSs: number
+    employeeMpf: number
+    employerMpf: number
+    ec: number
+    loanAmount: number
+    totalAmount: number
+    _all: number
+  }
+
+
+  export type ImportedSssLoanReportEntryAvgAggregateInputType = {
+    sourceEntryId?: true
+    sourceReportId?: true
+    sourceEmployeeId?: true
+    sourceSssLoanId?: true
+    sourceEmployeeEmployerId?: true
+    monthlySalaryCredit?: true
+    employeeSs?: true
+    employerSs?: true
+    employeeMpf?: true
+    employerMpf?: true
+    ec?: true
+    loanAmount?: true
+    totalAmount?: true
+  }
+
+  export type ImportedSssLoanReportEntrySumAggregateInputType = {
+    sourceEntryId?: true
+    sourceReportId?: true
+    sourceEmployeeId?: true
+    sourceSssLoanId?: true
+    sourceEmployeeEmployerId?: true
+    monthlySalaryCredit?: true
+    employeeSs?: true
+    employerSs?: true
+    employeeMpf?: true
+    employerMpf?: true
+    ec?: true
+    loanAmount?: true
+    totalAmount?: true
+  }
+
+  export type ImportedSssLoanReportEntryMinAggregateInputType = {
+    sourceEntryId?: true
+    sourceReportId?: true
+    sourceEmployeeId?: true
+    employeeName?: true
+    employeeCode?: true
+    employeeSssNumber?: true
+    sourceSssLoanId?: true
+    loanAccountNumber?: true
+    sourceEmployeeEmployerId?: true
+    employeeEmployerName?: true
+    salaryRange?: true
+    monthlySalaryCredit?: true
+    employeeSs?: true
+    employerSs?: true
+    employeeMpf?: true
+    employerMpf?: true
+    ec?: true
+    loanAmount?: true
+    totalAmount?: true
+  }
+
+  export type ImportedSssLoanReportEntryMaxAggregateInputType = {
+    sourceEntryId?: true
+    sourceReportId?: true
+    sourceEmployeeId?: true
+    employeeName?: true
+    employeeCode?: true
+    employeeSssNumber?: true
+    sourceSssLoanId?: true
+    loanAccountNumber?: true
+    sourceEmployeeEmployerId?: true
+    employeeEmployerName?: true
+    salaryRange?: true
+    monthlySalaryCredit?: true
+    employeeSs?: true
+    employerSs?: true
+    employeeMpf?: true
+    employerMpf?: true
+    ec?: true
+    loanAmount?: true
+    totalAmount?: true
+  }
+
+  export type ImportedSssLoanReportEntryCountAggregateInputType = {
+    sourceEntryId?: true
+    sourceReportId?: true
+    sourceEmployeeId?: true
+    employeeName?: true
+    employeeCode?: true
+    employeeSssNumber?: true
+    sourceSssLoanId?: true
+    loanAccountNumber?: true
+    sourceEmployeeEmployerId?: true
+    employeeEmployerName?: true
+    salaryRange?: true
+    monthlySalaryCredit?: true
+    employeeSs?: true
+    employerSs?: true
+    employeeMpf?: true
+    employerMpf?: true
+    ec?: true
+    loanAmount?: true
+    totalAmount?: true
+    _all?: true
+  }
+
+  export type ImportedSssLoanReportEntryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ImportedSssLoanReportEntry to aggregate.
+     */
+    where?: ImportedSssLoanReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReportEntries to fetch.
+     */
+    orderBy?: ImportedSssLoanReportEntryOrderByWithRelationInput | ImportedSssLoanReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ImportedSssLoanReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReportEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ImportedSssLoanReportEntries
+    **/
+    _count?: true | ImportedSssLoanReportEntryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ImportedSssLoanReportEntryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ImportedSssLoanReportEntrySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ImportedSssLoanReportEntryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ImportedSssLoanReportEntryMaxAggregateInputType
+  }
+
+  export type GetImportedSssLoanReportEntryAggregateType<T extends ImportedSssLoanReportEntryAggregateArgs> = {
+        [P in keyof T & keyof AggregateImportedSssLoanReportEntry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateImportedSssLoanReportEntry[P]>
+      : GetScalarType<T[P], AggregateImportedSssLoanReportEntry[P]>
+  }
+
+
+
+
+  export type ImportedSssLoanReportEntryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ImportedSssLoanReportEntryWhereInput
+    orderBy?: ImportedSssLoanReportEntryOrderByWithAggregationInput | ImportedSssLoanReportEntryOrderByWithAggregationInput[]
+    by: ImportedSssLoanReportEntryScalarFieldEnum[] | ImportedSssLoanReportEntryScalarFieldEnum
+    having?: ImportedSssLoanReportEntryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ImportedSssLoanReportEntryCountAggregateInputType | true
+    _avg?: ImportedSssLoanReportEntryAvgAggregateInputType
+    _sum?: ImportedSssLoanReportEntrySumAggregateInputType
+    _min?: ImportedSssLoanReportEntryMinAggregateInputType
+    _max?: ImportedSssLoanReportEntryMaxAggregateInputType
+  }
+
+  export type ImportedSssLoanReportEntryGroupByOutputType = {
+    sourceEntryId: number
+    sourceReportId: number
+    sourceEmployeeId: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber: string | null
+    sourceSssLoanId: number | null
+    loanAccountNumber: string | null
+    sourceEmployeeEmployerId: number | null
+    employeeEmployerName: string | null
+    salaryRange: string | null
+    monthlySalaryCredit: Decimal | null
+    employeeSs: Decimal
+    employerSs: Decimal
+    employeeMpf: Decimal
+    employerMpf: Decimal
+    ec: Decimal
+    loanAmount: Decimal
+    totalAmount: Decimal
+    _count: ImportedSssLoanReportEntryCountAggregateOutputType | null
+    _avg: ImportedSssLoanReportEntryAvgAggregateOutputType | null
+    _sum: ImportedSssLoanReportEntrySumAggregateOutputType | null
+    _min: ImportedSssLoanReportEntryMinAggregateOutputType | null
+    _max: ImportedSssLoanReportEntryMaxAggregateOutputType | null
+  }
+
+  type GetImportedSssLoanReportEntryGroupByPayload<T extends ImportedSssLoanReportEntryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ImportedSssLoanReportEntryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ImportedSssLoanReportEntryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ImportedSssLoanReportEntryGroupByOutputType[P]>
+            : GetScalarType<T[P], ImportedSssLoanReportEntryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ImportedSssLoanReportEntrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    sourceEntryId?: boolean
+    sourceReportId?: boolean
+    sourceEmployeeId?: boolean
+    employeeName?: boolean
+    employeeCode?: boolean
+    employeeSssNumber?: boolean
+    sourceSssLoanId?: boolean
+    loanAccountNumber?: boolean
+    sourceEmployeeEmployerId?: boolean
+    employeeEmployerName?: boolean
+    salaryRange?: boolean
+    monthlySalaryCredit?: boolean
+    employeeSs?: boolean
+    employerSs?: boolean
+    employeeMpf?: boolean
+    employerMpf?: boolean
+    ec?: boolean
+    loanAmount?: boolean
+    totalAmount?: boolean
+    report?: boolean | ImportedSssLoanReportDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["importedSssLoanReportEntry"]>
+
+  export type ImportedSssLoanReportEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    sourceEntryId?: boolean
+    sourceReportId?: boolean
+    sourceEmployeeId?: boolean
+    employeeName?: boolean
+    employeeCode?: boolean
+    employeeSssNumber?: boolean
+    sourceSssLoanId?: boolean
+    loanAccountNumber?: boolean
+    sourceEmployeeEmployerId?: boolean
+    employeeEmployerName?: boolean
+    salaryRange?: boolean
+    monthlySalaryCredit?: boolean
+    employeeSs?: boolean
+    employerSs?: boolean
+    employeeMpf?: boolean
+    employerMpf?: boolean
+    ec?: boolean
+    loanAmount?: boolean
+    totalAmount?: boolean
+    report?: boolean | ImportedSssLoanReportDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["importedSssLoanReportEntry"]>
+
+  export type ImportedSssLoanReportEntrySelectScalar = {
+    sourceEntryId?: boolean
+    sourceReportId?: boolean
+    sourceEmployeeId?: boolean
+    employeeName?: boolean
+    employeeCode?: boolean
+    employeeSssNumber?: boolean
+    sourceSssLoanId?: boolean
+    loanAccountNumber?: boolean
+    sourceEmployeeEmployerId?: boolean
+    employeeEmployerName?: boolean
+    salaryRange?: boolean
+    monthlySalaryCredit?: boolean
+    employeeSs?: boolean
+    employerSs?: boolean
+    employeeMpf?: boolean
+    employerMpf?: boolean
+    ec?: boolean
+    loanAmount?: boolean
+    totalAmount?: boolean
+  }
+
+  export type ImportedSssLoanReportEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    report?: boolean | ImportedSssLoanReportDefaultArgs<ExtArgs>
+  }
+  export type ImportedSssLoanReportEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    report?: boolean | ImportedSssLoanReportDefaultArgs<ExtArgs>
+  }
+
+  export type $ImportedSssLoanReportEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ImportedSssLoanReportEntry"
+    objects: {
+      report: Prisma.$ImportedSssLoanReportPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      sourceEntryId: number
+      sourceReportId: number
+      sourceEmployeeId: number | null
+      employeeName: string
+      employeeCode: string
+      employeeSssNumber: string | null
+      sourceSssLoanId: number | null
+      loanAccountNumber: string | null
+      sourceEmployeeEmployerId: number | null
+      employeeEmployerName: string | null
+      salaryRange: string | null
+      monthlySalaryCredit: Prisma.Decimal | null
+      employeeSs: Prisma.Decimal
+      employerSs: Prisma.Decimal
+      employeeMpf: Prisma.Decimal
+      employerMpf: Prisma.Decimal
+      ec: Prisma.Decimal
+      loanAmount: Prisma.Decimal
+      totalAmount: Prisma.Decimal
+    }, ExtArgs["result"]["importedSssLoanReportEntry"]>
+    composites: {}
+  }
+
+  type ImportedSssLoanReportEntryGetPayload<S extends boolean | null | undefined | ImportedSssLoanReportEntryDefaultArgs> = $Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload, S>
+
+  type ImportedSssLoanReportEntryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ImportedSssLoanReportEntryFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ImportedSssLoanReportEntryCountAggregateInputType | true
+    }
+
+  export interface ImportedSssLoanReportEntryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ImportedSssLoanReportEntry'], meta: { name: 'ImportedSssLoanReportEntry' } }
+    /**
+     * Find zero or one ImportedSssLoanReportEntry that matches the filter.
+     * @param {ImportedSssLoanReportEntryFindUniqueArgs} args - Arguments to find a ImportedSssLoanReportEntry
+     * @example
+     * // Get one ImportedSssLoanReportEntry
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ImportedSssLoanReportEntryFindUniqueArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryFindUniqueArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ImportedSssLoanReportEntry that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ImportedSssLoanReportEntryFindUniqueOrThrowArgs} args - Arguments to find a ImportedSssLoanReportEntry
+     * @example
+     * // Get one ImportedSssLoanReportEntry
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ImportedSssLoanReportEntryFindUniqueOrThrowArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ImportedSssLoanReportEntry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryFindFirstArgs} args - Arguments to find a ImportedSssLoanReportEntry
+     * @example
+     * // Get one ImportedSssLoanReportEntry
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ImportedSssLoanReportEntryFindFirstArgs>(args?: SelectSubset<T, ImportedSssLoanReportEntryFindFirstArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ImportedSssLoanReportEntry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryFindFirstOrThrowArgs} args - Arguments to find a ImportedSssLoanReportEntry
+     * @example
+     * // Get one ImportedSssLoanReportEntry
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ImportedSssLoanReportEntryFindFirstOrThrowArgs>(args?: SelectSubset<T, ImportedSssLoanReportEntryFindFirstOrThrowArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ImportedSssLoanReportEntries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ImportedSssLoanReportEntries
+     * const importedSssLoanReportEntries = await prisma.importedSssLoanReportEntry.findMany()
+     * 
+     * // Get first 10 ImportedSssLoanReportEntries
+     * const importedSssLoanReportEntries = await prisma.importedSssLoanReportEntry.findMany({ take: 10 })
+     * 
+     * // Only select the `sourceEntryId`
+     * const importedSssLoanReportEntryWithSourceEntryIdOnly = await prisma.importedSssLoanReportEntry.findMany({ select: { sourceEntryId: true } })
+     * 
+     */
+    findMany<T extends ImportedSssLoanReportEntryFindManyArgs>(args?: SelectSubset<T, ImportedSssLoanReportEntryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ImportedSssLoanReportEntry.
+     * @param {ImportedSssLoanReportEntryCreateArgs} args - Arguments to create a ImportedSssLoanReportEntry.
+     * @example
+     * // Create one ImportedSssLoanReportEntry
+     * const ImportedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.create({
+     *   data: {
+     *     // ... data to create a ImportedSssLoanReportEntry
+     *   }
+     * })
+     * 
+     */
+    create<T extends ImportedSssLoanReportEntryCreateArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryCreateArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ImportedSssLoanReportEntries.
+     * @param {ImportedSssLoanReportEntryCreateManyArgs} args - Arguments to create many ImportedSssLoanReportEntries.
+     * @example
+     * // Create many ImportedSssLoanReportEntries
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ImportedSssLoanReportEntryCreateManyArgs>(args?: SelectSubset<T, ImportedSssLoanReportEntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ImportedSssLoanReportEntries and returns the data saved in the database.
+     * @param {ImportedSssLoanReportEntryCreateManyAndReturnArgs} args - Arguments to create many ImportedSssLoanReportEntries.
+     * @example
+     * // Create many ImportedSssLoanReportEntries
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ImportedSssLoanReportEntries and only return the `sourceEntryId`
+     * const importedSssLoanReportEntryWithSourceEntryIdOnly = await prisma.importedSssLoanReportEntry.createManyAndReturn({ 
+     *   select: { sourceEntryId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ImportedSssLoanReportEntryCreateManyAndReturnArgs>(args?: SelectSubset<T, ImportedSssLoanReportEntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a ImportedSssLoanReportEntry.
+     * @param {ImportedSssLoanReportEntryDeleteArgs} args - Arguments to delete one ImportedSssLoanReportEntry.
+     * @example
+     * // Delete one ImportedSssLoanReportEntry
+     * const ImportedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.delete({
+     *   where: {
+     *     // ... filter to delete one ImportedSssLoanReportEntry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ImportedSssLoanReportEntryDeleteArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryDeleteArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ImportedSssLoanReportEntry.
+     * @param {ImportedSssLoanReportEntryUpdateArgs} args - Arguments to update one ImportedSssLoanReportEntry.
+     * @example
+     * // Update one ImportedSssLoanReportEntry
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ImportedSssLoanReportEntryUpdateArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryUpdateArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ImportedSssLoanReportEntries.
+     * @param {ImportedSssLoanReportEntryDeleteManyArgs} args - Arguments to filter ImportedSssLoanReportEntries to delete.
+     * @example
+     * // Delete a few ImportedSssLoanReportEntries
+     * const { count } = await prisma.importedSssLoanReportEntry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ImportedSssLoanReportEntryDeleteManyArgs>(args?: SelectSubset<T, ImportedSssLoanReportEntryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ImportedSssLoanReportEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ImportedSssLoanReportEntries
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ImportedSssLoanReportEntryUpdateManyArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ImportedSssLoanReportEntry.
+     * @param {ImportedSssLoanReportEntryUpsertArgs} args - Arguments to update or create a ImportedSssLoanReportEntry.
+     * @example
+     * // Update or create a ImportedSssLoanReportEntry
+     * const importedSssLoanReportEntry = await prisma.importedSssLoanReportEntry.upsert({
+     *   create: {
+     *     // ... data to create a ImportedSssLoanReportEntry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ImportedSssLoanReportEntry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ImportedSssLoanReportEntryUpsertArgs>(args: SelectSubset<T, ImportedSssLoanReportEntryUpsertArgs<ExtArgs>>): Prisma__ImportedSssLoanReportEntryClient<$Result.GetResult<Prisma.$ImportedSssLoanReportEntryPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ImportedSssLoanReportEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryCountArgs} args - Arguments to filter ImportedSssLoanReportEntries to count.
+     * @example
+     * // Count the number of ImportedSssLoanReportEntries
+     * const count = await prisma.importedSssLoanReportEntry.count({
+     *   where: {
+     *     // ... the filter for the ImportedSssLoanReportEntries we want to count
+     *   }
+     * })
+    **/
+    count<T extends ImportedSssLoanReportEntryCountArgs>(
+      args?: Subset<T, ImportedSssLoanReportEntryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ImportedSssLoanReportEntryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ImportedSssLoanReportEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ImportedSssLoanReportEntryAggregateArgs>(args: Subset<T, ImportedSssLoanReportEntryAggregateArgs>): Prisma.PrismaPromise<GetImportedSssLoanReportEntryAggregateType<T>>
+
+    /**
+     * Group by ImportedSssLoanReportEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ImportedSssLoanReportEntryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ImportedSssLoanReportEntryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ImportedSssLoanReportEntryGroupByArgs['orderBy'] }
+        : { orderBy?: ImportedSssLoanReportEntryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ImportedSssLoanReportEntryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetImportedSssLoanReportEntryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ImportedSssLoanReportEntry model
+   */
+  readonly fields: ImportedSssLoanReportEntryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ImportedSssLoanReportEntry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ImportedSssLoanReportEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    report<T extends ImportedSssLoanReportDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ImportedSssLoanReportDefaultArgs<ExtArgs>>): Prisma__ImportedSssLoanReportClient<$Result.GetResult<Prisma.$ImportedSssLoanReportPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ImportedSssLoanReportEntry model
+   */ 
+  interface ImportedSssLoanReportEntryFieldRefs {
+    readonly sourceEntryId: FieldRef<"ImportedSssLoanReportEntry", 'Int'>
+    readonly sourceReportId: FieldRef<"ImportedSssLoanReportEntry", 'Int'>
+    readonly sourceEmployeeId: FieldRef<"ImportedSssLoanReportEntry", 'Int'>
+    readonly employeeName: FieldRef<"ImportedSssLoanReportEntry", 'String'>
+    readonly employeeCode: FieldRef<"ImportedSssLoanReportEntry", 'String'>
+    readonly employeeSssNumber: FieldRef<"ImportedSssLoanReportEntry", 'String'>
+    readonly sourceSssLoanId: FieldRef<"ImportedSssLoanReportEntry", 'Int'>
+    readonly loanAccountNumber: FieldRef<"ImportedSssLoanReportEntry", 'String'>
+    readonly sourceEmployeeEmployerId: FieldRef<"ImportedSssLoanReportEntry", 'Int'>
+    readonly employeeEmployerName: FieldRef<"ImportedSssLoanReportEntry", 'String'>
+    readonly salaryRange: FieldRef<"ImportedSssLoanReportEntry", 'String'>
+    readonly monthlySalaryCredit: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly employeeSs: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly employerSs: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly employeeMpf: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly employerMpf: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly ec: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly loanAmount: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+    readonly totalAmount: FieldRef<"ImportedSssLoanReportEntry", 'Decimal'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ImportedSssLoanReportEntry findUnique
+   */
+  export type ImportedSssLoanReportEntryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReportEntry to fetch.
+     */
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReportEntry findUniqueOrThrow
+   */
+  export type ImportedSssLoanReportEntryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReportEntry to fetch.
+     */
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReportEntry findFirst
+   */
+  export type ImportedSssLoanReportEntryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReportEntry to fetch.
+     */
+    where?: ImportedSssLoanReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReportEntries to fetch.
+     */
+    orderBy?: ImportedSssLoanReportEntryOrderByWithRelationInput | ImportedSssLoanReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ImportedSssLoanReportEntries.
+     */
+    cursor?: ImportedSssLoanReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReportEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ImportedSssLoanReportEntries.
+     */
+    distinct?: ImportedSssLoanReportEntryScalarFieldEnum | ImportedSssLoanReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReportEntry findFirstOrThrow
+   */
+  export type ImportedSssLoanReportEntryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReportEntry to fetch.
+     */
+    where?: ImportedSssLoanReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReportEntries to fetch.
+     */
+    orderBy?: ImportedSssLoanReportEntryOrderByWithRelationInput | ImportedSssLoanReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ImportedSssLoanReportEntries.
+     */
+    cursor?: ImportedSssLoanReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReportEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ImportedSssLoanReportEntries.
+     */
+    distinct?: ImportedSssLoanReportEntryScalarFieldEnum | ImportedSssLoanReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReportEntry findMany
+   */
+  export type ImportedSssLoanReportEntryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which ImportedSssLoanReportEntries to fetch.
+     */
+    where?: ImportedSssLoanReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ImportedSssLoanReportEntries to fetch.
+     */
+    orderBy?: ImportedSssLoanReportEntryOrderByWithRelationInput | ImportedSssLoanReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ImportedSssLoanReportEntries.
+     */
+    cursor?: ImportedSssLoanReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ImportedSssLoanReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ImportedSssLoanReportEntries.
+     */
+    skip?: number
+    distinct?: ImportedSssLoanReportEntryScalarFieldEnum | ImportedSssLoanReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * ImportedSssLoanReportEntry create
+   */
+  export type ImportedSssLoanReportEntryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ImportedSssLoanReportEntry.
+     */
+    data: XOR<ImportedSssLoanReportEntryCreateInput, ImportedSssLoanReportEntryUncheckedCreateInput>
+  }
+
+  /**
+   * ImportedSssLoanReportEntry createMany
+   */
+  export type ImportedSssLoanReportEntryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ImportedSssLoanReportEntries.
+     */
+    data: ImportedSssLoanReportEntryCreateManyInput | ImportedSssLoanReportEntryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ImportedSssLoanReportEntry createManyAndReturn
+   */
+  export type ImportedSssLoanReportEntryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many ImportedSssLoanReportEntries.
+     */
+    data: ImportedSssLoanReportEntryCreateManyInput | ImportedSssLoanReportEntryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ImportedSssLoanReportEntry update
+   */
+  export type ImportedSssLoanReportEntryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ImportedSssLoanReportEntry.
+     */
+    data: XOR<ImportedSssLoanReportEntryUpdateInput, ImportedSssLoanReportEntryUncheckedUpdateInput>
+    /**
+     * Choose, which ImportedSssLoanReportEntry to update.
+     */
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReportEntry updateMany
+   */
+  export type ImportedSssLoanReportEntryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ImportedSssLoanReportEntries.
+     */
+    data: XOR<ImportedSssLoanReportEntryUpdateManyMutationInput, ImportedSssLoanReportEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which ImportedSssLoanReportEntries to update
+     */
+    where?: ImportedSssLoanReportEntryWhereInput
+  }
+
+  /**
+   * ImportedSssLoanReportEntry upsert
+   */
+  export type ImportedSssLoanReportEntryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ImportedSssLoanReportEntry to update in case it exists.
+     */
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+    /**
+     * In case the ImportedSssLoanReportEntry found by the `where` argument doesn't exist, create a new ImportedSssLoanReportEntry with this data.
+     */
+    create: XOR<ImportedSssLoanReportEntryCreateInput, ImportedSssLoanReportEntryUncheckedCreateInput>
+    /**
+     * In case the ImportedSssLoanReportEntry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ImportedSssLoanReportEntryUpdateInput, ImportedSssLoanReportEntryUncheckedUpdateInput>
+  }
+
+  /**
+   * ImportedSssLoanReportEntry delete
+   */
+  export type ImportedSssLoanReportEntryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter which ImportedSssLoanReportEntry to delete.
+     */
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+  }
+
+  /**
+   * ImportedSssLoanReportEntry deleteMany
+   */
+  export type ImportedSssLoanReportEntryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ImportedSssLoanReportEntries to delete
+     */
+    where?: ImportedSssLoanReportEntryWhereInput
+  }
+
+  /**
+   * ImportedSssLoanReportEntry without action
+   */
+  export type ImportedSssLoanReportEntryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ImportedSssLoanReportEntry
+     */
+    select?: ImportedSssLoanReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ImportedSssLoanReportEntryInclude<ExtArgs> | null
   }
 
 
@@ -36135,6 +39196,4380 @@ export namespace Prisma {
 
 
   /**
+   * Model Loan
+   */
+
+  export type AggregateLoan = {
+    _count: LoanCountAggregateOutputType | null
+    _avg: LoanAvgAggregateOutputType | null
+    _sum: LoanSumAggregateOutputType | null
+    _min: LoanMinAggregateOutputType | null
+    _max: LoanMaxAggregateOutputType | null
+  }
+
+  export type LoanAvgAggregateOutputType = {
+    employeeId: number | null
+    terms: number | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+  }
+
+  export type LoanSumAggregateOutputType = {
+    employeeId: number | null
+    terms: number | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+  }
+
+  export type LoanMinAggregateOutputType = {
+    id: string | null
+    employeeId: number | null
+    provider: $Enums.LoanProvider | null
+    loanType: string | null
+    loanAccountNumber: string | null
+    loanDate: Date | null
+    terms: number | null
+    statusReason: string | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+    status: $Enums.LoanStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LoanMaxAggregateOutputType = {
+    id: string | null
+    employeeId: number | null
+    provider: $Enums.LoanProvider | null
+    loanType: string | null
+    loanAccountNumber: string | null
+    loanDate: Date | null
+    terms: number | null
+    statusReason: string | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+    status: $Enums.LoanStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LoanCountAggregateOutputType = {
+    id: number
+    employeeId: number
+    provider: number
+    loanType: number
+    loanAccountNumber: number
+    loanDate: number
+    terms: number
+    statusReason: number
+    totalAmount: number
+    monthlyAmortization: number
+    outstandingBalance: number
+    status: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type LoanAvgAggregateInputType = {
+    employeeId?: true
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+  }
+
+  export type LoanSumAggregateInputType = {
+    employeeId?: true
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+  }
+
+  export type LoanMinAggregateInputType = {
+    id?: true
+    employeeId?: true
+    provider?: true
+    loanType?: true
+    loanAccountNumber?: true
+    loanDate?: true
+    terms?: true
+    statusReason?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LoanMaxAggregateInputType = {
+    id?: true
+    employeeId?: true
+    provider?: true
+    loanType?: true
+    loanAccountNumber?: true
+    loanDate?: true
+    terms?: true
+    statusReason?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LoanCountAggregateInputType = {
+    id?: true
+    employeeId?: true
+    provider?: true
+    loanType?: true
+    loanAccountNumber?: true
+    loanDate?: true
+    terms?: true
+    statusReason?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type LoanAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Loan to aggregate.
+     */
+    where?: LoanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Loans to fetch.
+     */
+    orderBy?: LoanOrderByWithRelationInput | LoanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LoanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Loans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Loans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Loans
+    **/
+    _count?: true | LoanCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LoanAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LoanSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LoanMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LoanMaxAggregateInputType
+  }
+
+  export type GetLoanAggregateType<T extends LoanAggregateArgs> = {
+        [P in keyof T & keyof AggregateLoan]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLoan[P]>
+      : GetScalarType<T[P], AggregateLoan[P]>
+  }
+
+
+
+
+  export type LoanGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanWhereInput
+    orderBy?: LoanOrderByWithAggregationInput | LoanOrderByWithAggregationInput[]
+    by: LoanScalarFieldEnum[] | LoanScalarFieldEnum
+    having?: LoanScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LoanCountAggregateInputType | true
+    _avg?: LoanAvgAggregateInputType
+    _sum?: LoanSumAggregateInputType
+    _min?: LoanMinAggregateInputType
+    _max?: LoanMaxAggregateInputType
+  }
+
+  export type LoanGroupByOutputType = {
+    id: string
+    employeeId: number | null
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate: Date | null
+    terms: number | null
+    statusReason: string | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal
+    outstandingBalance: Decimal | null
+    status: $Enums.LoanStatus
+    createdAt: Date
+    updatedAt: Date
+    _count: LoanCountAggregateOutputType | null
+    _avg: LoanAvgAggregateOutputType | null
+    _sum: LoanSumAggregateOutputType | null
+    _min: LoanMinAggregateOutputType | null
+    _max: LoanMaxAggregateOutputType | null
+  }
+
+  type GetLoanGroupByPayload<T extends LoanGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LoanGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LoanGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LoanGroupByOutputType[P]>
+            : GetScalarType<T[P], LoanGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LoanSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    employeeId?: boolean
+    provider?: boolean
+    loanType?: boolean
+    loanAccountNumber?: boolean
+    loanDate?: boolean
+    terms?: boolean
+    statusReason?: boolean
+    totalAmount?: boolean
+    monthlyAmortization?: boolean
+    outstandingBalance?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    employee?: boolean | Loan$employeeArgs<ExtArgs>
+    payments?: boolean | Loan$paymentsArgs<ExtArgs>
+    _count?: boolean | LoanCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loan"]>
+
+  export type LoanSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    employeeId?: boolean
+    provider?: boolean
+    loanType?: boolean
+    loanAccountNumber?: boolean
+    loanDate?: boolean
+    terms?: boolean
+    statusReason?: boolean
+    totalAmount?: boolean
+    monthlyAmortization?: boolean
+    outstandingBalance?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    employee?: boolean | Loan$employeeArgs<ExtArgs>
+  }, ExtArgs["result"]["loan"]>
+
+  export type LoanSelectScalar = {
+    id?: boolean
+    employeeId?: boolean
+    provider?: boolean
+    loanType?: boolean
+    loanAccountNumber?: boolean
+    loanDate?: boolean
+    terms?: boolean
+    statusReason?: boolean
+    totalAmount?: boolean
+    monthlyAmortization?: boolean
+    outstandingBalance?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type LoanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    employee?: boolean | Loan$employeeArgs<ExtArgs>
+    payments?: boolean | Loan$paymentsArgs<ExtArgs>
+    _count?: boolean | LoanCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type LoanIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    employee?: boolean | Loan$employeeArgs<ExtArgs>
+  }
+
+  export type $LoanPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Loan"
+    objects: {
+      employee: Prisma.$employeePayload<ExtArgs> | null
+      payments: Prisma.$LoanPaymentPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      employeeId: number | null
+      provider: $Enums.LoanProvider
+      loanType: string
+      loanAccountNumber: string
+      loanDate: Date | null
+      terms: number | null
+      statusReason: string | null
+      totalAmount: Prisma.Decimal | null
+      monthlyAmortization: Prisma.Decimal
+      outstandingBalance: Prisma.Decimal | null
+      status: $Enums.LoanStatus
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["loan"]>
+    composites: {}
+  }
+
+  type LoanGetPayload<S extends boolean | null | undefined | LoanDefaultArgs> = $Result.GetResult<Prisma.$LoanPayload, S>
+
+  type LoanCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LoanFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LoanCountAggregateInputType | true
+    }
+
+  export interface LoanDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Loan'], meta: { name: 'Loan' } }
+    /**
+     * Find zero or one Loan that matches the filter.
+     * @param {LoanFindUniqueArgs} args - Arguments to find a Loan
+     * @example
+     * // Get one Loan
+     * const loan = await prisma.loan.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LoanFindUniqueArgs>(args: SelectSubset<T, LoanFindUniqueArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Loan that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LoanFindUniqueOrThrowArgs} args - Arguments to find a Loan
+     * @example
+     * // Get one Loan
+     * const loan = await prisma.loan.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LoanFindUniqueOrThrowArgs>(args: SelectSubset<T, LoanFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Loan that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanFindFirstArgs} args - Arguments to find a Loan
+     * @example
+     * // Get one Loan
+     * const loan = await prisma.loan.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LoanFindFirstArgs>(args?: SelectSubset<T, LoanFindFirstArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Loan that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanFindFirstOrThrowArgs} args - Arguments to find a Loan
+     * @example
+     * // Get one Loan
+     * const loan = await prisma.loan.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LoanFindFirstOrThrowArgs>(args?: SelectSubset<T, LoanFindFirstOrThrowArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Loans that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Loans
+     * const loans = await prisma.loan.findMany()
+     * 
+     * // Get first 10 Loans
+     * const loans = await prisma.loan.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const loanWithIdOnly = await prisma.loan.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LoanFindManyArgs>(args?: SelectSubset<T, LoanFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Loan.
+     * @param {LoanCreateArgs} args - Arguments to create a Loan.
+     * @example
+     * // Create one Loan
+     * const Loan = await prisma.loan.create({
+     *   data: {
+     *     // ... data to create a Loan
+     *   }
+     * })
+     * 
+     */
+    create<T extends LoanCreateArgs>(args: SelectSubset<T, LoanCreateArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Loans.
+     * @param {LoanCreateManyArgs} args - Arguments to create many Loans.
+     * @example
+     * // Create many Loans
+     * const loan = await prisma.loan.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LoanCreateManyArgs>(args?: SelectSubset<T, LoanCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Loans and returns the data saved in the database.
+     * @param {LoanCreateManyAndReturnArgs} args - Arguments to create many Loans.
+     * @example
+     * // Create many Loans
+     * const loan = await prisma.loan.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Loans and only return the `id`
+     * const loanWithIdOnly = await prisma.loan.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LoanCreateManyAndReturnArgs>(args?: SelectSubset<T, LoanCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Loan.
+     * @param {LoanDeleteArgs} args - Arguments to delete one Loan.
+     * @example
+     * // Delete one Loan
+     * const Loan = await prisma.loan.delete({
+     *   where: {
+     *     // ... filter to delete one Loan
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LoanDeleteArgs>(args: SelectSubset<T, LoanDeleteArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Loan.
+     * @param {LoanUpdateArgs} args - Arguments to update one Loan.
+     * @example
+     * // Update one Loan
+     * const loan = await prisma.loan.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LoanUpdateArgs>(args: SelectSubset<T, LoanUpdateArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Loans.
+     * @param {LoanDeleteManyArgs} args - Arguments to filter Loans to delete.
+     * @example
+     * // Delete a few Loans
+     * const { count } = await prisma.loan.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LoanDeleteManyArgs>(args?: SelectSubset<T, LoanDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Loans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Loans
+     * const loan = await prisma.loan.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LoanUpdateManyArgs>(args: SelectSubset<T, LoanUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Loan.
+     * @param {LoanUpsertArgs} args - Arguments to update or create a Loan.
+     * @example
+     * // Update or create a Loan
+     * const loan = await prisma.loan.upsert({
+     *   create: {
+     *     // ... data to create a Loan
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Loan we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LoanUpsertArgs>(args: SelectSubset<T, LoanUpsertArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Loans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanCountArgs} args - Arguments to filter Loans to count.
+     * @example
+     * // Count the number of Loans
+     * const count = await prisma.loan.count({
+     *   where: {
+     *     // ... the filter for the Loans we want to count
+     *   }
+     * })
+    **/
+    count<T extends LoanCountArgs>(
+      args?: Subset<T, LoanCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LoanCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Loan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LoanAggregateArgs>(args: Subset<T, LoanAggregateArgs>): Prisma.PrismaPromise<GetLoanAggregateType<T>>
+
+    /**
+     * Group by Loan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LoanGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LoanGroupByArgs['orderBy'] }
+        : { orderBy?: LoanGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LoanGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLoanGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Loan model
+   */
+  readonly fields: LoanFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Loan.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LoanClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    employee<T extends Loan$employeeArgs<ExtArgs> = {}>(args?: Subset<T, Loan$employeeArgs<ExtArgs>>): Prisma__employeeClient<$Result.GetResult<Prisma.$employeePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    payments<T extends Loan$paymentsArgs<ExtArgs> = {}>(args?: Subset<T, Loan$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Loan model
+   */ 
+  interface LoanFieldRefs {
+    readonly id: FieldRef<"Loan", 'String'>
+    readonly employeeId: FieldRef<"Loan", 'Int'>
+    readonly provider: FieldRef<"Loan", 'LoanProvider'>
+    readonly loanType: FieldRef<"Loan", 'String'>
+    readonly loanAccountNumber: FieldRef<"Loan", 'String'>
+    readonly loanDate: FieldRef<"Loan", 'DateTime'>
+    readonly terms: FieldRef<"Loan", 'Int'>
+    readonly statusReason: FieldRef<"Loan", 'String'>
+    readonly totalAmount: FieldRef<"Loan", 'Decimal'>
+    readonly monthlyAmortization: FieldRef<"Loan", 'Decimal'>
+    readonly outstandingBalance: FieldRef<"Loan", 'Decimal'>
+    readonly status: FieldRef<"Loan", 'LoanStatus'>
+    readonly createdAt: FieldRef<"Loan", 'DateTime'>
+    readonly updatedAt: FieldRef<"Loan", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Loan findUnique
+   */
+  export type LoanFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * Filter, which Loan to fetch.
+     */
+    where: LoanWhereUniqueInput
+  }
+
+  /**
+   * Loan findUniqueOrThrow
+   */
+  export type LoanFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * Filter, which Loan to fetch.
+     */
+    where: LoanWhereUniqueInput
+  }
+
+  /**
+   * Loan findFirst
+   */
+  export type LoanFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * Filter, which Loan to fetch.
+     */
+    where?: LoanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Loans to fetch.
+     */
+    orderBy?: LoanOrderByWithRelationInput | LoanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Loans.
+     */
+    cursor?: LoanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Loans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Loans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Loans.
+     */
+    distinct?: LoanScalarFieldEnum | LoanScalarFieldEnum[]
+  }
+
+  /**
+   * Loan findFirstOrThrow
+   */
+  export type LoanFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * Filter, which Loan to fetch.
+     */
+    where?: LoanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Loans to fetch.
+     */
+    orderBy?: LoanOrderByWithRelationInput | LoanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Loans.
+     */
+    cursor?: LoanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Loans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Loans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Loans.
+     */
+    distinct?: LoanScalarFieldEnum | LoanScalarFieldEnum[]
+  }
+
+  /**
+   * Loan findMany
+   */
+  export type LoanFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * Filter, which Loans to fetch.
+     */
+    where?: LoanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Loans to fetch.
+     */
+    orderBy?: LoanOrderByWithRelationInput | LoanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Loans.
+     */
+    cursor?: LoanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Loans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Loans.
+     */
+    skip?: number
+    distinct?: LoanScalarFieldEnum | LoanScalarFieldEnum[]
+  }
+
+  /**
+   * Loan create
+   */
+  export type LoanCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Loan.
+     */
+    data: XOR<LoanCreateInput, LoanUncheckedCreateInput>
+  }
+
+  /**
+   * Loan createMany
+   */
+  export type LoanCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Loans.
+     */
+    data: LoanCreateManyInput | LoanCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Loan createManyAndReturn
+   */
+  export type LoanCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Loans.
+     */
+    data: LoanCreateManyInput | LoanCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Loan update
+   */
+  export type LoanUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Loan.
+     */
+    data: XOR<LoanUpdateInput, LoanUncheckedUpdateInput>
+    /**
+     * Choose, which Loan to update.
+     */
+    where: LoanWhereUniqueInput
+  }
+
+  /**
+   * Loan updateMany
+   */
+  export type LoanUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Loans.
+     */
+    data: XOR<LoanUpdateManyMutationInput, LoanUncheckedUpdateManyInput>
+    /**
+     * Filter which Loans to update
+     */
+    where?: LoanWhereInput
+  }
+
+  /**
+   * Loan upsert
+   */
+  export type LoanUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Loan to update in case it exists.
+     */
+    where: LoanWhereUniqueInput
+    /**
+     * In case the Loan found by the `where` argument doesn't exist, create a new Loan with this data.
+     */
+    create: XOR<LoanCreateInput, LoanUncheckedCreateInput>
+    /**
+     * In case the Loan was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LoanUpdateInput, LoanUncheckedUpdateInput>
+  }
+
+  /**
+   * Loan delete
+   */
+  export type LoanDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+    /**
+     * Filter which Loan to delete.
+     */
+    where: LoanWhereUniqueInput
+  }
+
+  /**
+   * Loan deleteMany
+   */
+  export type LoanDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Loans to delete
+     */
+    where?: LoanWhereInput
+  }
+
+  /**
+   * Loan.employee
+   */
+  export type Loan$employeeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the employee
+     */
+    select?: employeeSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: employeeInclude<ExtArgs> | null
+    where?: employeeWhereInput
+  }
+
+  /**
+   * Loan.payments
+   */
+  export type Loan$paymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    where?: LoanPaymentWhereInput
+    orderBy?: LoanPaymentOrderByWithRelationInput | LoanPaymentOrderByWithRelationInput[]
+    cursor?: LoanPaymentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LoanPaymentScalarFieldEnum | LoanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * Loan without action
+   */
+  export type LoanDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Loan
+     */
+    select?: LoanSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LoanMonitorReport
+   */
+
+  export type AggregateLoanMonitorReport = {
+    _count: LoanMonitorReportCountAggregateOutputType | null
+    _avg: LoanMonitorReportAvgAggregateOutputType | null
+    _sum: LoanMonitorReportSumAggregateOutputType | null
+    _min: LoanMonitorReportMinAggregateOutputType | null
+    _max: LoanMonitorReportMaxAggregateOutputType | null
+  }
+
+  export type LoanMonitorReportAvgAggregateOutputType = {
+    totalMonthly: Decimal | null
+    totalOutstanding: Decimal | null
+    amountPaid: Decimal | null
+    createdBy: number | null
+  }
+
+  export type LoanMonitorReportSumAggregateOutputType = {
+    totalMonthly: Decimal | null
+    totalOutstanding: Decimal | null
+    amountPaid: Decimal | null
+    createdBy: number | null
+  }
+
+  export type LoanMonitorReportMinAggregateOutputType = {
+    id: string | null
+    applicableDate: Date | null
+    employerName: string | null
+    employerSssNumber: string | null
+    employerAddress: string | null
+    totalMonthly: Decimal | null
+    totalOutstanding: Decimal | null
+    prn: string | null
+    paymentDate: Date | null
+    amountPaid: Decimal | null
+    paymentBranch: string | null
+    transactionReference: string | null
+    createdBy: number | null
+    createdAt: Date | null
+  }
+
+  export type LoanMonitorReportMaxAggregateOutputType = {
+    id: string | null
+    applicableDate: Date | null
+    employerName: string | null
+    employerSssNumber: string | null
+    employerAddress: string | null
+    totalMonthly: Decimal | null
+    totalOutstanding: Decimal | null
+    prn: string | null
+    paymentDate: Date | null
+    amountPaid: Decimal | null
+    paymentBranch: string | null
+    transactionReference: string | null
+    createdBy: number | null
+    createdAt: Date | null
+  }
+
+  export type LoanMonitorReportCountAggregateOutputType = {
+    id: number
+    applicableDate: number
+    employerName: number
+    employerSssNumber: number
+    employerAddress: number
+    totalMonthly: number
+    totalOutstanding: number
+    prn: number
+    paymentDate: number
+    amountPaid: number
+    paymentBranch: number
+    transactionReference: number
+    createdBy: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type LoanMonitorReportAvgAggregateInputType = {
+    totalMonthly?: true
+    totalOutstanding?: true
+    amountPaid?: true
+    createdBy?: true
+  }
+
+  export type LoanMonitorReportSumAggregateInputType = {
+    totalMonthly?: true
+    totalOutstanding?: true
+    amountPaid?: true
+    createdBy?: true
+  }
+
+  export type LoanMonitorReportMinAggregateInputType = {
+    id?: true
+    applicableDate?: true
+    employerName?: true
+    employerSssNumber?: true
+    employerAddress?: true
+    totalMonthly?: true
+    totalOutstanding?: true
+    prn?: true
+    paymentDate?: true
+    amountPaid?: true
+    paymentBranch?: true
+    transactionReference?: true
+    createdBy?: true
+    createdAt?: true
+  }
+
+  export type LoanMonitorReportMaxAggregateInputType = {
+    id?: true
+    applicableDate?: true
+    employerName?: true
+    employerSssNumber?: true
+    employerAddress?: true
+    totalMonthly?: true
+    totalOutstanding?: true
+    prn?: true
+    paymentDate?: true
+    amountPaid?: true
+    paymentBranch?: true
+    transactionReference?: true
+    createdBy?: true
+    createdAt?: true
+  }
+
+  export type LoanMonitorReportCountAggregateInputType = {
+    id?: true
+    applicableDate?: true
+    employerName?: true
+    employerSssNumber?: true
+    employerAddress?: true
+    totalMonthly?: true
+    totalOutstanding?: true
+    prn?: true
+    paymentDate?: true
+    amountPaid?: true
+    paymentBranch?: true
+    transactionReference?: true
+    createdBy?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type LoanMonitorReportAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoanMonitorReport to aggregate.
+     */
+    where?: LoanMonitorReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReports to fetch.
+     */
+    orderBy?: LoanMonitorReportOrderByWithRelationInput | LoanMonitorReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LoanMonitorReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LoanMonitorReports
+    **/
+    _count?: true | LoanMonitorReportCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LoanMonitorReportAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LoanMonitorReportSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LoanMonitorReportMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LoanMonitorReportMaxAggregateInputType
+  }
+
+  export type GetLoanMonitorReportAggregateType<T extends LoanMonitorReportAggregateArgs> = {
+        [P in keyof T & keyof AggregateLoanMonitorReport]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLoanMonitorReport[P]>
+      : GetScalarType<T[P], AggregateLoanMonitorReport[P]>
+  }
+
+
+
+
+  export type LoanMonitorReportGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanMonitorReportWhereInput
+    orderBy?: LoanMonitorReportOrderByWithAggregationInput | LoanMonitorReportOrderByWithAggregationInput[]
+    by: LoanMonitorReportScalarFieldEnum[] | LoanMonitorReportScalarFieldEnum
+    having?: LoanMonitorReportScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LoanMonitorReportCountAggregateInputType | true
+    _avg?: LoanMonitorReportAvgAggregateInputType
+    _sum?: LoanMonitorReportSumAggregateInputType
+    _min?: LoanMonitorReportMinAggregateInputType
+    _max?: LoanMonitorReportMaxAggregateInputType
+  }
+
+  export type LoanMonitorReportGroupByOutputType = {
+    id: string
+    applicableDate: Date
+    employerName: string | null
+    employerSssNumber: string | null
+    employerAddress: string | null
+    totalMonthly: Decimal
+    totalOutstanding: Decimal
+    prn: string | null
+    paymentDate: Date | null
+    amountPaid: Decimal | null
+    paymentBranch: string | null
+    transactionReference: string | null
+    createdBy: number | null
+    createdAt: Date
+    _count: LoanMonitorReportCountAggregateOutputType | null
+    _avg: LoanMonitorReportAvgAggregateOutputType | null
+    _sum: LoanMonitorReportSumAggregateOutputType | null
+    _min: LoanMonitorReportMinAggregateOutputType | null
+    _max: LoanMonitorReportMaxAggregateOutputType | null
+  }
+
+  type GetLoanMonitorReportGroupByPayload<T extends LoanMonitorReportGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LoanMonitorReportGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LoanMonitorReportGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LoanMonitorReportGroupByOutputType[P]>
+            : GetScalarType<T[P], LoanMonitorReportGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LoanMonitorReportSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    applicableDate?: boolean
+    employerName?: boolean
+    employerSssNumber?: boolean
+    employerAddress?: boolean
+    totalMonthly?: boolean
+    totalOutstanding?: boolean
+    prn?: boolean
+    paymentDate?: boolean
+    amountPaid?: boolean
+    paymentBranch?: boolean
+    transactionReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    creator?: boolean | LoanMonitorReport$creatorArgs<ExtArgs>
+    entries?: boolean | LoanMonitorReport$entriesArgs<ExtArgs>
+    _count?: boolean | LoanMonitorReportCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loanMonitorReport"]>
+
+  export type LoanMonitorReportSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    applicableDate?: boolean
+    employerName?: boolean
+    employerSssNumber?: boolean
+    employerAddress?: boolean
+    totalMonthly?: boolean
+    totalOutstanding?: boolean
+    prn?: boolean
+    paymentDate?: boolean
+    amountPaid?: boolean
+    paymentBranch?: boolean
+    transactionReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    creator?: boolean | LoanMonitorReport$creatorArgs<ExtArgs>
+  }, ExtArgs["result"]["loanMonitorReport"]>
+
+  export type LoanMonitorReportSelectScalar = {
+    id?: boolean
+    applicableDate?: boolean
+    employerName?: boolean
+    employerSssNumber?: boolean
+    employerAddress?: boolean
+    totalMonthly?: boolean
+    totalOutstanding?: boolean
+    prn?: boolean
+    paymentDate?: boolean
+    amountPaid?: boolean
+    paymentBranch?: boolean
+    transactionReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+  }
+
+  export type LoanMonitorReportInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    creator?: boolean | LoanMonitorReport$creatorArgs<ExtArgs>
+    entries?: boolean | LoanMonitorReport$entriesArgs<ExtArgs>
+    _count?: boolean | LoanMonitorReportCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type LoanMonitorReportIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    creator?: boolean | LoanMonitorReport$creatorArgs<ExtArgs>
+  }
+
+  export type $LoanMonitorReportPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LoanMonitorReport"
+    objects: {
+      creator: Prisma.$UserPayload<ExtArgs> | null
+      entries: Prisma.$LoanMonitorReportEntryPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      applicableDate: Date
+      employerName: string | null
+      employerSssNumber: string | null
+      employerAddress: string | null
+      totalMonthly: Prisma.Decimal
+      totalOutstanding: Prisma.Decimal
+      prn: string | null
+      paymentDate: Date | null
+      amountPaid: Prisma.Decimal | null
+      paymentBranch: string | null
+      transactionReference: string | null
+      createdBy: number | null
+      createdAt: Date
+    }, ExtArgs["result"]["loanMonitorReport"]>
+    composites: {}
+  }
+
+  type LoanMonitorReportGetPayload<S extends boolean | null | undefined | LoanMonitorReportDefaultArgs> = $Result.GetResult<Prisma.$LoanMonitorReportPayload, S>
+
+  type LoanMonitorReportCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LoanMonitorReportFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LoanMonitorReportCountAggregateInputType | true
+    }
+
+  export interface LoanMonitorReportDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LoanMonitorReport'], meta: { name: 'LoanMonitorReport' } }
+    /**
+     * Find zero or one LoanMonitorReport that matches the filter.
+     * @param {LoanMonitorReportFindUniqueArgs} args - Arguments to find a LoanMonitorReport
+     * @example
+     * // Get one LoanMonitorReport
+     * const loanMonitorReport = await prisma.loanMonitorReport.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LoanMonitorReportFindUniqueArgs>(args: SelectSubset<T, LoanMonitorReportFindUniqueArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one LoanMonitorReport that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LoanMonitorReportFindUniqueOrThrowArgs} args - Arguments to find a LoanMonitorReport
+     * @example
+     * // Get one LoanMonitorReport
+     * const loanMonitorReport = await prisma.loanMonitorReport.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LoanMonitorReportFindUniqueOrThrowArgs>(args: SelectSubset<T, LoanMonitorReportFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first LoanMonitorReport that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportFindFirstArgs} args - Arguments to find a LoanMonitorReport
+     * @example
+     * // Get one LoanMonitorReport
+     * const loanMonitorReport = await prisma.loanMonitorReport.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LoanMonitorReportFindFirstArgs>(args?: SelectSubset<T, LoanMonitorReportFindFirstArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first LoanMonitorReport that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportFindFirstOrThrowArgs} args - Arguments to find a LoanMonitorReport
+     * @example
+     * // Get one LoanMonitorReport
+     * const loanMonitorReport = await prisma.loanMonitorReport.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LoanMonitorReportFindFirstOrThrowArgs>(args?: SelectSubset<T, LoanMonitorReportFindFirstOrThrowArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more LoanMonitorReports that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LoanMonitorReports
+     * const loanMonitorReports = await prisma.loanMonitorReport.findMany()
+     * 
+     * // Get first 10 LoanMonitorReports
+     * const loanMonitorReports = await prisma.loanMonitorReport.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const loanMonitorReportWithIdOnly = await prisma.loanMonitorReport.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LoanMonitorReportFindManyArgs>(args?: SelectSubset<T, LoanMonitorReportFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a LoanMonitorReport.
+     * @param {LoanMonitorReportCreateArgs} args - Arguments to create a LoanMonitorReport.
+     * @example
+     * // Create one LoanMonitorReport
+     * const LoanMonitorReport = await prisma.loanMonitorReport.create({
+     *   data: {
+     *     // ... data to create a LoanMonitorReport
+     *   }
+     * })
+     * 
+     */
+    create<T extends LoanMonitorReportCreateArgs>(args: SelectSubset<T, LoanMonitorReportCreateArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many LoanMonitorReports.
+     * @param {LoanMonitorReportCreateManyArgs} args - Arguments to create many LoanMonitorReports.
+     * @example
+     * // Create many LoanMonitorReports
+     * const loanMonitorReport = await prisma.loanMonitorReport.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LoanMonitorReportCreateManyArgs>(args?: SelectSubset<T, LoanMonitorReportCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LoanMonitorReports and returns the data saved in the database.
+     * @param {LoanMonitorReportCreateManyAndReturnArgs} args - Arguments to create many LoanMonitorReports.
+     * @example
+     * // Create many LoanMonitorReports
+     * const loanMonitorReport = await prisma.loanMonitorReport.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LoanMonitorReports and only return the `id`
+     * const loanMonitorReportWithIdOnly = await prisma.loanMonitorReport.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LoanMonitorReportCreateManyAndReturnArgs>(args?: SelectSubset<T, LoanMonitorReportCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a LoanMonitorReport.
+     * @param {LoanMonitorReportDeleteArgs} args - Arguments to delete one LoanMonitorReport.
+     * @example
+     * // Delete one LoanMonitorReport
+     * const LoanMonitorReport = await prisma.loanMonitorReport.delete({
+     *   where: {
+     *     // ... filter to delete one LoanMonitorReport
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LoanMonitorReportDeleteArgs>(args: SelectSubset<T, LoanMonitorReportDeleteArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one LoanMonitorReport.
+     * @param {LoanMonitorReportUpdateArgs} args - Arguments to update one LoanMonitorReport.
+     * @example
+     * // Update one LoanMonitorReport
+     * const loanMonitorReport = await prisma.loanMonitorReport.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LoanMonitorReportUpdateArgs>(args: SelectSubset<T, LoanMonitorReportUpdateArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more LoanMonitorReports.
+     * @param {LoanMonitorReportDeleteManyArgs} args - Arguments to filter LoanMonitorReports to delete.
+     * @example
+     * // Delete a few LoanMonitorReports
+     * const { count } = await prisma.loanMonitorReport.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LoanMonitorReportDeleteManyArgs>(args?: SelectSubset<T, LoanMonitorReportDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LoanMonitorReports.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LoanMonitorReports
+     * const loanMonitorReport = await prisma.loanMonitorReport.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LoanMonitorReportUpdateManyArgs>(args: SelectSubset<T, LoanMonitorReportUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one LoanMonitorReport.
+     * @param {LoanMonitorReportUpsertArgs} args - Arguments to update or create a LoanMonitorReport.
+     * @example
+     * // Update or create a LoanMonitorReport
+     * const loanMonitorReport = await prisma.loanMonitorReport.upsert({
+     *   create: {
+     *     // ... data to create a LoanMonitorReport
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LoanMonitorReport we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LoanMonitorReportUpsertArgs>(args: SelectSubset<T, LoanMonitorReportUpsertArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of LoanMonitorReports.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportCountArgs} args - Arguments to filter LoanMonitorReports to count.
+     * @example
+     * // Count the number of LoanMonitorReports
+     * const count = await prisma.loanMonitorReport.count({
+     *   where: {
+     *     // ... the filter for the LoanMonitorReports we want to count
+     *   }
+     * })
+    **/
+    count<T extends LoanMonitorReportCountArgs>(
+      args?: Subset<T, LoanMonitorReportCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LoanMonitorReportCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LoanMonitorReport.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LoanMonitorReportAggregateArgs>(args: Subset<T, LoanMonitorReportAggregateArgs>): Prisma.PrismaPromise<GetLoanMonitorReportAggregateType<T>>
+
+    /**
+     * Group by LoanMonitorReport.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LoanMonitorReportGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LoanMonitorReportGroupByArgs['orderBy'] }
+        : { orderBy?: LoanMonitorReportGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LoanMonitorReportGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLoanMonitorReportGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LoanMonitorReport model
+   */
+  readonly fields: LoanMonitorReportFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LoanMonitorReport.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LoanMonitorReportClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    creator<T extends LoanMonitorReport$creatorArgs<ExtArgs> = {}>(args?: Subset<T, LoanMonitorReport$creatorArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    entries<T extends LoanMonitorReport$entriesArgs<ExtArgs> = {}>(args?: Subset<T, LoanMonitorReport$entriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LoanMonitorReport model
+   */ 
+  interface LoanMonitorReportFieldRefs {
+    readonly id: FieldRef<"LoanMonitorReport", 'String'>
+    readonly applicableDate: FieldRef<"LoanMonitorReport", 'DateTime'>
+    readonly employerName: FieldRef<"LoanMonitorReport", 'String'>
+    readonly employerSssNumber: FieldRef<"LoanMonitorReport", 'String'>
+    readonly employerAddress: FieldRef<"LoanMonitorReport", 'String'>
+    readonly totalMonthly: FieldRef<"LoanMonitorReport", 'Decimal'>
+    readonly totalOutstanding: FieldRef<"LoanMonitorReport", 'Decimal'>
+    readonly prn: FieldRef<"LoanMonitorReport", 'String'>
+    readonly paymentDate: FieldRef<"LoanMonitorReport", 'DateTime'>
+    readonly amountPaid: FieldRef<"LoanMonitorReport", 'Decimal'>
+    readonly paymentBranch: FieldRef<"LoanMonitorReport", 'String'>
+    readonly transactionReference: FieldRef<"LoanMonitorReport", 'String'>
+    readonly createdBy: FieldRef<"LoanMonitorReport", 'Int'>
+    readonly createdAt: FieldRef<"LoanMonitorReport", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LoanMonitorReport findUnique
+   */
+  export type LoanMonitorReportFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReport to fetch.
+     */
+    where: LoanMonitorReportWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReport findUniqueOrThrow
+   */
+  export type LoanMonitorReportFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReport to fetch.
+     */
+    where: LoanMonitorReportWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReport findFirst
+   */
+  export type LoanMonitorReportFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReport to fetch.
+     */
+    where?: LoanMonitorReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReports to fetch.
+     */
+    orderBy?: LoanMonitorReportOrderByWithRelationInput | LoanMonitorReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoanMonitorReports.
+     */
+    cursor?: LoanMonitorReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoanMonitorReports.
+     */
+    distinct?: LoanMonitorReportScalarFieldEnum | LoanMonitorReportScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReport findFirstOrThrow
+   */
+  export type LoanMonitorReportFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReport to fetch.
+     */
+    where?: LoanMonitorReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReports to fetch.
+     */
+    orderBy?: LoanMonitorReportOrderByWithRelationInput | LoanMonitorReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoanMonitorReports.
+     */
+    cursor?: LoanMonitorReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReports.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoanMonitorReports.
+     */
+    distinct?: LoanMonitorReportScalarFieldEnum | LoanMonitorReportScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReport findMany
+   */
+  export type LoanMonitorReportFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReports to fetch.
+     */
+    where?: LoanMonitorReportWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReports to fetch.
+     */
+    orderBy?: LoanMonitorReportOrderByWithRelationInput | LoanMonitorReportOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LoanMonitorReports.
+     */
+    cursor?: LoanMonitorReportWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReports from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReports.
+     */
+    skip?: number
+    distinct?: LoanMonitorReportScalarFieldEnum | LoanMonitorReportScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReport create
+   */
+  export type LoanMonitorReportCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LoanMonitorReport.
+     */
+    data: XOR<LoanMonitorReportCreateInput, LoanMonitorReportUncheckedCreateInput>
+  }
+
+  /**
+   * LoanMonitorReport createMany
+   */
+  export type LoanMonitorReportCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LoanMonitorReports.
+     */
+    data: LoanMonitorReportCreateManyInput | LoanMonitorReportCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LoanMonitorReport createManyAndReturn
+   */
+  export type LoanMonitorReportCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many LoanMonitorReports.
+     */
+    data: LoanMonitorReportCreateManyInput | LoanMonitorReportCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LoanMonitorReport update
+   */
+  export type LoanMonitorReportUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LoanMonitorReport.
+     */
+    data: XOR<LoanMonitorReportUpdateInput, LoanMonitorReportUncheckedUpdateInput>
+    /**
+     * Choose, which LoanMonitorReport to update.
+     */
+    where: LoanMonitorReportWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReport updateMany
+   */
+  export type LoanMonitorReportUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LoanMonitorReports.
+     */
+    data: XOR<LoanMonitorReportUpdateManyMutationInput, LoanMonitorReportUncheckedUpdateManyInput>
+    /**
+     * Filter which LoanMonitorReports to update
+     */
+    where?: LoanMonitorReportWhereInput
+  }
+
+  /**
+   * LoanMonitorReport upsert
+   */
+  export type LoanMonitorReportUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LoanMonitorReport to update in case it exists.
+     */
+    where: LoanMonitorReportWhereUniqueInput
+    /**
+     * In case the LoanMonitorReport found by the `where` argument doesn't exist, create a new LoanMonitorReport with this data.
+     */
+    create: XOR<LoanMonitorReportCreateInput, LoanMonitorReportUncheckedCreateInput>
+    /**
+     * In case the LoanMonitorReport was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LoanMonitorReportUpdateInput, LoanMonitorReportUncheckedUpdateInput>
+  }
+
+  /**
+   * LoanMonitorReport delete
+   */
+  export type LoanMonitorReportDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+    /**
+     * Filter which LoanMonitorReport to delete.
+     */
+    where: LoanMonitorReportWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReport deleteMany
+   */
+  export type LoanMonitorReportDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoanMonitorReports to delete
+     */
+    where?: LoanMonitorReportWhereInput
+  }
+
+  /**
+   * LoanMonitorReport.creator
+   */
+  export type LoanMonitorReport$creatorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * LoanMonitorReport.entries
+   */
+  export type LoanMonitorReport$entriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    where?: LoanMonitorReportEntryWhereInput
+    orderBy?: LoanMonitorReportEntryOrderByWithRelationInput | LoanMonitorReportEntryOrderByWithRelationInput[]
+    cursor?: LoanMonitorReportEntryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LoanMonitorReportEntryScalarFieldEnum | LoanMonitorReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReport without action
+   */
+  export type LoanMonitorReportDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReport
+     */
+    select?: LoanMonitorReportSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LoanMonitorReportEntry
+   */
+
+  export type AggregateLoanMonitorReportEntry = {
+    _count: LoanMonitorReportEntryCountAggregateOutputType | null
+    _avg: LoanMonitorReportEntryAvgAggregateOutputType | null
+    _sum: LoanMonitorReportEntrySumAggregateOutputType | null
+    _min: LoanMonitorReportEntryMinAggregateOutputType | null
+    _max: LoanMonitorReportEntryMaxAggregateOutputType | null
+  }
+
+  export type LoanMonitorReportEntryAvgAggregateOutputType = {
+    terms: number | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+  }
+
+  export type LoanMonitorReportEntrySumAggregateOutputType = {
+    terms: number | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+  }
+
+  export type LoanMonitorReportEntryMinAggregateOutputType = {
+    id: string | null
+    reportId: string | null
+    loanId: string | null
+    provider: string | null
+    loanType: string | null
+    loanAccountNumber: string | null
+    employeeName: string | null
+    loanDate: Date | null
+    terms: number | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+    status: string | null
+    statusReason: string | null
+    employerName: string | null
+    employerSssNumber: string | null
+    employerAddress: string | null
+  }
+
+  export type LoanMonitorReportEntryMaxAggregateOutputType = {
+    id: string | null
+    reportId: string | null
+    loanId: string | null
+    provider: string | null
+    loanType: string | null
+    loanAccountNumber: string | null
+    employeeName: string | null
+    loanDate: Date | null
+    terms: number | null
+    totalAmount: Decimal | null
+    monthlyAmortization: Decimal | null
+    outstandingBalance: Decimal | null
+    status: string | null
+    statusReason: string | null
+    employerName: string | null
+    employerSssNumber: string | null
+    employerAddress: string | null
+  }
+
+  export type LoanMonitorReportEntryCountAggregateOutputType = {
+    id: number
+    reportId: number
+    loanId: number
+    provider: number
+    loanType: number
+    loanAccountNumber: number
+    employeeName: number
+    loanDate: number
+    terms: number
+    totalAmount: number
+    monthlyAmortization: number
+    outstandingBalance: number
+    status: number
+    statusReason: number
+    employerName: number
+    employerSssNumber: number
+    employerAddress: number
+    _all: number
+  }
+
+
+  export type LoanMonitorReportEntryAvgAggregateInputType = {
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+  }
+
+  export type LoanMonitorReportEntrySumAggregateInputType = {
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+  }
+
+  export type LoanMonitorReportEntryMinAggregateInputType = {
+    id?: true
+    reportId?: true
+    loanId?: true
+    provider?: true
+    loanType?: true
+    loanAccountNumber?: true
+    employeeName?: true
+    loanDate?: true
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+    status?: true
+    statusReason?: true
+    employerName?: true
+    employerSssNumber?: true
+    employerAddress?: true
+  }
+
+  export type LoanMonitorReportEntryMaxAggregateInputType = {
+    id?: true
+    reportId?: true
+    loanId?: true
+    provider?: true
+    loanType?: true
+    loanAccountNumber?: true
+    employeeName?: true
+    loanDate?: true
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+    status?: true
+    statusReason?: true
+    employerName?: true
+    employerSssNumber?: true
+    employerAddress?: true
+  }
+
+  export type LoanMonitorReportEntryCountAggregateInputType = {
+    id?: true
+    reportId?: true
+    loanId?: true
+    provider?: true
+    loanType?: true
+    loanAccountNumber?: true
+    employeeName?: true
+    loanDate?: true
+    terms?: true
+    totalAmount?: true
+    monthlyAmortization?: true
+    outstandingBalance?: true
+    status?: true
+    statusReason?: true
+    employerName?: true
+    employerSssNumber?: true
+    employerAddress?: true
+    _all?: true
+  }
+
+  export type LoanMonitorReportEntryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoanMonitorReportEntry to aggregate.
+     */
+    where?: LoanMonitorReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReportEntries to fetch.
+     */
+    orderBy?: LoanMonitorReportEntryOrderByWithRelationInput | LoanMonitorReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LoanMonitorReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReportEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LoanMonitorReportEntries
+    **/
+    _count?: true | LoanMonitorReportEntryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LoanMonitorReportEntryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LoanMonitorReportEntrySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LoanMonitorReportEntryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LoanMonitorReportEntryMaxAggregateInputType
+  }
+
+  export type GetLoanMonitorReportEntryAggregateType<T extends LoanMonitorReportEntryAggregateArgs> = {
+        [P in keyof T & keyof AggregateLoanMonitorReportEntry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLoanMonitorReportEntry[P]>
+      : GetScalarType<T[P], AggregateLoanMonitorReportEntry[P]>
+  }
+
+
+
+
+  export type LoanMonitorReportEntryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanMonitorReportEntryWhereInput
+    orderBy?: LoanMonitorReportEntryOrderByWithAggregationInput | LoanMonitorReportEntryOrderByWithAggregationInput[]
+    by: LoanMonitorReportEntryScalarFieldEnum[] | LoanMonitorReportEntryScalarFieldEnum
+    having?: LoanMonitorReportEntryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LoanMonitorReportEntryCountAggregateInputType | true
+    _avg?: LoanMonitorReportEntryAvgAggregateInputType
+    _sum?: LoanMonitorReportEntrySumAggregateInputType
+    _min?: LoanMonitorReportEntryMinAggregateInputType
+    _max?: LoanMonitorReportEntryMaxAggregateInputType
+  }
+
+  export type LoanMonitorReportEntryGroupByOutputType = {
+    id: string
+    reportId: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate: Date | null
+    terms: number | null
+    totalAmount: Decimal
+    monthlyAmortization: Decimal
+    outstandingBalance: Decimal
+    status: string
+    statusReason: string | null
+    employerName: string
+    employerSssNumber: string | null
+    employerAddress: string | null
+    _count: LoanMonitorReportEntryCountAggregateOutputType | null
+    _avg: LoanMonitorReportEntryAvgAggregateOutputType | null
+    _sum: LoanMonitorReportEntrySumAggregateOutputType | null
+    _min: LoanMonitorReportEntryMinAggregateOutputType | null
+    _max: LoanMonitorReportEntryMaxAggregateOutputType | null
+  }
+
+  type GetLoanMonitorReportEntryGroupByPayload<T extends LoanMonitorReportEntryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LoanMonitorReportEntryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LoanMonitorReportEntryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LoanMonitorReportEntryGroupByOutputType[P]>
+            : GetScalarType<T[P], LoanMonitorReportEntryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LoanMonitorReportEntrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    reportId?: boolean
+    loanId?: boolean
+    provider?: boolean
+    loanType?: boolean
+    loanAccountNumber?: boolean
+    employeeName?: boolean
+    loanDate?: boolean
+    terms?: boolean
+    totalAmount?: boolean
+    monthlyAmortization?: boolean
+    outstandingBalance?: boolean
+    status?: boolean
+    statusReason?: boolean
+    employerName?: boolean
+    employerSssNumber?: boolean
+    employerAddress?: boolean
+    report?: boolean | LoanMonitorReportDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loanMonitorReportEntry"]>
+
+  export type LoanMonitorReportEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    reportId?: boolean
+    loanId?: boolean
+    provider?: boolean
+    loanType?: boolean
+    loanAccountNumber?: boolean
+    employeeName?: boolean
+    loanDate?: boolean
+    terms?: boolean
+    totalAmount?: boolean
+    monthlyAmortization?: boolean
+    outstandingBalance?: boolean
+    status?: boolean
+    statusReason?: boolean
+    employerName?: boolean
+    employerSssNumber?: boolean
+    employerAddress?: boolean
+    report?: boolean | LoanMonitorReportDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loanMonitorReportEntry"]>
+
+  export type LoanMonitorReportEntrySelectScalar = {
+    id?: boolean
+    reportId?: boolean
+    loanId?: boolean
+    provider?: boolean
+    loanType?: boolean
+    loanAccountNumber?: boolean
+    employeeName?: boolean
+    loanDate?: boolean
+    terms?: boolean
+    totalAmount?: boolean
+    monthlyAmortization?: boolean
+    outstandingBalance?: boolean
+    status?: boolean
+    statusReason?: boolean
+    employerName?: boolean
+    employerSssNumber?: boolean
+    employerAddress?: boolean
+  }
+
+  export type LoanMonitorReportEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    report?: boolean | LoanMonitorReportDefaultArgs<ExtArgs>
+  }
+  export type LoanMonitorReportEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    report?: boolean | LoanMonitorReportDefaultArgs<ExtArgs>
+  }
+
+  export type $LoanMonitorReportEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LoanMonitorReportEntry"
+    objects: {
+      report: Prisma.$LoanMonitorReportPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      reportId: string
+      loanId: string
+      provider: string
+      loanType: string
+      loanAccountNumber: string
+      employeeName: string
+      loanDate: Date | null
+      terms: number | null
+      totalAmount: Prisma.Decimal
+      monthlyAmortization: Prisma.Decimal
+      outstandingBalance: Prisma.Decimal
+      status: string
+      statusReason: string | null
+      employerName: string
+      employerSssNumber: string | null
+      employerAddress: string | null
+    }, ExtArgs["result"]["loanMonitorReportEntry"]>
+    composites: {}
+  }
+
+  type LoanMonitorReportEntryGetPayload<S extends boolean | null | undefined | LoanMonitorReportEntryDefaultArgs> = $Result.GetResult<Prisma.$LoanMonitorReportEntryPayload, S>
+
+  type LoanMonitorReportEntryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LoanMonitorReportEntryFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LoanMonitorReportEntryCountAggregateInputType | true
+    }
+
+  export interface LoanMonitorReportEntryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LoanMonitorReportEntry'], meta: { name: 'LoanMonitorReportEntry' } }
+    /**
+     * Find zero or one LoanMonitorReportEntry that matches the filter.
+     * @param {LoanMonitorReportEntryFindUniqueArgs} args - Arguments to find a LoanMonitorReportEntry
+     * @example
+     * // Get one LoanMonitorReportEntry
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LoanMonitorReportEntryFindUniqueArgs>(args: SelectSubset<T, LoanMonitorReportEntryFindUniqueArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one LoanMonitorReportEntry that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LoanMonitorReportEntryFindUniqueOrThrowArgs} args - Arguments to find a LoanMonitorReportEntry
+     * @example
+     * // Get one LoanMonitorReportEntry
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LoanMonitorReportEntryFindUniqueOrThrowArgs>(args: SelectSubset<T, LoanMonitorReportEntryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first LoanMonitorReportEntry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryFindFirstArgs} args - Arguments to find a LoanMonitorReportEntry
+     * @example
+     * // Get one LoanMonitorReportEntry
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LoanMonitorReportEntryFindFirstArgs>(args?: SelectSubset<T, LoanMonitorReportEntryFindFirstArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first LoanMonitorReportEntry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryFindFirstOrThrowArgs} args - Arguments to find a LoanMonitorReportEntry
+     * @example
+     * // Get one LoanMonitorReportEntry
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LoanMonitorReportEntryFindFirstOrThrowArgs>(args?: SelectSubset<T, LoanMonitorReportEntryFindFirstOrThrowArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more LoanMonitorReportEntries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LoanMonitorReportEntries
+     * const loanMonitorReportEntries = await prisma.loanMonitorReportEntry.findMany()
+     * 
+     * // Get first 10 LoanMonitorReportEntries
+     * const loanMonitorReportEntries = await prisma.loanMonitorReportEntry.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const loanMonitorReportEntryWithIdOnly = await prisma.loanMonitorReportEntry.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LoanMonitorReportEntryFindManyArgs>(args?: SelectSubset<T, LoanMonitorReportEntryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a LoanMonitorReportEntry.
+     * @param {LoanMonitorReportEntryCreateArgs} args - Arguments to create a LoanMonitorReportEntry.
+     * @example
+     * // Create one LoanMonitorReportEntry
+     * const LoanMonitorReportEntry = await prisma.loanMonitorReportEntry.create({
+     *   data: {
+     *     // ... data to create a LoanMonitorReportEntry
+     *   }
+     * })
+     * 
+     */
+    create<T extends LoanMonitorReportEntryCreateArgs>(args: SelectSubset<T, LoanMonitorReportEntryCreateArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many LoanMonitorReportEntries.
+     * @param {LoanMonitorReportEntryCreateManyArgs} args - Arguments to create many LoanMonitorReportEntries.
+     * @example
+     * // Create many LoanMonitorReportEntries
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LoanMonitorReportEntryCreateManyArgs>(args?: SelectSubset<T, LoanMonitorReportEntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LoanMonitorReportEntries and returns the data saved in the database.
+     * @param {LoanMonitorReportEntryCreateManyAndReturnArgs} args - Arguments to create many LoanMonitorReportEntries.
+     * @example
+     * // Create many LoanMonitorReportEntries
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LoanMonitorReportEntries and only return the `id`
+     * const loanMonitorReportEntryWithIdOnly = await prisma.loanMonitorReportEntry.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LoanMonitorReportEntryCreateManyAndReturnArgs>(args?: SelectSubset<T, LoanMonitorReportEntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a LoanMonitorReportEntry.
+     * @param {LoanMonitorReportEntryDeleteArgs} args - Arguments to delete one LoanMonitorReportEntry.
+     * @example
+     * // Delete one LoanMonitorReportEntry
+     * const LoanMonitorReportEntry = await prisma.loanMonitorReportEntry.delete({
+     *   where: {
+     *     // ... filter to delete one LoanMonitorReportEntry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LoanMonitorReportEntryDeleteArgs>(args: SelectSubset<T, LoanMonitorReportEntryDeleteArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one LoanMonitorReportEntry.
+     * @param {LoanMonitorReportEntryUpdateArgs} args - Arguments to update one LoanMonitorReportEntry.
+     * @example
+     * // Update one LoanMonitorReportEntry
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LoanMonitorReportEntryUpdateArgs>(args: SelectSubset<T, LoanMonitorReportEntryUpdateArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more LoanMonitorReportEntries.
+     * @param {LoanMonitorReportEntryDeleteManyArgs} args - Arguments to filter LoanMonitorReportEntries to delete.
+     * @example
+     * // Delete a few LoanMonitorReportEntries
+     * const { count } = await prisma.loanMonitorReportEntry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LoanMonitorReportEntryDeleteManyArgs>(args?: SelectSubset<T, LoanMonitorReportEntryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LoanMonitorReportEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LoanMonitorReportEntries
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LoanMonitorReportEntryUpdateManyArgs>(args: SelectSubset<T, LoanMonitorReportEntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one LoanMonitorReportEntry.
+     * @param {LoanMonitorReportEntryUpsertArgs} args - Arguments to update or create a LoanMonitorReportEntry.
+     * @example
+     * // Update or create a LoanMonitorReportEntry
+     * const loanMonitorReportEntry = await prisma.loanMonitorReportEntry.upsert({
+     *   create: {
+     *     // ... data to create a LoanMonitorReportEntry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LoanMonitorReportEntry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LoanMonitorReportEntryUpsertArgs>(args: SelectSubset<T, LoanMonitorReportEntryUpsertArgs<ExtArgs>>): Prisma__LoanMonitorReportEntryClient<$Result.GetResult<Prisma.$LoanMonitorReportEntryPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of LoanMonitorReportEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryCountArgs} args - Arguments to filter LoanMonitorReportEntries to count.
+     * @example
+     * // Count the number of LoanMonitorReportEntries
+     * const count = await prisma.loanMonitorReportEntry.count({
+     *   where: {
+     *     // ... the filter for the LoanMonitorReportEntries we want to count
+     *   }
+     * })
+    **/
+    count<T extends LoanMonitorReportEntryCountArgs>(
+      args?: Subset<T, LoanMonitorReportEntryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LoanMonitorReportEntryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LoanMonitorReportEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LoanMonitorReportEntryAggregateArgs>(args: Subset<T, LoanMonitorReportEntryAggregateArgs>): Prisma.PrismaPromise<GetLoanMonitorReportEntryAggregateType<T>>
+
+    /**
+     * Group by LoanMonitorReportEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanMonitorReportEntryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LoanMonitorReportEntryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LoanMonitorReportEntryGroupByArgs['orderBy'] }
+        : { orderBy?: LoanMonitorReportEntryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LoanMonitorReportEntryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLoanMonitorReportEntryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LoanMonitorReportEntry model
+   */
+  readonly fields: LoanMonitorReportEntryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LoanMonitorReportEntry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LoanMonitorReportEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    report<T extends LoanMonitorReportDefaultArgs<ExtArgs> = {}>(args?: Subset<T, LoanMonitorReportDefaultArgs<ExtArgs>>): Prisma__LoanMonitorReportClient<$Result.GetResult<Prisma.$LoanMonitorReportPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LoanMonitorReportEntry model
+   */ 
+  interface LoanMonitorReportEntryFieldRefs {
+    readonly id: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly reportId: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly loanId: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly provider: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly loanType: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly loanAccountNumber: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly employeeName: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly loanDate: FieldRef<"LoanMonitorReportEntry", 'DateTime'>
+    readonly terms: FieldRef<"LoanMonitorReportEntry", 'Int'>
+    readonly totalAmount: FieldRef<"LoanMonitorReportEntry", 'Decimal'>
+    readonly monthlyAmortization: FieldRef<"LoanMonitorReportEntry", 'Decimal'>
+    readonly outstandingBalance: FieldRef<"LoanMonitorReportEntry", 'Decimal'>
+    readonly status: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly statusReason: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly employerName: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly employerSssNumber: FieldRef<"LoanMonitorReportEntry", 'String'>
+    readonly employerAddress: FieldRef<"LoanMonitorReportEntry", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LoanMonitorReportEntry findUnique
+   */
+  export type LoanMonitorReportEntryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReportEntry to fetch.
+     */
+    where: LoanMonitorReportEntryWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReportEntry findUniqueOrThrow
+   */
+  export type LoanMonitorReportEntryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReportEntry to fetch.
+     */
+    where: LoanMonitorReportEntryWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReportEntry findFirst
+   */
+  export type LoanMonitorReportEntryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReportEntry to fetch.
+     */
+    where?: LoanMonitorReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReportEntries to fetch.
+     */
+    orderBy?: LoanMonitorReportEntryOrderByWithRelationInput | LoanMonitorReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoanMonitorReportEntries.
+     */
+    cursor?: LoanMonitorReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReportEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoanMonitorReportEntries.
+     */
+    distinct?: LoanMonitorReportEntryScalarFieldEnum | LoanMonitorReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReportEntry findFirstOrThrow
+   */
+  export type LoanMonitorReportEntryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReportEntry to fetch.
+     */
+    where?: LoanMonitorReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReportEntries to fetch.
+     */
+    orderBy?: LoanMonitorReportEntryOrderByWithRelationInput | LoanMonitorReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoanMonitorReportEntries.
+     */
+    cursor?: LoanMonitorReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReportEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoanMonitorReportEntries.
+     */
+    distinct?: LoanMonitorReportEntryScalarFieldEnum | LoanMonitorReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReportEntry findMany
+   */
+  export type LoanMonitorReportEntryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanMonitorReportEntries to fetch.
+     */
+    where?: LoanMonitorReportEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanMonitorReportEntries to fetch.
+     */
+    orderBy?: LoanMonitorReportEntryOrderByWithRelationInput | LoanMonitorReportEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LoanMonitorReportEntries.
+     */
+    cursor?: LoanMonitorReportEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanMonitorReportEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanMonitorReportEntries.
+     */
+    skip?: number
+    distinct?: LoanMonitorReportEntryScalarFieldEnum | LoanMonitorReportEntryScalarFieldEnum[]
+  }
+
+  /**
+   * LoanMonitorReportEntry create
+   */
+  export type LoanMonitorReportEntryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LoanMonitorReportEntry.
+     */
+    data: XOR<LoanMonitorReportEntryCreateInput, LoanMonitorReportEntryUncheckedCreateInput>
+  }
+
+  /**
+   * LoanMonitorReportEntry createMany
+   */
+  export type LoanMonitorReportEntryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LoanMonitorReportEntries.
+     */
+    data: LoanMonitorReportEntryCreateManyInput | LoanMonitorReportEntryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LoanMonitorReportEntry createManyAndReturn
+   */
+  export type LoanMonitorReportEntryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many LoanMonitorReportEntries.
+     */
+    data: LoanMonitorReportEntryCreateManyInput | LoanMonitorReportEntryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LoanMonitorReportEntry update
+   */
+  export type LoanMonitorReportEntryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LoanMonitorReportEntry.
+     */
+    data: XOR<LoanMonitorReportEntryUpdateInput, LoanMonitorReportEntryUncheckedUpdateInput>
+    /**
+     * Choose, which LoanMonitorReportEntry to update.
+     */
+    where: LoanMonitorReportEntryWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReportEntry updateMany
+   */
+  export type LoanMonitorReportEntryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LoanMonitorReportEntries.
+     */
+    data: XOR<LoanMonitorReportEntryUpdateManyMutationInput, LoanMonitorReportEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which LoanMonitorReportEntries to update
+     */
+    where?: LoanMonitorReportEntryWhereInput
+  }
+
+  /**
+   * LoanMonitorReportEntry upsert
+   */
+  export type LoanMonitorReportEntryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LoanMonitorReportEntry to update in case it exists.
+     */
+    where: LoanMonitorReportEntryWhereUniqueInput
+    /**
+     * In case the LoanMonitorReportEntry found by the `where` argument doesn't exist, create a new LoanMonitorReportEntry with this data.
+     */
+    create: XOR<LoanMonitorReportEntryCreateInput, LoanMonitorReportEntryUncheckedCreateInput>
+    /**
+     * In case the LoanMonitorReportEntry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LoanMonitorReportEntryUpdateInput, LoanMonitorReportEntryUncheckedUpdateInput>
+  }
+
+  /**
+   * LoanMonitorReportEntry delete
+   */
+  export type LoanMonitorReportEntryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+    /**
+     * Filter which LoanMonitorReportEntry to delete.
+     */
+    where: LoanMonitorReportEntryWhereUniqueInput
+  }
+
+  /**
+   * LoanMonitorReportEntry deleteMany
+   */
+  export type LoanMonitorReportEntryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoanMonitorReportEntries to delete
+     */
+    where?: LoanMonitorReportEntryWhereInput
+  }
+
+  /**
+   * LoanMonitorReportEntry without action
+   */
+  export type LoanMonitorReportEntryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanMonitorReportEntry
+     */
+    select?: LoanMonitorReportEntrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanMonitorReportEntryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LoanPayment
+   */
+
+  export type AggregateLoanPayment = {
+    _count: LoanPaymentCountAggregateOutputType | null
+    _avg: LoanPaymentAvgAggregateOutputType | null
+    _sum: LoanPaymentSumAggregateOutputType | null
+    _min: LoanPaymentMinAggregateOutputType | null
+    _max: LoanPaymentMaxAggregateOutputType | null
+  }
+
+  export type LoanPaymentAvgAggregateOutputType = {
+    amountPaid: Decimal | null
+  }
+
+  export type LoanPaymentSumAggregateOutputType = {
+    amountPaid: Decimal | null
+  }
+
+  export type LoanPaymentMinAggregateOutputType = {
+    id: string | null
+    loanId: string | null
+    payrollPeriodId: string | null
+    amountPaid: Decimal | null
+    paymentDate: Date | null
+    source: string | null
+    createdAt: Date | null
+  }
+
+  export type LoanPaymentMaxAggregateOutputType = {
+    id: string | null
+    loanId: string | null
+    payrollPeriodId: string | null
+    amountPaid: Decimal | null
+    paymentDate: Date | null
+    source: string | null
+    createdAt: Date | null
+  }
+
+  export type LoanPaymentCountAggregateOutputType = {
+    id: number
+    loanId: number
+    payrollPeriodId: number
+    amountPaid: number
+    paymentDate: number
+    source: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type LoanPaymentAvgAggregateInputType = {
+    amountPaid?: true
+  }
+
+  export type LoanPaymentSumAggregateInputType = {
+    amountPaid?: true
+  }
+
+  export type LoanPaymentMinAggregateInputType = {
+    id?: true
+    loanId?: true
+    payrollPeriodId?: true
+    amountPaid?: true
+    paymentDate?: true
+    source?: true
+    createdAt?: true
+  }
+
+  export type LoanPaymentMaxAggregateInputType = {
+    id?: true
+    loanId?: true
+    payrollPeriodId?: true
+    amountPaid?: true
+    paymentDate?: true
+    source?: true
+    createdAt?: true
+  }
+
+  export type LoanPaymentCountAggregateInputType = {
+    id?: true
+    loanId?: true
+    payrollPeriodId?: true
+    amountPaid?: true
+    paymentDate?: true
+    source?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type LoanPaymentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoanPayment to aggregate.
+     */
+    where?: LoanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanPayments to fetch.
+     */
+    orderBy?: LoanPaymentOrderByWithRelationInput | LoanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LoanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LoanPayments
+    **/
+    _count?: true | LoanPaymentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LoanPaymentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LoanPaymentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LoanPaymentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LoanPaymentMaxAggregateInputType
+  }
+
+  export type GetLoanPaymentAggregateType<T extends LoanPaymentAggregateArgs> = {
+        [P in keyof T & keyof AggregateLoanPayment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLoanPayment[P]>
+      : GetScalarType<T[P], AggregateLoanPayment[P]>
+  }
+
+
+
+
+  export type LoanPaymentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LoanPaymentWhereInput
+    orderBy?: LoanPaymentOrderByWithAggregationInput | LoanPaymentOrderByWithAggregationInput[]
+    by: LoanPaymentScalarFieldEnum[] | LoanPaymentScalarFieldEnum
+    having?: LoanPaymentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LoanPaymentCountAggregateInputType | true
+    _avg?: LoanPaymentAvgAggregateInputType
+    _sum?: LoanPaymentSumAggregateInputType
+    _min?: LoanPaymentMinAggregateInputType
+    _max?: LoanPaymentMaxAggregateInputType
+  }
+
+  export type LoanPaymentGroupByOutputType = {
+    id: string
+    loanId: string
+    payrollPeriodId: string
+    amountPaid: Decimal
+    paymentDate: Date
+    source: string
+    createdAt: Date
+    _count: LoanPaymentCountAggregateOutputType | null
+    _avg: LoanPaymentAvgAggregateOutputType | null
+    _sum: LoanPaymentSumAggregateOutputType | null
+    _min: LoanPaymentMinAggregateOutputType | null
+    _max: LoanPaymentMaxAggregateOutputType | null
+  }
+
+  type GetLoanPaymentGroupByPayload<T extends LoanPaymentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LoanPaymentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LoanPaymentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LoanPaymentGroupByOutputType[P]>
+            : GetScalarType<T[P], LoanPaymentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LoanPaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    loanId?: boolean
+    payrollPeriodId?: boolean
+    amountPaid?: boolean
+    paymentDate?: boolean
+    source?: boolean
+    createdAt?: boolean
+    loan?: boolean | LoanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loanPayment"]>
+
+  export type LoanPaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    loanId?: boolean
+    payrollPeriodId?: boolean
+    amountPaid?: boolean
+    paymentDate?: boolean
+    source?: boolean
+    createdAt?: boolean
+    loan?: boolean | LoanDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["loanPayment"]>
+
+  export type LoanPaymentSelectScalar = {
+    id?: boolean
+    loanId?: boolean
+    payrollPeriodId?: boolean
+    amountPaid?: boolean
+    paymentDate?: boolean
+    source?: boolean
+    createdAt?: boolean
+  }
+
+  export type LoanPaymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    loan?: boolean | LoanDefaultArgs<ExtArgs>
+  }
+  export type LoanPaymentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    loan?: boolean | LoanDefaultArgs<ExtArgs>
+  }
+
+  export type $LoanPaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LoanPayment"
+    objects: {
+      loan: Prisma.$LoanPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      loanId: string
+      payrollPeriodId: string
+      amountPaid: Prisma.Decimal
+      paymentDate: Date
+      source: string
+      createdAt: Date
+    }, ExtArgs["result"]["loanPayment"]>
+    composites: {}
+  }
+
+  type LoanPaymentGetPayload<S extends boolean | null | undefined | LoanPaymentDefaultArgs> = $Result.GetResult<Prisma.$LoanPaymentPayload, S>
+
+  type LoanPaymentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LoanPaymentFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LoanPaymentCountAggregateInputType | true
+    }
+
+  export interface LoanPaymentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LoanPayment'], meta: { name: 'LoanPayment' } }
+    /**
+     * Find zero or one LoanPayment that matches the filter.
+     * @param {LoanPaymentFindUniqueArgs} args - Arguments to find a LoanPayment
+     * @example
+     * // Get one LoanPayment
+     * const loanPayment = await prisma.loanPayment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LoanPaymentFindUniqueArgs>(args: SelectSubset<T, LoanPaymentFindUniqueArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one LoanPayment that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LoanPaymentFindUniqueOrThrowArgs} args - Arguments to find a LoanPayment
+     * @example
+     * // Get one LoanPayment
+     * const loanPayment = await prisma.loanPayment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LoanPaymentFindUniqueOrThrowArgs>(args: SelectSubset<T, LoanPaymentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first LoanPayment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentFindFirstArgs} args - Arguments to find a LoanPayment
+     * @example
+     * // Get one LoanPayment
+     * const loanPayment = await prisma.loanPayment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LoanPaymentFindFirstArgs>(args?: SelectSubset<T, LoanPaymentFindFirstArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first LoanPayment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentFindFirstOrThrowArgs} args - Arguments to find a LoanPayment
+     * @example
+     * // Get one LoanPayment
+     * const loanPayment = await prisma.loanPayment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LoanPaymentFindFirstOrThrowArgs>(args?: SelectSubset<T, LoanPaymentFindFirstOrThrowArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more LoanPayments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LoanPayments
+     * const loanPayments = await prisma.loanPayment.findMany()
+     * 
+     * // Get first 10 LoanPayments
+     * const loanPayments = await prisma.loanPayment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const loanPaymentWithIdOnly = await prisma.loanPayment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LoanPaymentFindManyArgs>(args?: SelectSubset<T, LoanPaymentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a LoanPayment.
+     * @param {LoanPaymentCreateArgs} args - Arguments to create a LoanPayment.
+     * @example
+     * // Create one LoanPayment
+     * const LoanPayment = await prisma.loanPayment.create({
+     *   data: {
+     *     // ... data to create a LoanPayment
+     *   }
+     * })
+     * 
+     */
+    create<T extends LoanPaymentCreateArgs>(args: SelectSubset<T, LoanPaymentCreateArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many LoanPayments.
+     * @param {LoanPaymentCreateManyArgs} args - Arguments to create many LoanPayments.
+     * @example
+     * // Create many LoanPayments
+     * const loanPayment = await prisma.loanPayment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LoanPaymentCreateManyArgs>(args?: SelectSubset<T, LoanPaymentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LoanPayments and returns the data saved in the database.
+     * @param {LoanPaymentCreateManyAndReturnArgs} args - Arguments to create many LoanPayments.
+     * @example
+     * // Create many LoanPayments
+     * const loanPayment = await prisma.loanPayment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LoanPayments and only return the `id`
+     * const loanPaymentWithIdOnly = await prisma.loanPayment.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LoanPaymentCreateManyAndReturnArgs>(args?: SelectSubset<T, LoanPaymentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a LoanPayment.
+     * @param {LoanPaymentDeleteArgs} args - Arguments to delete one LoanPayment.
+     * @example
+     * // Delete one LoanPayment
+     * const LoanPayment = await prisma.loanPayment.delete({
+     *   where: {
+     *     // ... filter to delete one LoanPayment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LoanPaymentDeleteArgs>(args: SelectSubset<T, LoanPaymentDeleteArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one LoanPayment.
+     * @param {LoanPaymentUpdateArgs} args - Arguments to update one LoanPayment.
+     * @example
+     * // Update one LoanPayment
+     * const loanPayment = await prisma.loanPayment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LoanPaymentUpdateArgs>(args: SelectSubset<T, LoanPaymentUpdateArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more LoanPayments.
+     * @param {LoanPaymentDeleteManyArgs} args - Arguments to filter LoanPayments to delete.
+     * @example
+     * // Delete a few LoanPayments
+     * const { count } = await prisma.loanPayment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LoanPaymentDeleteManyArgs>(args?: SelectSubset<T, LoanPaymentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LoanPayments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LoanPayments
+     * const loanPayment = await prisma.loanPayment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LoanPaymentUpdateManyArgs>(args: SelectSubset<T, LoanPaymentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one LoanPayment.
+     * @param {LoanPaymentUpsertArgs} args - Arguments to update or create a LoanPayment.
+     * @example
+     * // Update or create a LoanPayment
+     * const loanPayment = await prisma.loanPayment.upsert({
+     *   create: {
+     *     // ... data to create a LoanPayment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LoanPayment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LoanPaymentUpsertArgs>(args: SelectSubset<T, LoanPaymentUpsertArgs<ExtArgs>>): Prisma__LoanPaymentClient<$Result.GetResult<Prisma.$LoanPaymentPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of LoanPayments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentCountArgs} args - Arguments to filter LoanPayments to count.
+     * @example
+     * // Count the number of LoanPayments
+     * const count = await prisma.loanPayment.count({
+     *   where: {
+     *     // ... the filter for the LoanPayments we want to count
+     *   }
+     * })
+    **/
+    count<T extends LoanPaymentCountArgs>(
+      args?: Subset<T, LoanPaymentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LoanPaymentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LoanPayment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LoanPaymentAggregateArgs>(args: Subset<T, LoanPaymentAggregateArgs>): Prisma.PrismaPromise<GetLoanPaymentAggregateType<T>>
+
+    /**
+     * Group by LoanPayment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LoanPaymentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LoanPaymentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LoanPaymentGroupByArgs['orderBy'] }
+        : { orderBy?: LoanPaymentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LoanPaymentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLoanPaymentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LoanPayment model
+   */
+  readonly fields: LoanPaymentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LoanPayment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LoanPaymentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    loan<T extends LoanDefaultArgs<ExtArgs> = {}>(args?: Subset<T, LoanDefaultArgs<ExtArgs>>): Prisma__LoanClient<$Result.GetResult<Prisma.$LoanPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LoanPayment model
+   */ 
+  interface LoanPaymentFieldRefs {
+    readonly id: FieldRef<"LoanPayment", 'String'>
+    readonly loanId: FieldRef<"LoanPayment", 'String'>
+    readonly payrollPeriodId: FieldRef<"LoanPayment", 'String'>
+    readonly amountPaid: FieldRef<"LoanPayment", 'Decimal'>
+    readonly paymentDate: FieldRef<"LoanPayment", 'DateTime'>
+    readonly source: FieldRef<"LoanPayment", 'String'>
+    readonly createdAt: FieldRef<"LoanPayment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LoanPayment findUnique
+   */
+  export type LoanPaymentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanPayment to fetch.
+     */
+    where: LoanPaymentWhereUniqueInput
+  }
+
+  /**
+   * LoanPayment findUniqueOrThrow
+   */
+  export type LoanPaymentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanPayment to fetch.
+     */
+    where: LoanPaymentWhereUniqueInput
+  }
+
+  /**
+   * LoanPayment findFirst
+   */
+  export type LoanPaymentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanPayment to fetch.
+     */
+    where?: LoanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanPayments to fetch.
+     */
+    orderBy?: LoanPaymentOrderByWithRelationInput | LoanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoanPayments.
+     */
+    cursor?: LoanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoanPayments.
+     */
+    distinct?: LoanPaymentScalarFieldEnum | LoanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * LoanPayment findFirstOrThrow
+   */
+  export type LoanPaymentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanPayment to fetch.
+     */
+    where?: LoanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanPayments to fetch.
+     */
+    orderBy?: LoanPaymentOrderByWithRelationInput | LoanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LoanPayments.
+     */
+    cursor?: LoanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LoanPayments.
+     */
+    distinct?: LoanPaymentScalarFieldEnum | LoanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * LoanPayment findMany
+   */
+  export type LoanPaymentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which LoanPayments to fetch.
+     */
+    where?: LoanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LoanPayments to fetch.
+     */
+    orderBy?: LoanPaymentOrderByWithRelationInput | LoanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LoanPayments.
+     */
+    cursor?: LoanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LoanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LoanPayments.
+     */
+    skip?: number
+    distinct?: LoanPaymentScalarFieldEnum | LoanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * LoanPayment create
+   */
+  export type LoanPaymentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LoanPayment.
+     */
+    data: XOR<LoanPaymentCreateInput, LoanPaymentUncheckedCreateInput>
+  }
+
+  /**
+   * LoanPayment createMany
+   */
+  export type LoanPaymentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LoanPayments.
+     */
+    data: LoanPaymentCreateManyInput | LoanPaymentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LoanPayment createManyAndReturn
+   */
+  export type LoanPaymentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many LoanPayments.
+     */
+    data: LoanPaymentCreateManyInput | LoanPaymentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LoanPayment update
+   */
+  export type LoanPaymentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LoanPayment.
+     */
+    data: XOR<LoanPaymentUpdateInput, LoanPaymentUncheckedUpdateInput>
+    /**
+     * Choose, which LoanPayment to update.
+     */
+    where: LoanPaymentWhereUniqueInput
+  }
+
+  /**
+   * LoanPayment updateMany
+   */
+  export type LoanPaymentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LoanPayments.
+     */
+    data: XOR<LoanPaymentUpdateManyMutationInput, LoanPaymentUncheckedUpdateManyInput>
+    /**
+     * Filter which LoanPayments to update
+     */
+    where?: LoanPaymentWhereInput
+  }
+
+  /**
+   * LoanPayment upsert
+   */
+  export type LoanPaymentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LoanPayment to update in case it exists.
+     */
+    where: LoanPaymentWhereUniqueInput
+    /**
+     * In case the LoanPayment found by the `where` argument doesn't exist, create a new LoanPayment with this data.
+     */
+    create: XOR<LoanPaymentCreateInput, LoanPaymentUncheckedCreateInput>
+    /**
+     * In case the LoanPayment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LoanPaymentUpdateInput, LoanPaymentUncheckedUpdateInput>
+  }
+
+  /**
+   * LoanPayment delete
+   */
+  export type LoanPaymentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter which LoanPayment to delete.
+     */
+    where: LoanPaymentWhereUniqueInput
+  }
+
+  /**
+   * LoanPayment deleteMany
+   */
+  export type LoanPaymentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LoanPayments to delete
+     */
+    where?: LoanPaymentWhereInput
+  }
+
+  /**
+   * LoanPayment without action
+   */
+  export type LoanPaymentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LoanPayment
+     */
+    select?: LoanPaymentSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LoanPaymentInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model OfficeContact
    */
 
@@ -37573,6 +45008,56 @@ export namespace Prisma {
   export type SssReportEntryScalarFieldEnum = (typeof SssReportEntryScalarFieldEnum)[keyof typeof SssReportEntryScalarFieldEnum]
 
 
+  export const ImportedSssLoanReportScalarFieldEnum: {
+    sourceReportId: 'sourceReportId',
+    sourceKind: 'sourceKind',
+    sourceEmployerId: 'sourceEmployerId',
+    employerName: 'employerName',
+    employerAddress: 'employerAddress',
+    employerSssNumber: 'employerSssNumber',
+    prn: 'prn',
+    applicableMonth: 'applicableMonth',
+    applicableYear: 'applicableYear',
+    amountDue: 'amountDue',
+    amountPaid: 'amountPaid',
+    paymentType: 'paymentType',
+    payDate: 'payDate',
+    sssBranch: 'sssBranch',
+    transactionReference: 'transactionReference',
+    sourceCreatedBy: 'sourceCreatedBy',
+    sourceCreatedAt: 'sourceCreatedAt',
+    sourceUpdatedAt: 'sourceUpdatedAt',
+    importedAt: 'importedAt'
+  };
+
+  export type ImportedSssLoanReportScalarFieldEnum = (typeof ImportedSssLoanReportScalarFieldEnum)[keyof typeof ImportedSssLoanReportScalarFieldEnum]
+
+
+  export const ImportedSssLoanReportEntryScalarFieldEnum: {
+    sourceEntryId: 'sourceEntryId',
+    sourceReportId: 'sourceReportId',
+    sourceEmployeeId: 'sourceEmployeeId',
+    employeeName: 'employeeName',
+    employeeCode: 'employeeCode',
+    employeeSssNumber: 'employeeSssNumber',
+    sourceSssLoanId: 'sourceSssLoanId',
+    loanAccountNumber: 'loanAccountNumber',
+    sourceEmployeeEmployerId: 'sourceEmployeeEmployerId',
+    employeeEmployerName: 'employeeEmployerName',
+    salaryRange: 'salaryRange',
+    monthlySalaryCredit: 'monthlySalaryCredit',
+    employeeSs: 'employeeSs',
+    employerSs: 'employerSs',
+    employeeMpf: 'employeeMpf',
+    employerMpf: 'employerMpf',
+    ec: 'ec',
+    loanAmount: 'loanAmount',
+    totalAmount: 'totalAmount'
+  };
+
+  export type ImportedSssLoanReportEntryScalarFieldEnum = (typeof ImportedSssLoanReportEntryScalarFieldEnum)[keyof typeof ImportedSssLoanReportEntryScalarFieldEnum]
+
+
   export const SssReportDraftScalarFieldEnum: {
     id: 'id',
     createdBy: 'createdBy',
@@ -37776,6 +45261,82 @@ export namespace Prisma {
   export type PhilHealthPaymentScalarFieldEnum = (typeof PhilHealthPaymentScalarFieldEnum)[keyof typeof PhilHealthPaymentScalarFieldEnum]
 
 
+  export const LoanScalarFieldEnum: {
+    id: 'id',
+    employeeId: 'employeeId',
+    provider: 'provider',
+    loanType: 'loanType',
+    loanAccountNumber: 'loanAccountNumber',
+    loanDate: 'loanDate',
+    terms: 'terms',
+    statusReason: 'statusReason',
+    totalAmount: 'totalAmount',
+    monthlyAmortization: 'monthlyAmortization',
+    outstandingBalance: 'outstandingBalance',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type LoanScalarFieldEnum = (typeof LoanScalarFieldEnum)[keyof typeof LoanScalarFieldEnum]
+
+
+  export const LoanMonitorReportScalarFieldEnum: {
+    id: 'id',
+    applicableDate: 'applicableDate',
+    employerName: 'employerName',
+    employerSssNumber: 'employerSssNumber',
+    employerAddress: 'employerAddress',
+    totalMonthly: 'totalMonthly',
+    totalOutstanding: 'totalOutstanding',
+    prn: 'prn',
+    paymentDate: 'paymentDate',
+    amountPaid: 'amountPaid',
+    paymentBranch: 'paymentBranch',
+    transactionReference: 'transactionReference',
+    createdBy: 'createdBy',
+    createdAt: 'createdAt'
+  };
+
+  export type LoanMonitorReportScalarFieldEnum = (typeof LoanMonitorReportScalarFieldEnum)[keyof typeof LoanMonitorReportScalarFieldEnum]
+
+
+  export const LoanMonitorReportEntryScalarFieldEnum: {
+    id: 'id',
+    reportId: 'reportId',
+    loanId: 'loanId',
+    provider: 'provider',
+    loanType: 'loanType',
+    loanAccountNumber: 'loanAccountNumber',
+    employeeName: 'employeeName',
+    loanDate: 'loanDate',
+    terms: 'terms',
+    totalAmount: 'totalAmount',
+    monthlyAmortization: 'monthlyAmortization',
+    outstandingBalance: 'outstandingBalance',
+    status: 'status',
+    statusReason: 'statusReason',
+    employerName: 'employerName',
+    employerSssNumber: 'employerSssNumber',
+    employerAddress: 'employerAddress'
+  };
+
+  export type LoanMonitorReportEntryScalarFieldEnum = (typeof LoanMonitorReportEntryScalarFieldEnum)[keyof typeof LoanMonitorReportEntryScalarFieldEnum]
+
+
+  export const LoanPaymentScalarFieldEnum: {
+    id: 'id',
+    loanId: 'loanId',
+    payrollPeriodId: 'payrollPeriodId',
+    amountPaid: 'amountPaid',
+    paymentDate: 'paymentDate',
+    source: 'source',
+    createdAt: 'createdAt'
+  };
+
+  export type LoanPaymentScalarFieldEnum = (typeof LoanPaymentScalarFieldEnum)[keyof typeof LoanPaymentScalarFieldEnum]
+
+
   export const OfficeContactScalarFieldEnum: {
     id: 'id',
     employeeId: 'employeeId',
@@ -37935,6 +45496,34 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'LoanProvider'
+   */
+  export type EnumLoanProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LoanProvider'>
+    
+
+
+  /**
+   * Reference to a field of type 'LoanProvider[]'
+   */
+  export type ListEnumLoanProviderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LoanProvider[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LoanStatus'
+   */
+  export type EnumLoanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LoanStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'LoanStatus[]'
+   */
+  export type ListEnumLoanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LoanStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -37975,6 +45564,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportListRelationFilter
     PagibigReportDraft?: PagibigReportDraftListRelationFilter
     philHealthReports?: PhilHealthReportListRelationFilter
+    loanMonitorReports?: LoanMonitorReportListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -37998,6 +45588,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportOrderByRelationAggregateInput
     PagibigReportDraft?: PagibigReportDraftOrderByRelationAggregateInput
     philHealthReports?: PhilHealthReportOrderByRelationAggregateInput
+    loanMonitorReports?: LoanMonitorReportOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -38024,6 +45615,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportListRelationFilter
     PagibigReportDraft?: PagibigReportDraftListRelationFilter
     philHealthReports?: PhilHealthReportListRelationFilter
+    loanMonitorReports?: LoanMonitorReportListRelationFilter
   }, "id" | "email" | "verificationTokenHash">
 
   export type UserOrderByWithAggregationInput = {
@@ -38473,6 +46065,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanListRelationFilter
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordListRelationFilter
     philHealthReportEntries?: PhilHealthReportEntryListRelationFilter
+    loans?: LoanListRelationFilter
   }
 
   export type employeeOrderByWithRelationInput = {
@@ -38528,6 +46121,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanOrderByRelationAggregateInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordOrderByRelationAggregateInput
     philHealthReportEntries?: PhilHealthReportEntryOrderByRelationAggregateInput
+    loans?: LoanOrderByRelationAggregateInput
   }
 
   export type employeeWhereUniqueInput = Prisma.AtLeast<{
@@ -38586,6 +46180,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanListRelationFilter
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordListRelationFilter
     philHealthReportEntries?: PhilHealthReportEntryListRelationFilter
+    loans?: LoanListRelationFilter
   }, "id" | "biometricNo" | "employeeCode">
 
   export type employeeOrderByWithAggregationInput = {
@@ -39720,6 +47315,260 @@ export namespace Prisma {
     totalAmount?: DecimalWithAggregatesFilter<"SssReportEntry"> | Decimal | DecimalJsLike | number | string
   }
 
+  export type ImportedSssLoanReportWhereInput = {
+    AND?: ImportedSssLoanReportWhereInput | ImportedSssLoanReportWhereInput[]
+    OR?: ImportedSssLoanReportWhereInput[]
+    NOT?: ImportedSssLoanReportWhereInput | ImportedSssLoanReportWhereInput[]
+    sourceReportId?: IntFilter<"ImportedSssLoanReport"> | number
+    sourceKind?: StringFilter<"ImportedSssLoanReport"> | string
+    sourceEmployerId?: IntFilter<"ImportedSssLoanReport"> | number
+    employerName?: StringFilter<"ImportedSssLoanReport"> | string
+    employerAddress?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    employerSssNumber?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    prn?: StringFilter<"ImportedSssLoanReport"> | string
+    applicableMonth?: IntFilter<"ImportedSssLoanReport"> | number
+    applicableYear?: IntFilter<"ImportedSssLoanReport"> | number
+    amountDue?: DecimalFilter<"ImportedSssLoanReport"> | Decimal | DecimalJsLike | number | string
+    amountPaid?: DecimalNullableFilter<"ImportedSssLoanReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentType?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    payDate?: DateTimeNullableFilter<"ImportedSssLoanReport"> | Date | string | null
+    sssBranch?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    transactionReference?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    sourceCreatedBy?: IntNullableFilter<"ImportedSssLoanReport"> | number | null
+    sourceCreatedAt?: DateTimeFilter<"ImportedSssLoanReport"> | Date | string
+    sourceUpdatedAt?: DateTimeFilter<"ImportedSssLoanReport"> | Date | string
+    importedAt?: DateTimeFilter<"ImportedSssLoanReport"> | Date | string
+    entries?: ImportedSssLoanReportEntryListRelationFilter
+  }
+
+  export type ImportedSssLoanReportOrderByWithRelationInput = {
+    sourceReportId?: SortOrder
+    sourceKind?: SortOrder
+    sourceEmployerId?: SortOrder
+    employerName?: SortOrder
+    employerAddress?: SortOrderInput | SortOrder
+    employerSssNumber?: SortOrderInput | SortOrder
+    prn?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrderInput | SortOrder
+    paymentType?: SortOrderInput | SortOrder
+    payDate?: SortOrderInput | SortOrder
+    sssBranch?: SortOrderInput | SortOrder
+    transactionReference?: SortOrderInput | SortOrder
+    sourceCreatedBy?: SortOrderInput | SortOrder
+    sourceCreatedAt?: SortOrder
+    sourceUpdatedAt?: SortOrder
+    importedAt?: SortOrder
+    entries?: ImportedSssLoanReportEntryOrderByRelationAggregateInput
+  }
+
+  export type ImportedSssLoanReportWhereUniqueInput = Prisma.AtLeast<{
+    sourceReportId?: number
+    AND?: ImportedSssLoanReportWhereInput | ImportedSssLoanReportWhereInput[]
+    OR?: ImportedSssLoanReportWhereInput[]
+    NOT?: ImportedSssLoanReportWhereInput | ImportedSssLoanReportWhereInput[]
+    sourceKind?: StringFilter<"ImportedSssLoanReport"> | string
+    sourceEmployerId?: IntFilter<"ImportedSssLoanReport"> | number
+    employerName?: StringFilter<"ImportedSssLoanReport"> | string
+    employerAddress?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    employerSssNumber?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    prn?: StringFilter<"ImportedSssLoanReport"> | string
+    applicableMonth?: IntFilter<"ImportedSssLoanReport"> | number
+    applicableYear?: IntFilter<"ImportedSssLoanReport"> | number
+    amountDue?: DecimalFilter<"ImportedSssLoanReport"> | Decimal | DecimalJsLike | number | string
+    amountPaid?: DecimalNullableFilter<"ImportedSssLoanReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentType?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    payDate?: DateTimeNullableFilter<"ImportedSssLoanReport"> | Date | string | null
+    sssBranch?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    transactionReference?: StringNullableFilter<"ImportedSssLoanReport"> | string | null
+    sourceCreatedBy?: IntNullableFilter<"ImportedSssLoanReport"> | number | null
+    sourceCreatedAt?: DateTimeFilter<"ImportedSssLoanReport"> | Date | string
+    sourceUpdatedAt?: DateTimeFilter<"ImportedSssLoanReport"> | Date | string
+    importedAt?: DateTimeFilter<"ImportedSssLoanReport"> | Date | string
+    entries?: ImportedSssLoanReportEntryListRelationFilter
+  }, "sourceReportId">
+
+  export type ImportedSssLoanReportOrderByWithAggregationInput = {
+    sourceReportId?: SortOrder
+    sourceKind?: SortOrder
+    sourceEmployerId?: SortOrder
+    employerName?: SortOrder
+    employerAddress?: SortOrderInput | SortOrder
+    employerSssNumber?: SortOrderInput | SortOrder
+    prn?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrderInput | SortOrder
+    paymentType?: SortOrderInput | SortOrder
+    payDate?: SortOrderInput | SortOrder
+    sssBranch?: SortOrderInput | SortOrder
+    transactionReference?: SortOrderInput | SortOrder
+    sourceCreatedBy?: SortOrderInput | SortOrder
+    sourceCreatedAt?: SortOrder
+    sourceUpdatedAt?: SortOrder
+    importedAt?: SortOrder
+    _count?: ImportedSssLoanReportCountOrderByAggregateInput
+    _avg?: ImportedSssLoanReportAvgOrderByAggregateInput
+    _max?: ImportedSssLoanReportMaxOrderByAggregateInput
+    _min?: ImportedSssLoanReportMinOrderByAggregateInput
+    _sum?: ImportedSssLoanReportSumOrderByAggregateInput
+  }
+
+  export type ImportedSssLoanReportScalarWhereWithAggregatesInput = {
+    AND?: ImportedSssLoanReportScalarWhereWithAggregatesInput | ImportedSssLoanReportScalarWhereWithAggregatesInput[]
+    OR?: ImportedSssLoanReportScalarWhereWithAggregatesInput[]
+    NOT?: ImportedSssLoanReportScalarWhereWithAggregatesInput | ImportedSssLoanReportScalarWhereWithAggregatesInput[]
+    sourceReportId?: IntWithAggregatesFilter<"ImportedSssLoanReport"> | number
+    sourceKind?: StringWithAggregatesFilter<"ImportedSssLoanReport"> | string
+    sourceEmployerId?: IntWithAggregatesFilter<"ImportedSssLoanReport"> | number
+    employerName?: StringWithAggregatesFilter<"ImportedSssLoanReport"> | string
+    employerAddress?: StringNullableWithAggregatesFilter<"ImportedSssLoanReport"> | string | null
+    employerSssNumber?: StringNullableWithAggregatesFilter<"ImportedSssLoanReport"> | string | null
+    prn?: StringWithAggregatesFilter<"ImportedSssLoanReport"> | string
+    applicableMonth?: IntWithAggregatesFilter<"ImportedSssLoanReport"> | number
+    applicableYear?: IntWithAggregatesFilter<"ImportedSssLoanReport"> | number
+    amountDue?: DecimalWithAggregatesFilter<"ImportedSssLoanReport"> | Decimal | DecimalJsLike | number | string
+    amountPaid?: DecimalNullableWithAggregatesFilter<"ImportedSssLoanReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentType?: StringNullableWithAggregatesFilter<"ImportedSssLoanReport"> | string | null
+    payDate?: DateTimeNullableWithAggregatesFilter<"ImportedSssLoanReport"> | Date | string | null
+    sssBranch?: StringNullableWithAggregatesFilter<"ImportedSssLoanReport"> | string | null
+    transactionReference?: StringNullableWithAggregatesFilter<"ImportedSssLoanReport"> | string | null
+    sourceCreatedBy?: IntNullableWithAggregatesFilter<"ImportedSssLoanReport"> | number | null
+    sourceCreatedAt?: DateTimeWithAggregatesFilter<"ImportedSssLoanReport"> | Date | string
+    sourceUpdatedAt?: DateTimeWithAggregatesFilter<"ImportedSssLoanReport"> | Date | string
+    importedAt?: DateTimeWithAggregatesFilter<"ImportedSssLoanReport"> | Date | string
+  }
+
+  export type ImportedSssLoanReportEntryWhereInput = {
+    AND?: ImportedSssLoanReportEntryWhereInput | ImportedSssLoanReportEntryWhereInput[]
+    OR?: ImportedSssLoanReportEntryWhereInput[]
+    NOT?: ImportedSssLoanReportEntryWhereInput | ImportedSssLoanReportEntryWhereInput[]
+    sourceEntryId?: IntFilter<"ImportedSssLoanReportEntry"> | number
+    sourceReportId?: IntFilter<"ImportedSssLoanReportEntry"> | number
+    sourceEmployeeId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeName?: StringFilter<"ImportedSssLoanReportEntry"> | string
+    employeeCode?: StringFilter<"ImportedSssLoanReportEntry"> | string
+    employeeSssNumber?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceSssLoanId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    loanAccountNumber?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceEmployeeEmployerId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeEmployerName?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    salaryRange?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    monthlySalaryCredit?: DecimalNullableFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    report?: XOR<ImportedSssLoanReportRelationFilter, ImportedSssLoanReportWhereInput>
+  }
+
+  export type ImportedSssLoanReportEntryOrderByWithRelationInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrderInput | SortOrder
+    employeeName?: SortOrder
+    employeeCode?: SortOrder
+    employeeSssNumber?: SortOrderInput | SortOrder
+    sourceSssLoanId?: SortOrderInput | SortOrder
+    loanAccountNumber?: SortOrderInput | SortOrder
+    sourceEmployeeEmployerId?: SortOrderInput | SortOrder
+    employeeEmployerName?: SortOrderInput | SortOrder
+    salaryRange?: SortOrderInput | SortOrder
+    monthlySalaryCredit?: SortOrderInput | SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+    report?: ImportedSssLoanReportOrderByWithRelationInput
+  }
+
+  export type ImportedSssLoanReportEntryWhereUniqueInput = Prisma.AtLeast<{
+    sourceEntryId?: number
+    AND?: ImportedSssLoanReportEntryWhereInput | ImportedSssLoanReportEntryWhereInput[]
+    OR?: ImportedSssLoanReportEntryWhereInput[]
+    NOT?: ImportedSssLoanReportEntryWhereInput | ImportedSssLoanReportEntryWhereInput[]
+    sourceReportId?: IntFilter<"ImportedSssLoanReportEntry"> | number
+    sourceEmployeeId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeName?: StringFilter<"ImportedSssLoanReportEntry"> | string
+    employeeCode?: StringFilter<"ImportedSssLoanReportEntry"> | string
+    employeeSssNumber?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceSssLoanId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    loanAccountNumber?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceEmployeeEmployerId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeEmployerName?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    salaryRange?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    monthlySalaryCredit?: DecimalNullableFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    report?: XOR<ImportedSssLoanReportRelationFilter, ImportedSssLoanReportWhereInput>
+  }, "sourceEntryId">
+
+  export type ImportedSssLoanReportEntryOrderByWithAggregationInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrderInput | SortOrder
+    employeeName?: SortOrder
+    employeeCode?: SortOrder
+    employeeSssNumber?: SortOrderInput | SortOrder
+    sourceSssLoanId?: SortOrderInput | SortOrder
+    loanAccountNumber?: SortOrderInput | SortOrder
+    sourceEmployeeEmployerId?: SortOrderInput | SortOrder
+    employeeEmployerName?: SortOrderInput | SortOrder
+    salaryRange?: SortOrderInput | SortOrder
+    monthlySalaryCredit?: SortOrderInput | SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+    _count?: ImportedSssLoanReportEntryCountOrderByAggregateInput
+    _avg?: ImportedSssLoanReportEntryAvgOrderByAggregateInput
+    _max?: ImportedSssLoanReportEntryMaxOrderByAggregateInput
+    _min?: ImportedSssLoanReportEntryMinOrderByAggregateInput
+    _sum?: ImportedSssLoanReportEntrySumOrderByAggregateInput
+  }
+
+  export type ImportedSssLoanReportEntryScalarWhereWithAggregatesInput = {
+    AND?: ImportedSssLoanReportEntryScalarWhereWithAggregatesInput | ImportedSssLoanReportEntryScalarWhereWithAggregatesInput[]
+    OR?: ImportedSssLoanReportEntryScalarWhereWithAggregatesInput[]
+    NOT?: ImportedSssLoanReportEntryScalarWhereWithAggregatesInput | ImportedSssLoanReportEntryScalarWhereWithAggregatesInput[]
+    sourceEntryId?: IntWithAggregatesFilter<"ImportedSssLoanReportEntry"> | number
+    sourceReportId?: IntWithAggregatesFilter<"ImportedSssLoanReportEntry"> | number
+    sourceEmployeeId?: IntNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeName?: StringWithAggregatesFilter<"ImportedSssLoanReportEntry"> | string
+    employeeCode?: StringWithAggregatesFilter<"ImportedSssLoanReportEntry"> | string
+    employeeSssNumber?: StringNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceSssLoanId?: IntNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | number | null
+    loanAccountNumber?: StringNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceEmployeeEmployerId?: IntNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeEmployerName?: StringNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | string | null
+    salaryRange?: StringNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | string | null
+    monthlySalaryCredit?: DecimalNullableWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    ec?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalWithAggregatesFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+  }
+
   export type SssReportDraftWhereInput = {
     AND?: SssReportDraftWhereInput | SssReportDraftWhereInput[]
     OR?: SssReportDraftWhereInput[]
@@ -40804,6 +48653,400 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"PhilHealthPayment"> | Date | string
   }
 
+  export type LoanWhereInput = {
+    AND?: LoanWhereInput | LoanWhereInput[]
+    OR?: LoanWhereInput[]
+    NOT?: LoanWhereInput | LoanWhereInput[]
+    id?: StringFilter<"Loan"> | string
+    employeeId?: IntNullableFilter<"Loan"> | number | null
+    provider?: EnumLoanProviderFilter<"Loan"> | $Enums.LoanProvider
+    loanType?: StringFilter<"Loan"> | string
+    loanAccountNumber?: StringFilter<"Loan"> | string
+    loanDate?: DateTimeNullableFilter<"Loan"> | Date | string | null
+    terms?: IntNullableFilter<"Loan"> | number | null
+    statusReason?: StringNullableFilter<"Loan"> | string | null
+    totalAmount?: DecimalNullableFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFilter<"Loan"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalNullableFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFilter<"Loan"> | $Enums.LoanStatus
+    createdAt?: DateTimeFilter<"Loan"> | Date | string
+    updatedAt?: DateTimeFilter<"Loan"> | Date | string
+    employee?: XOR<EmployeeNullableRelationFilter, employeeWhereInput> | null
+    payments?: LoanPaymentListRelationFilter
+  }
+
+  export type LoanOrderByWithRelationInput = {
+    id?: SortOrder
+    employeeId?: SortOrderInput | SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    loanDate?: SortOrderInput | SortOrder
+    terms?: SortOrderInput | SortOrder
+    statusReason?: SortOrderInput | SortOrder
+    totalAmount?: SortOrderInput | SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrderInput | SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    employee?: employeeOrderByWithRelationInput
+    payments?: LoanPaymentOrderByRelationAggregateInput
+  }
+
+  export type LoanWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    loanAccountNumber?: string
+    AND?: LoanWhereInput | LoanWhereInput[]
+    OR?: LoanWhereInput[]
+    NOT?: LoanWhereInput | LoanWhereInput[]
+    employeeId?: IntNullableFilter<"Loan"> | number | null
+    provider?: EnumLoanProviderFilter<"Loan"> | $Enums.LoanProvider
+    loanType?: StringFilter<"Loan"> | string
+    loanDate?: DateTimeNullableFilter<"Loan"> | Date | string | null
+    terms?: IntNullableFilter<"Loan"> | number | null
+    statusReason?: StringNullableFilter<"Loan"> | string | null
+    totalAmount?: DecimalNullableFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFilter<"Loan"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalNullableFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFilter<"Loan"> | $Enums.LoanStatus
+    createdAt?: DateTimeFilter<"Loan"> | Date | string
+    updatedAt?: DateTimeFilter<"Loan"> | Date | string
+    employee?: XOR<EmployeeNullableRelationFilter, employeeWhereInput> | null
+    payments?: LoanPaymentListRelationFilter
+  }, "id" | "loanAccountNumber">
+
+  export type LoanOrderByWithAggregationInput = {
+    id?: SortOrder
+    employeeId?: SortOrderInput | SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    loanDate?: SortOrderInput | SortOrder
+    terms?: SortOrderInput | SortOrder
+    statusReason?: SortOrderInput | SortOrder
+    totalAmount?: SortOrderInput | SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrderInput | SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: LoanCountOrderByAggregateInput
+    _avg?: LoanAvgOrderByAggregateInput
+    _max?: LoanMaxOrderByAggregateInput
+    _min?: LoanMinOrderByAggregateInput
+    _sum?: LoanSumOrderByAggregateInput
+  }
+
+  export type LoanScalarWhereWithAggregatesInput = {
+    AND?: LoanScalarWhereWithAggregatesInput | LoanScalarWhereWithAggregatesInput[]
+    OR?: LoanScalarWhereWithAggregatesInput[]
+    NOT?: LoanScalarWhereWithAggregatesInput | LoanScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Loan"> | string
+    employeeId?: IntNullableWithAggregatesFilter<"Loan"> | number | null
+    provider?: EnumLoanProviderWithAggregatesFilter<"Loan"> | $Enums.LoanProvider
+    loanType?: StringWithAggregatesFilter<"Loan"> | string
+    loanAccountNumber?: StringWithAggregatesFilter<"Loan"> | string
+    loanDate?: DateTimeNullableWithAggregatesFilter<"Loan"> | Date | string | null
+    terms?: IntNullableWithAggregatesFilter<"Loan"> | number | null
+    statusReason?: StringNullableWithAggregatesFilter<"Loan"> | string | null
+    totalAmount?: DecimalNullableWithAggregatesFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalWithAggregatesFilter<"Loan"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalNullableWithAggregatesFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusWithAggregatesFilter<"Loan"> | $Enums.LoanStatus
+    createdAt?: DateTimeWithAggregatesFilter<"Loan"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Loan"> | Date | string
+  }
+
+  export type LoanMonitorReportWhereInput = {
+    AND?: LoanMonitorReportWhereInput | LoanMonitorReportWhereInput[]
+    OR?: LoanMonitorReportWhereInput[]
+    NOT?: LoanMonitorReportWhereInput | LoanMonitorReportWhereInput[]
+    id?: StringFilter<"LoanMonitorReport"> | string
+    applicableDate?: DateTimeFilter<"LoanMonitorReport"> | Date | string
+    employerName?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    employerSssNumber?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    employerAddress?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    totalMonthly?: DecimalFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    prn?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    paymentDate?: DateTimeNullableFilter<"LoanMonitorReport"> | Date | string | null
+    amountPaid?: DecimalNullableFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    transactionReference?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    createdBy?: IntNullableFilter<"LoanMonitorReport"> | number | null
+    createdAt?: DateTimeFilter<"LoanMonitorReport"> | Date | string
+    creator?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    entries?: LoanMonitorReportEntryListRelationFilter
+  }
+
+  export type LoanMonitorReportOrderByWithRelationInput = {
+    id?: SortOrder
+    applicableDate?: SortOrder
+    employerName?: SortOrderInput | SortOrder
+    employerSssNumber?: SortOrderInput | SortOrder
+    employerAddress?: SortOrderInput | SortOrder
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    prn?: SortOrderInput | SortOrder
+    paymentDate?: SortOrderInput | SortOrder
+    amountPaid?: SortOrderInput | SortOrder
+    paymentBranch?: SortOrderInput | SortOrder
+    transactionReference?: SortOrderInput | SortOrder
+    createdBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    creator?: UserOrderByWithRelationInput
+    entries?: LoanMonitorReportEntryOrderByRelationAggregateInput
+  }
+
+  export type LoanMonitorReportWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LoanMonitorReportWhereInput | LoanMonitorReportWhereInput[]
+    OR?: LoanMonitorReportWhereInput[]
+    NOT?: LoanMonitorReportWhereInput | LoanMonitorReportWhereInput[]
+    applicableDate?: DateTimeFilter<"LoanMonitorReport"> | Date | string
+    employerName?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    employerSssNumber?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    employerAddress?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    totalMonthly?: DecimalFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    prn?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    paymentDate?: DateTimeNullableFilter<"LoanMonitorReport"> | Date | string | null
+    amountPaid?: DecimalNullableFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    transactionReference?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    createdBy?: IntNullableFilter<"LoanMonitorReport"> | number | null
+    createdAt?: DateTimeFilter<"LoanMonitorReport"> | Date | string
+    creator?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    entries?: LoanMonitorReportEntryListRelationFilter
+  }, "id">
+
+  export type LoanMonitorReportOrderByWithAggregationInput = {
+    id?: SortOrder
+    applicableDate?: SortOrder
+    employerName?: SortOrderInput | SortOrder
+    employerSssNumber?: SortOrderInput | SortOrder
+    employerAddress?: SortOrderInput | SortOrder
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    prn?: SortOrderInput | SortOrder
+    paymentDate?: SortOrderInput | SortOrder
+    amountPaid?: SortOrderInput | SortOrder
+    paymentBranch?: SortOrderInput | SortOrder
+    transactionReference?: SortOrderInput | SortOrder
+    createdBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: LoanMonitorReportCountOrderByAggregateInput
+    _avg?: LoanMonitorReportAvgOrderByAggregateInput
+    _max?: LoanMonitorReportMaxOrderByAggregateInput
+    _min?: LoanMonitorReportMinOrderByAggregateInput
+    _sum?: LoanMonitorReportSumOrderByAggregateInput
+  }
+
+  export type LoanMonitorReportScalarWhereWithAggregatesInput = {
+    AND?: LoanMonitorReportScalarWhereWithAggregatesInput | LoanMonitorReportScalarWhereWithAggregatesInput[]
+    OR?: LoanMonitorReportScalarWhereWithAggregatesInput[]
+    NOT?: LoanMonitorReportScalarWhereWithAggregatesInput | LoanMonitorReportScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LoanMonitorReport"> | string
+    applicableDate?: DateTimeWithAggregatesFilter<"LoanMonitorReport"> | Date | string
+    employerName?: StringNullableWithAggregatesFilter<"LoanMonitorReport"> | string | null
+    employerSssNumber?: StringNullableWithAggregatesFilter<"LoanMonitorReport"> | string | null
+    employerAddress?: StringNullableWithAggregatesFilter<"LoanMonitorReport"> | string | null
+    totalMonthly?: DecimalWithAggregatesFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalWithAggregatesFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    prn?: StringNullableWithAggregatesFilter<"LoanMonitorReport"> | string | null
+    paymentDate?: DateTimeNullableWithAggregatesFilter<"LoanMonitorReport"> | Date | string | null
+    amountPaid?: DecimalNullableWithAggregatesFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: StringNullableWithAggregatesFilter<"LoanMonitorReport"> | string | null
+    transactionReference?: StringNullableWithAggregatesFilter<"LoanMonitorReport"> | string | null
+    createdBy?: IntNullableWithAggregatesFilter<"LoanMonitorReport"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"LoanMonitorReport"> | Date | string
+  }
+
+  export type LoanMonitorReportEntryWhereInput = {
+    AND?: LoanMonitorReportEntryWhereInput | LoanMonitorReportEntryWhereInput[]
+    OR?: LoanMonitorReportEntryWhereInput[]
+    NOT?: LoanMonitorReportEntryWhereInput | LoanMonitorReportEntryWhereInput[]
+    id?: StringFilter<"LoanMonitorReportEntry"> | string
+    reportId?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanId?: StringFilter<"LoanMonitorReportEntry"> | string
+    provider?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanType?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanAccountNumber?: StringFilter<"LoanMonitorReportEntry"> | string
+    employeeName?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanDate?: DateTimeNullableFilter<"LoanMonitorReportEntry"> | Date | string | null
+    terms?: IntNullableFilter<"LoanMonitorReportEntry"> | number | null
+    totalAmount?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    status?: StringFilter<"LoanMonitorReportEntry"> | string
+    statusReason?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    employerName?: StringFilter<"LoanMonitorReportEntry"> | string
+    employerSssNumber?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    employerAddress?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    report?: XOR<LoanMonitorReportRelationFilter, LoanMonitorReportWhereInput>
+  }
+
+  export type LoanMonitorReportEntryOrderByWithRelationInput = {
+    id?: SortOrder
+    reportId?: SortOrder
+    loanId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    employeeName?: SortOrder
+    loanDate?: SortOrderInput | SortOrder
+    terms?: SortOrderInput | SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    statusReason?: SortOrderInput | SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrderInput | SortOrder
+    employerAddress?: SortOrderInput | SortOrder
+    report?: LoanMonitorReportOrderByWithRelationInput
+  }
+
+  export type LoanMonitorReportEntryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LoanMonitorReportEntryWhereInput | LoanMonitorReportEntryWhereInput[]
+    OR?: LoanMonitorReportEntryWhereInput[]
+    NOT?: LoanMonitorReportEntryWhereInput | LoanMonitorReportEntryWhereInput[]
+    reportId?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanId?: StringFilter<"LoanMonitorReportEntry"> | string
+    provider?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanType?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanAccountNumber?: StringFilter<"LoanMonitorReportEntry"> | string
+    employeeName?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanDate?: DateTimeNullableFilter<"LoanMonitorReportEntry"> | Date | string | null
+    terms?: IntNullableFilter<"LoanMonitorReportEntry"> | number | null
+    totalAmount?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    status?: StringFilter<"LoanMonitorReportEntry"> | string
+    statusReason?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    employerName?: StringFilter<"LoanMonitorReportEntry"> | string
+    employerSssNumber?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    employerAddress?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    report?: XOR<LoanMonitorReportRelationFilter, LoanMonitorReportWhereInput>
+  }, "id">
+
+  export type LoanMonitorReportEntryOrderByWithAggregationInput = {
+    id?: SortOrder
+    reportId?: SortOrder
+    loanId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    employeeName?: SortOrder
+    loanDate?: SortOrderInput | SortOrder
+    terms?: SortOrderInput | SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    statusReason?: SortOrderInput | SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrderInput | SortOrder
+    employerAddress?: SortOrderInput | SortOrder
+    _count?: LoanMonitorReportEntryCountOrderByAggregateInput
+    _avg?: LoanMonitorReportEntryAvgOrderByAggregateInput
+    _max?: LoanMonitorReportEntryMaxOrderByAggregateInput
+    _min?: LoanMonitorReportEntryMinOrderByAggregateInput
+    _sum?: LoanMonitorReportEntrySumOrderByAggregateInput
+  }
+
+  export type LoanMonitorReportEntryScalarWhereWithAggregatesInput = {
+    AND?: LoanMonitorReportEntryScalarWhereWithAggregatesInput | LoanMonitorReportEntryScalarWhereWithAggregatesInput[]
+    OR?: LoanMonitorReportEntryScalarWhereWithAggregatesInput[]
+    NOT?: LoanMonitorReportEntryScalarWhereWithAggregatesInput | LoanMonitorReportEntryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    reportId?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    loanId?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    provider?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    loanType?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    loanAccountNumber?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    employeeName?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    loanDate?: DateTimeNullableWithAggregatesFilter<"LoanMonitorReportEntry"> | Date | string | null
+    terms?: IntNullableWithAggregatesFilter<"LoanMonitorReportEntry"> | number | null
+    totalAmount?: DecimalWithAggregatesFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalWithAggregatesFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalWithAggregatesFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    status?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    statusReason?: StringNullableWithAggregatesFilter<"LoanMonitorReportEntry"> | string | null
+    employerName?: StringWithAggregatesFilter<"LoanMonitorReportEntry"> | string
+    employerSssNumber?: StringNullableWithAggregatesFilter<"LoanMonitorReportEntry"> | string | null
+    employerAddress?: StringNullableWithAggregatesFilter<"LoanMonitorReportEntry"> | string | null
+  }
+
+  export type LoanPaymentWhereInput = {
+    AND?: LoanPaymentWhereInput | LoanPaymentWhereInput[]
+    OR?: LoanPaymentWhereInput[]
+    NOT?: LoanPaymentWhereInput | LoanPaymentWhereInput[]
+    id?: StringFilter<"LoanPayment"> | string
+    loanId?: StringFilter<"LoanPayment"> | string
+    payrollPeriodId?: StringFilter<"LoanPayment"> | string
+    amountPaid?: DecimalFilter<"LoanPayment"> | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFilter<"LoanPayment"> | Date | string
+    source?: StringFilter<"LoanPayment"> | string
+    createdAt?: DateTimeFilter<"LoanPayment"> | Date | string
+    loan?: XOR<LoanRelationFilter, LoanWhereInput>
+  }
+
+  export type LoanPaymentOrderByWithRelationInput = {
+    id?: SortOrder
+    loanId?: SortOrder
+    payrollPeriodId?: SortOrder
+    amountPaid?: SortOrder
+    paymentDate?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    loan?: LoanOrderByWithRelationInput
+  }
+
+  export type LoanPaymentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LoanPaymentWhereInput | LoanPaymentWhereInput[]
+    OR?: LoanPaymentWhereInput[]
+    NOT?: LoanPaymentWhereInput | LoanPaymentWhereInput[]
+    loanId?: StringFilter<"LoanPayment"> | string
+    payrollPeriodId?: StringFilter<"LoanPayment"> | string
+    amountPaid?: DecimalFilter<"LoanPayment"> | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFilter<"LoanPayment"> | Date | string
+    source?: StringFilter<"LoanPayment"> | string
+    createdAt?: DateTimeFilter<"LoanPayment"> | Date | string
+    loan?: XOR<LoanRelationFilter, LoanWhereInput>
+  }, "id">
+
+  export type LoanPaymentOrderByWithAggregationInput = {
+    id?: SortOrder
+    loanId?: SortOrder
+    payrollPeriodId?: SortOrder
+    amountPaid?: SortOrder
+    paymentDate?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    _count?: LoanPaymentCountOrderByAggregateInput
+    _avg?: LoanPaymentAvgOrderByAggregateInput
+    _max?: LoanPaymentMaxOrderByAggregateInput
+    _min?: LoanPaymentMinOrderByAggregateInput
+    _sum?: LoanPaymentSumOrderByAggregateInput
+  }
+
+  export type LoanPaymentScalarWhereWithAggregatesInput = {
+    AND?: LoanPaymentScalarWhereWithAggregatesInput | LoanPaymentScalarWhereWithAggregatesInput[]
+    OR?: LoanPaymentScalarWhereWithAggregatesInput[]
+    NOT?: LoanPaymentScalarWhereWithAggregatesInput | LoanPaymentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LoanPayment"> | string
+    loanId?: StringWithAggregatesFilter<"LoanPayment"> | string
+    payrollPeriodId?: StringWithAggregatesFilter<"LoanPayment"> | string
+    amountPaid?: DecimalWithAggregatesFilter<"LoanPayment"> | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeWithAggregatesFilter<"LoanPayment"> | Date | string
+    source?: StringWithAggregatesFilter<"LoanPayment"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"LoanPayment"> | Date | string
+  }
+
   export type OfficeContactWhereInput = {
     AND?: OfficeContactWhereInput | OfficeContactWhereInput[]
     OR?: OfficeContactWhereInput[]
@@ -40931,6 +49174,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -40954,6 +49198,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUpdateInput = {
@@ -40976,6 +49221,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -40999,6 +49245,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -41447,6 +49694,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateInput = {
@@ -41500,6 +49748,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUpdateInput = {
@@ -41552,6 +49801,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateInput = {
@@ -41605,6 +49855,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeCreateManyInput = {
@@ -42849,6 +51100,317 @@ export namespace Prisma {
     totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type ImportedSssLoanReportCreateInput = {
+    sourceReportId: number
+    sourceKind: string
+    sourceEmployerId: number
+    employerName: string
+    employerAddress?: string | null
+    employerSssNumber?: string | null
+    prn: string
+    applicableMonth: number
+    applicableYear: number
+    amountDue: Decimal | DecimalJsLike | number | string
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentType?: string | null
+    payDate?: Date | string | null
+    sssBranch?: string | null
+    transactionReference?: string | null
+    sourceCreatedBy?: number | null
+    sourceCreatedAt: Date | string
+    sourceUpdatedAt: Date | string
+    importedAt?: Date | string
+    entries?: ImportedSssLoanReportEntryCreateNestedManyWithoutReportInput
+  }
+
+  export type ImportedSssLoanReportUncheckedCreateInput = {
+    sourceReportId: number
+    sourceKind: string
+    sourceEmployerId: number
+    employerName: string
+    employerAddress?: string | null
+    employerSssNumber?: string | null
+    prn: string
+    applicableMonth: number
+    applicableYear: number
+    amountDue: Decimal | DecimalJsLike | number | string
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentType?: string | null
+    payDate?: Date | string | null
+    sssBranch?: string | null
+    transactionReference?: string | null
+    sourceCreatedBy?: number | null
+    sourceCreatedAt: Date | string
+    sourceUpdatedAt: Date | string
+    importedAt?: Date | string
+    entries?: ImportedSssLoanReportEntryUncheckedCreateNestedManyWithoutReportInput
+  }
+
+  export type ImportedSssLoanReportUpdateInput = {
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceKind?: StringFieldUpdateOperationsInput | string
+    sourceEmployerId?: IntFieldUpdateOperationsInput | number
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    prn?: StringFieldUpdateOperationsInput | string
+    applicableMonth?: IntFieldUpdateOperationsInput | number
+    applicableYear?: IntFieldUpdateOperationsInput | number
+    amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentType?: NullableStringFieldUpdateOperationsInput | string | null
+    payDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sssBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceCreatedBy?: NullableIntFieldUpdateOperationsInput | number | null
+    sourceCreatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sourceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    importedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: ImportedSssLoanReportEntryUpdateManyWithoutReportNestedInput
+  }
+
+  export type ImportedSssLoanReportUncheckedUpdateInput = {
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceKind?: StringFieldUpdateOperationsInput | string
+    sourceEmployerId?: IntFieldUpdateOperationsInput | number
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    prn?: StringFieldUpdateOperationsInput | string
+    applicableMonth?: IntFieldUpdateOperationsInput | number
+    applicableYear?: IntFieldUpdateOperationsInput | number
+    amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentType?: NullableStringFieldUpdateOperationsInput | string | null
+    payDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sssBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceCreatedBy?: NullableIntFieldUpdateOperationsInput | number | null
+    sourceCreatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sourceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    importedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: ImportedSssLoanReportEntryUncheckedUpdateManyWithoutReportNestedInput
+  }
+
+  export type ImportedSssLoanReportCreateManyInput = {
+    sourceReportId: number
+    sourceKind: string
+    sourceEmployerId: number
+    employerName: string
+    employerAddress?: string | null
+    employerSssNumber?: string | null
+    prn: string
+    applicableMonth: number
+    applicableYear: number
+    amountDue: Decimal | DecimalJsLike | number | string
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentType?: string | null
+    payDate?: Date | string | null
+    sssBranch?: string | null
+    transactionReference?: string | null
+    sourceCreatedBy?: number | null
+    sourceCreatedAt: Date | string
+    sourceUpdatedAt: Date | string
+    importedAt?: Date | string
+  }
+
+  export type ImportedSssLoanReportUpdateManyMutationInput = {
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceKind?: StringFieldUpdateOperationsInput | string
+    sourceEmployerId?: IntFieldUpdateOperationsInput | number
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    prn?: StringFieldUpdateOperationsInput | string
+    applicableMonth?: IntFieldUpdateOperationsInput | number
+    applicableYear?: IntFieldUpdateOperationsInput | number
+    amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentType?: NullableStringFieldUpdateOperationsInput | string | null
+    payDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sssBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceCreatedBy?: NullableIntFieldUpdateOperationsInput | number | null
+    sourceCreatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sourceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    importedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ImportedSssLoanReportUncheckedUpdateManyInput = {
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceKind?: StringFieldUpdateOperationsInput | string
+    sourceEmployerId?: IntFieldUpdateOperationsInput | number
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    prn?: StringFieldUpdateOperationsInput | string
+    applicableMonth?: IntFieldUpdateOperationsInput | number
+    applicableYear?: IntFieldUpdateOperationsInput | number
+    amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentType?: NullableStringFieldUpdateOperationsInput | string | null
+    payDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sssBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceCreatedBy?: NullableIntFieldUpdateOperationsInput | number | null
+    sourceCreatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sourceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    importedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ImportedSssLoanReportEntryCreateInput = {
+    sourceEntryId: number
+    sourceEmployeeId?: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber?: string | null
+    sourceSssLoanId?: number | null
+    loanAccountNumber?: string | null
+    sourceEmployeeEmployerId?: number | null
+    employeeEmployerName?: string | null
+    salaryRange?: string | null
+    monthlySalaryCredit?: Decimal | DecimalJsLike | number | string | null
+    employeeSs: Decimal | DecimalJsLike | number | string
+    employerSs: Decimal | DecimalJsLike | number | string
+    employeeMpf: Decimal | DecimalJsLike | number | string
+    employerMpf: Decimal | DecimalJsLike | number | string
+    ec: Decimal | DecimalJsLike | number | string
+    loanAmount: Decimal | DecimalJsLike | number | string
+    totalAmount: Decimal | DecimalJsLike | number | string
+    report: ImportedSssLoanReportCreateNestedOneWithoutEntriesInput
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedCreateInput = {
+    sourceEntryId: number
+    sourceReportId: number
+    sourceEmployeeId?: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber?: string | null
+    sourceSssLoanId?: number | null
+    loanAccountNumber?: string | null
+    sourceEmployeeEmployerId?: number | null
+    employeeEmployerName?: string | null
+    salaryRange?: string | null
+    monthlySalaryCredit?: Decimal | DecimalJsLike | number | string | null
+    employeeSs: Decimal | DecimalJsLike | number | string
+    employerSs: Decimal | DecimalJsLike | number | string
+    employeeMpf: Decimal | DecimalJsLike | number | string
+    employerMpf: Decimal | DecimalJsLike | number | string
+    ec: Decimal | DecimalJsLike | number | string
+    loanAmount: Decimal | DecimalJsLike | number | string
+    totalAmount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUpdateInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    report?: ImportedSssLoanReportUpdateOneRequiredWithoutEntriesNestedInput
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedUpdateInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryCreateManyInput = {
+    sourceEntryId: number
+    sourceReportId: number
+    sourceEmployeeId?: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber?: string | null
+    sourceSssLoanId?: number | null
+    loanAccountNumber?: string | null
+    sourceEmployeeEmployerId?: number | null
+    employeeEmployerName?: string | null
+    salaryRange?: string | null
+    monthlySalaryCredit?: Decimal | DecimalJsLike | number | string | null
+    employeeSs: Decimal | DecimalJsLike | number | string
+    employerSs: Decimal | DecimalJsLike | number | string
+    employeeMpf: Decimal | DecimalJsLike | number | string
+    employerMpf: Decimal | DecimalJsLike | number | string
+    ec: Decimal | DecimalJsLike | number | string
+    loanAmount: Decimal | DecimalJsLike | number | string
+    totalAmount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUpdateManyMutationInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedUpdateManyInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
   export type SssReportDraftCreateInput = {
     kind: string
     employerId?: number | null
@@ -44006,6 +52568,458 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type LoanCreateInput = {
+    id?: string
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employee?: employeeCreateNestedOneWithoutLoansInput
+    payments?: LoanPaymentCreateNestedManyWithoutLoanInput
+  }
+
+  export type LoanUncheckedCreateInput = {
+    id?: string
+    employeeId?: number | null
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    payments?: LoanPaymentUncheckedCreateNestedManyWithoutLoanInput
+  }
+
+  export type LoanUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employee?: employeeUpdateOneWithoutLoansNestedInput
+    payments?: LoanPaymentUpdateManyWithoutLoanNestedInput
+  }
+
+  export type LoanUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payments?: LoanPaymentUncheckedUpdateManyWithoutLoanNestedInput
+  }
+
+  export type LoanCreateManyInput = {
+    id?: string
+    employeeId?: number | null
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LoanUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanMonitorReportCreateInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdAt?: Date | string
+    creator?: UserCreateNestedOneWithoutLoanMonitorReportsInput
+    entries?: LoanMonitorReportEntryCreateNestedManyWithoutReportInput
+  }
+
+  export type LoanMonitorReportUncheckedCreateInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdBy?: number | null
+    createdAt?: Date | string
+    entries?: LoanMonitorReportEntryUncheckedCreateNestedManyWithoutReportInput
+  }
+
+  export type LoanMonitorReportUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    creator?: UserUpdateOneWithoutLoanMonitorReportsNestedInput
+    entries?: LoanMonitorReportEntryUpdateManyWithoutReportNestedInput
+  }
+
+  export type LoanMonitorReportUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: LoanMonitorReportEntryUncheckedUpdateManyWithoutReportNestedInput
+  }
+
+  export type LoanMonitorReportCreateManyInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdBy?: number | null
+    createdAt?: Date | string
+  }
+
+  export type LoanMonitorReportUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanMonitorReportUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanMonitorReportEntryCreateInput = {
+    id?: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    totalAmount: Decimal | DecimalJsLike | number | string
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance: Decimal | DecimalJsLike | number | string
+    status: string
+    statusReason?: string | null
+    employerName: string
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    report: LoanMonitorReportCreateNestedOneWithoutEntriesInput
+  }
+
+  export type LoanMonitorReportEntryUncheckedCreateInput = {
+    id?: string
+    reportId: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    totalAmount: Decimal | DecimalJsLike | number | string
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance: Decimal | DecimalJsLike | number | string
+    status: string
+    statusReason?: string | null
+    employerName: string
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+  }
+
+  export type LoanMonitorReportEntryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    report?: LoanMonitorReportUpdateOneRequiredWithoutEntriesNestedInput
+  }
+
+  export type LoanMonitorReportEntryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    reportId?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type LoanMonitorReportEntryCreateManyInput = {
+    id?: string
+    reportId: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    totalAmount: Decimal | DecimalJsLike | number | string
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance: Decimal | DecimalJsLike | number | string
+    status: string
+    statusReason?: string | null
+    employerName: string
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+  }
+
+  export type LoanMonitorReportEntryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type LoanMonitorReportEntryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    reportId?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type LoanPaymentCreateInput = {
+    id?: string
+    payrollPeriodId: string
+    amountPaid: Decimal | DecimalJsLike | number | string
+    paymentDate: Date | string
+    source?: string
+    createdAt?: Date | string
+    loan: LoanCreateNestedOneWithoutPaymentsInput
+  }
+
+  export type LoanPaymentUncheckedCreateInput = {
+    id?: string
+    loanId: string
+    payrollPeriodId: string
+    amountPaid: Decimal | DecimalJsLike | number | string
+    paymentDate: Date | string
+    source?: string
+    createdAt?: Date | string
+  }
+
+  export type LoanPaymentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    loan?: LoanUpdateOneRequiredWithoutPaymentsNestedInput
+  }
+
+  export type LoanPaymentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanPaymentCreateManyInput = {
+    id?: string
+    loanId: string
+    payrollPeriodId: string
+    amountPaid: Decimal | DecimalJsLike | number | string
+    paymentDate: Date | string
+    source?: string
+    createdAt?: Date | string
+  }
+
+  export type LoanPaymentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanPaymentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OfficeContactCreateInput = {
     companyName: string
     contactName: string
@@ -44246,6 +53260,12 @@ export namespace Prisma {
     none?: PhilHealthReportWhereInput
   }
 
+  export type LoanMonitorReportListRelationFilter = {
+    every?: LoanMonitorReportWhereInput
+    some?: LoanMonitorReportWhereInput
+    none?: LoanMonitorReportWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -44276,6 +53296,10 @@ export namespace Prisma {
   }
 
   export type PhilHealthReportOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LoanMonitorReportOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -44773,6 +53797,12 @@ export namespace Prisma {
     none?: PhilHealthReportEntryWhereInput
   }
 
+  export type LoanListRelationFilter = {
+    every?: LoanWhereInput
+    some?: LoanWhereInput
+    none?: LoanWhereInput
+  }
+
   export type employeeOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -44826,6 +53856,10 @@ export namespace Prisma {
   }
 
   export type PhilHealthReportEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LoanOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -45764,6 +54798,205 @@ export namespace Prisma {
     loanAmount?: SortOrder
     totalAmount?: SortOrder
   }
+
+  export type ImportedSssLoanReportEntryListRelationFilter = {
+    every?: ImportedSssLoanReportEntryWhereInput
+    some?: ImportedSssLoanReportEntryWhereInput
+    none?: ImportedSssLoanReportEntryWhereInput
+  }
+
+  export type ImportedSssLoanReportEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ImportedSssLoanReportCountOrderByAggregateInput = {
+    sourceReportId?: SortOrder
+    sourceKind?: SortOrder
+    sourceEmployerId?: SortOrder
+    employerName?: SortOrder
+    employerAddress?: SortOrder
+    employerSssNumber?: SortOrder
+    prn?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrder
+    paymentType?: SortOrder
+    payDate?: SortOrder
+    sssBranch?: SortOrder
+    transactionReference?: SortOrder
+    sourceCreatedBy?: SortOrder
+    sourceCreatedAt?: SortOrder
+    sourceUpdatedAt?: SortOrder
+    importedAt?: SortOrder
+  }
+
+  export type ImportedSssLoanReportAvgOrderByAggregateInput = {
+    sourceReportId?: SortOrder
+    sourceEmployerId?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrder
+    sourceCreatedBy?: SortOrder
+  }
+
+  export type ImportedSssLoanReportMaxOrderByAggregateInput = {
+    sourceReportId?: SortOrder
+    sourceKind?: SortOrder
+    sourceEmployerId?: SortOrder
+    employerName?: SortOrder
+    employerAddress?: SortOrder
+    employerSssNumber?: SortOrder
+    prn?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrder
+    paymentType?: SortOrder
+    payDate?: SortOrder
+    sssBranch?: SortOrder
+    transactionReference?: SortOrder
+    sourceCreatedBy?: SortOrder
+    sourceCreatedAt?: SortOrder
+    sourceUpdatedAt?: SortOrder
+    importedAt?: SortOrder
+  }
+
+  export type ImportedSssLoanReportMinOrderByAggregateInput = {
+    sourceReportId?: SortOrder
+    sourceKind?: SortOrder
+    sourceEmployerId?: SortOrder
+    employerName?: SortOrder
+    employerAddress?: SortOrder
+    employerSssNumber?: SortOrder
+    prn?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrder
+    paymentType?: SortOrder
+    payDate?: SortOrder
+    sssBranch?: SortOrder
+    transactionReference?: SortOrder
+    sourceCreatedBy?: SortOrder
+    sourceCreatedAt?: SortOrder
+    sourceUpdatedAt?: SortOrder
+    importedAt?: SortOrder
+  }
+
+  export type ImportedSssLoanReportSumOrderByAggregateInput = {
+    sourceReportId?: SortOrder
+    sourceEmployerId?: SortOrder
+    applicableMonth?: SortOrder
+    applicableYear?: SortOrder
+    amountDue?: SortOrder
+    amountPaid?: SortOrder
+    sourceCreatedBy?: SortOrder
+  }
+
+  export type ImportedSssLoanReportRelationFilter = {
+    is?: ImportedSssLoanReportWhereInput
+    isNot?: ImportedSssLoanReportWhereInput
+  }
+
+  export type ImportedSssLoanReportEntryCountOrderByAggregateInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrder
+    employeeName?: SortOrder
+    employeeCode?: SortOrder
+    employeeSssNumber?: SortOrder
+    sourceSssLoanId?: SortOrder
+    loanAccountNumber?: SortOrder
+    sourceEmployeeEmployerId?: SortOrder
+    employeeEmployerName?: SortOrder
+    salaryRange?: SortOrder
+    monthlySalaryCredit?: SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+  }
+
+  export type ImportedSssLoanReportEntryAvgOrderByAggregateInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrder
+    sourceSssLoanId?: SortOrder
+    sourceEmployeeEmployerId?: SortOrder
+    monthlySalaryCredit?: SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+  }
+
+  export type ImportedSssLoanReportEntryMaxOrderByAggregateInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrder
+    employeeName?: SortOrder
+    employeeCode?: SortOrder
+    employeeSssNumber?: SortOrder
+    sourceSssLoanId?: SortOrder
+    loanAccountNumber?: SortOrder
+    sourceEmployeeEmployerId?: SortOrder
+    employeeEmployerName?: SortOrder
+    salaryRange?: SortOrder
+    monthlySalaryCredit?: SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+  }
+
+  export type ImportedSssLoanReportEntryMinOrderByAggregateInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrder
+    employeeName?: SortOrder
+    employeeCode?: SortOrder
+    employeeSssNumber?: SortOrder
+    sourceSssLoanId?: SortOrder
+    loanAccountNumber?: SortOrder
+    sourceEmployeeEmployerId?: SortOrder
+    employeeEmployerName?: SortOrder
+    salaryRange?: SortOrder
+    monthlySalaryCredit?: SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+  }
+
+  export type ImportedSssLoanReportEntrySumOrderByAggregateInput = {
+    sourceEntryId?: SortOrder
+    sourceReportId?: SortOrder
+    sourceEmployeeId?: SortOrder
+    sourceSssLoanId?: SortOrder
+    sourceEmployeeEmployerId?: SortOrder
+    monthlySalaryCredit?: SortOrder
+    employeeSs?: SortOrder
+    employerSs?: SortOrder
+    employeeMpf?: SortOrder
+    employerMpf?: SortOrder
+    ec?: SortOrder
+    loanAmount?: SortOrder
+    totalAmount?: SortOrder
+  }
   export type JsonFilter<$PrismaModel = never> = 
     | PatchUndefined<
         Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -46613,6 +55846,314 @@ export namespace Prisma {
     amountPaid?: SortOrder
   }
 
+  export type EnumLoanProviderFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanProvider | EnumLoanProviderFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanProviderFilter<$PrismaModel> | $Enums.LoanProvider
+  }
+
+  export type EnumLoanStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanStatus | EnumLoanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanStatusFilter<$PrismaModel> | $Enums.LoanStatus
+  }
+
+  export type LoanPaymentListRelationFilter = {
+    every?: LoanPaymentWhereInput
+    some?: LoanPaymentWhereInput
+    none?: LoanPaymentWhereInput
+  }
+
+  export type LoanPaymentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LoanCountOrderByAggregateInput = {
+    id?: SortOrder
+    employeeId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    loanDate?: SortOrder
+    terms?: SortOrder
+    statusReason?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LoanAvgOrderByAggregateInput = {
+    employeeId?: SortOrder
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+  }
+
+  export type LoanMaxOrderByAggregateInput = {
+    id?: SortOrder
+    employeeId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    loanDate?: SortOrder
+    terms?: SortOrder
+    statusReason?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LoanMinOrderByAggregateInput = {
+    id?: SortOrder
+    employeeId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    loanDate?: SortOrder
+    terms?: SortOrder
+    statusReason?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LoanSumOrderByAggregateInput = {
+    employeeId?: SortOrder
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+  }
+
+  export type EnumLoanProviderWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanProvider | EnumLoanProviderFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanProviderWithAggregatesFilter<$PrismaModel> | $Enums.LoanProvider
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLoanProviderFilter<$PrismaModel>
+    _max?: NestedEnumLoanProviderFilter<$PrismaModel>
+  }
+
+  export type EnumLoanStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanStatus | EnumLoanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanStatusWithAggregatesFilter<$PrismaModel> | $Enums.LoanStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLoanStatusFilter<$PrismaModel>
+    _max?: NestedEnumLoanStatusFilter<$PrismaModel>
+  }
+
+  export type LoanMonitorReportEntryListRelationFilter = {
+    every?: LoanMonitorReportEntryWhereInput
+    some?: LoanMonitorReportEntryWhereInput
+    none?: LoanMonitorReportEntryWhereInput
+  }
+
+  export type LoanMonitorReportEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LoanMonitorReportCountOrderByAggregateInput = {
+    id?: SortOrder
+    applicableDate?: SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrder
+    employerAddress?: SortOrder
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    prn?: SortOrder
+    paymentDate?: SortOrder
+    amountPaid?: SortOrder
+    paymentBranch?: SortOrder
+    transactionReference?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LoanMonitorReportAvgOrderByAggregateInput = {
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    amountPaid?: SortOrder
+    createdBy?: SortOrder
+  }
+
+  export type LoanMonitorReportMaxOrderByAggregateInput = {
+    id?: SortOrder
+    applicableDate?: SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrder
+    employerAddress?: SortOrder
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    prn?: SortOrder
+    paymentDate?: SortOrder
+    amountPaid?: SortOrder
+    paymentBranch?: SortOrder
+    transactionReference?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LoanMonitorReportMinOrderByAggregateInput = {
+    id?: SortOrder
+    applicableDate?: SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrder
+    employerAddress?: SortOrder
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    prn?: SortOrder
+    paymentDate?: SortOrder
+    amountPaid?: SortOrder
+    paymentBranch?: SortOrder
+    transactionReference?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LoanMonitorReportSumOrderByAggregateInput = {
+    totalMonthly?: SortOrder
+    totalOutstanding?: SortOrder
+    amountPaid?: SortOrder
+    createdBy?: SortOrder
+  }
+
+  export type LoanMonitorReportRelationFilter = {
+    is?: LoanMonitorReportWhereInput
+    isNot?: LoanMonitorReportWhereInput
+  }
+
+  export type LoanMonitorReportEntryCountOrderByAggregateInput = {
+    id?: SortOrder
+    reportId?: SortOrder
+    loanId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    employeeName?: SortOrder
+    loanDate?: SortOrder
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    statusReason?: SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrder
+    employerAddress?: SortOrder
+  }
+
+  export type LoanMonitorReportEntryAvgOrderByAggregateInput = {
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+  }
+
+  export type LoanMonitorReportEntryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    reportId?: SortOrder
+    loanId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    employeeName?: SortOrder
+    loanDate?: SortOrder
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    statusReason?: SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrder
+    employerAddress?: SortOrder
+  }
+
+  export type LoanMonitorReportEntryMinOrderByAggregateInput = {
+    id?: SortOrder
+    reportId?: SortOrder
+    loanId?: SortOrder
+    provider?: SortOrder
+    loanType?: SortOrder
+    loanAccountNumber?: SortOrder
+    employeeName?: SortOrder
+    loanDate?: SortOrder
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+    status?: SortOrder
+    statusReason?: SortOrder
+    employerName?: SortOrder
+    employerSssNumber?: SortOrder
+    employerAddress?: SortOrder
+  }
+
+  export type LoanMonitorReportEntrySumOrderByAggregateInput = {
+    terms?: SortOrder
+    totalAmount?: SortOrder
+    monthlyAmortization?: SortOrder
+    outstandingBalance?: SortOrder
+  }
+
+  export type LoanRelationFilter = {
+    is?: LoanWhereInput
+    isNot?: LoanWhereInput
+  }
+
+  export type LoanPaymentCountOrderByAggregateInput = {
+    id?: SortOrder
+    loanId?: SortOrder
+    payrollPeriodId?: SortOrder
+    amountPaid?: SortOrder
+    paymentDate?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LoanPaymentAvgOrderByAggregateInput = {
+    amountPaid?: SortOrder
+  }
+
+  export type LoanPaymentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    loanId?: SortOrder
+    payrollPeriodId?: SortOrder
+    amountPaid?: SortOrder
+    paymentDate?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LoanPaymentMinOrderByAggregateInput = {
+    id?: SortOrder
+    loanId?: SortOrder
+    payrollPeriodId?: SortOrder
+    amountPaid?: SortOrder
+    paymentDate?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LoanPaymentSumOrderByAggregateInput = {
+    amountPaid?: SortOrder
+  }
+
   export type OfficeContactCountOrderByAggregateInput = {
     id?: SortOrder
     employeeId?: SortOrder
@@ -46730,6 +56271,13 @@ export namespace Prisma {
     connect?: PhilHealthReportWhereUniqueInput | PhilHealthReportWhereUniqueInput[]
   }
 
+  export type LoanMonitorReportCreateNestedManyWithoutCreatorInput = {
+    create?: XOR<LoanMonitorReportCreateWithoutCreatorInput, LoanMonitorReportUncheckedCreateWithoutCreatorInput> | LoanMonitorReportCreateWithoutCreatorInput[] | LoanMonitorReportUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: LoanMonitorReportCreateOrConnectWithoutCreatorInput | LoanMonitorReportCreateOrConnectWithoutCreatorInput[]
+    createMany?: LoanMonitorReportCreateManyCreatorInputEnvelope
+    connect?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+  }
+
   export type PostUncheckedCreateNestedManyWithoutAuthorInput = {
     create?: XOR<PostCreateWithoutAuthorInput, PostUncheckedCreateWithoutAuthorInput> | PostCreateWithoutAuthorInput[] | PostUncheckedCreateWithoutAuthorInput[]
     connectOrCreate?: PostCreateOrConnectWithoutAuthorInput | PostCreateOrConnectWithoutAuthorInput[]
@@ -46777,6 +56325,13 @@ export namespace Prisma {
     connectOrCreate?: PhilHealthReportCreateOrConnectWithoutCreatorInput | PhilHealthReportCreateOrConnectWithoutCreatorInput[]
     createMany?: PhilHealthReportCreateManyCreatorInputEnvelope
     connect?: PhilHealthReportWhereUniqueInput | PhilHealthReportWhereUniqueInput[]
+  }
+
+  export type LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput = {
+    create?: XOR<LoanMonitorReportCreateWithoutCreatorInput, LoanMonitorReportUncheckedCreateWithoutCreatorInput> | LoanMonitorReportCreateWithoutCreatorInput[] | LoanMonitorReportUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: LoanMonitorReportCreateOrConnectWithoutCreatorInput | LoanMonitorReportCreateOrConnectWithoutCreatorInput[]
+    createMany?: LoanMonitorReportCreateManyCreatorInputEnvelope
+    connect?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -46902,6 +56457,20 @@ export namespace Prisma {
     deleteMany?: PhilHealthReportScalarWhereInput | PhilHealthReportScalarWhereInput[]
   }
 
+  export type LoanMonitorReportUpdateManyWithoutCreatorNestedInput = {
+    create?: XOR<LoanMonitorReportCreateWithoutCreatorInput, LoanMonitorReportUncheckedCreateWithoutCreatorInput> | LoanMonitorReportCreateWithoutCreatorInput[] | LoanMonitorReportUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: LoanMonitorReportCreateOrConnectWithoutCreatorInput | LoanMonitorReportCreateOrConnectWithoutCreatorInput[]
+    upsert?: LoanMonitorReportUpsertWithWhereUniqueWithoutCreatorInput | LoanMonitorReportUpsertWithWhereUniqueWithoutCreatorInput[]
+    createMany?: LoanMonitorReportCreateManyCreatorInputEnvelope
+    set?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    disconnect?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    delete?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    connect?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    update?: LoanMonitorReportUpdateWithWhereUniqueWithoutCreatorInput | LoanMonitorReportUpdateWithWhereUniqueWithoutCreatorInput[]
+    updateMany?: LoanMonitorReportUpdateManyWithWhereWithoutCreatorInput | LoanMonitorReportUpdateManyWithWhereWithoutCreatorInput[]
+    deleteMany?: LoanMonitorReportScalarWhereInput | LoanMonitorReportScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -47006,6 +56575,20 @@ export namespace Prisma {
     update?: PhilHealthReportUpdateWithWhereUniqueWithoutCreatorInput | PhilHealthReportUpdateWithWhereUniqueWithoutCreatorInput[]
     updateMany?: PhilHealthReportUpdateManyWithWhereWithoutCreatorInput | PhilHealthReportUpdateManyWithWhereWithoutCreatorInput[]
     deleteMany?: PhilHealthReportScalarWhereInput | PhilHealthReportScalarWhereInput[]
+  }
+
+  export type LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput = {
+    create?: XOR<LoanMonitorReportCreateWithoutCreatorInput, LoanMonitorReportUncheckedCreateWithoutCreatorInput> | LoanMonitorReportCreateWithoutCreatorInput[] | LoanMonitorReportUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: LoanMonitorReportCreateOrConnectWithoutCreatorInput | LoanMonitorReportCreateOrConnectWithoutCreatorInput[]
+    upsert?: LoanMonitorReportUpsertWithWhereUniqueWithoutCreatorInput | LoanMonitorReportUpsertWithWhereUniqueWithoutCreatorInput[]
+    createMany?: LoanMonitorReportCreateManyCreatorInputEnvelope
+    set?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    disconnect?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    delete?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    connect?: LoanMonitorReportWhereUniqueInput | LoanMonitorReportWhereUniqueInput[]
+    update?: LoanMonitorReportUpdateWithWhereUniqueWithoutCreatorInput | LoanMonitorReportUpdateWithWhereUniqueWithoutCreatorInput[]
+    updateMany?: LoanMonitorReportUpdateManyWithWhereWithoutCreatorInput | LoanMonitorReportUpdateManyWithWhereWithoutCreatorInput[]
+    deleteMany?: LoanMonitorReportScalarWhereInput | LoanMonitorReportScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutPostsInput = {
@@ -47370,6 +56953,13 @@ export namespace Prisma {
     connect?: PhilHealthReportEntryWhereUniqueInput | PhilHealthReportEntryWhereUniqueInput[]
   }
 
+  export type LoanCreateNestedManyWithoutEmployeeInput = {
+    create?: XOR<LoanCreateWithoutEmployeeInput, LoanUncheckedCreateWithoutEmployeeInput> | LoanCreateWithoutEmployeeInput[] | LoanUncheckedCreateWithoutEmployeeInput[]
+    connectOrCreate?: LoanCreateOrConnectWithoutEmployeeInput | LoanCreateOrConnectWithoutEmployeeInput[]
+    createMany?: LoanCreateManyEmployeeInputEnvelope
+    connect?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+  }
+
   export type employeeUncheckedCreateNestedManyWithoutSupervisorInput = {
     create?: XOR<employeeCreateWithoutSupervisorInput, employeeUncheckedCreateWithoutSupervisorInput> | employeeCreateWithoutSupervisorInput[] | employeeUncheckedCreateWithoutSupervisorInput[]
     connectOrCreate?: employeeCreateOrConnectWithoutSupervisorInput | employeeCreateOrConnectWithoutSupervisorInput[]
@@ -47466,6 +57056,13 @@ export namespace Prisma {
     connectOrCreate?: PhilHealthReportEntryCreateOrConnectWithoutEmployeeInput | PhilHealthReportEntryCreateOrConnectWithoutEmployeeInput[]
     createMany?: PhilHealthReportEntryCreateManyEmployeeInputEnvelope
     connect?: PhilHealthReportEntryWhereUniqueInput | PhilHealthReportEntryWhereUniqueInput[]
+  }
+
+  export type LoanUncheckedCreateNestedManyWithoutEmployeeInput = {
+    create?: XOR<LoanCreateWithoutEmployeeInput, LoanUncheckedCreateWithoutEmployeeInput> | LoanCreateWithoutEmployeeInput[] | LoanUncheckedCreateWithoutEmployeeInput[]
+    connectOrCreate?: LoanCreateOrConnectWithoutEmployeeInput | LoanCreateOrConnectWithoutEmployeeInput[]
+    createMany?: LoanCreateManyEmployeeInputEnvelope
+    connect?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -47692,6 +57289,20 @@ export namespace Prisma {
     deleteMany?: PhilHealthReportEntryScalarWhereInput | PhilHealthReportEntryScalarWhereInput[]
   }
 
+  export type LoanUpdateManyWithoutEmployeeNestedInput = {
+    create?: XOR<LoanCreateWithoutEmployeeInput, LoanUncheckedCreateWithoutEmployeeInput> | LoanCreateWithoutEmployeeInput[] | LoanUncheckedCreateWithoutEmployeeInput[]
+    connectOrCreate?: LoanCreateOrConnectWithoutEmployeeInput | LoanCreateOrConnectWithoutEmployeeInput[]
+    upsert?: LoanUpsertWithWhereUniqueWithoutEmployeeInput | LoanUpsertWithWhereUniqueWithoutEmployeeInput[]
+    createMany?: LoanCreateManyEmployeeInputEnvelope
+    set?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    disconnect?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    delete?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    connect?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    update?: LoanUpdateWithWhereUniqueWithoutEmployeeInput | LoanUpdateWithWhereUniqueWithoutEmployeeInput[]
+    updateMany?: LoanUpdateManyWithWhereWithoutEmployeeInput | LoanUpdateManyWithWhereWithoutEmployeeInput[]
+    deleteMany?: LoanScalarWhereInput | LoanScalarWhereInput[]
+  }
+
   export type employeeUncheckedUpdateManyWithoutSupervisorNestedInput = {
     create?: XOR<employeeCreateWithoutSupervisorInput, employeeUncheckedCreateWithoutSupervisorInput> | employeeCreateWithoutSupervisorInput[] | employeeUncheckedCreateWithoutSupervisorInput[]
     connectOrCreate?: employeeCreateOrConnectWithoutSupervisorInput | employeeCreateOrConnectWithoutSupervisorInput[]
@@ -47886,6 +57497,20 @@ export namespace Prisma {
     update?: PhilHealthReportEntryUpdateWithWhereUniqueWithoutEmployeeInput | PhilHealthReportEntryUpdateWithWhereUniqueWithoutEmployeeInput[]
     updateMany?: PhilHealthReportEntryUpdateManyWithWhereWithoutEmployeeInput | PhilHealthReportEntryUpdateManyWithWhereWithoutEmployeeInput[]
     deleteMany?: PhilHealthReportEntryScalarWhereInput | PhilHealthReportEntryScalarWhereInput[]
+  }
+
+  export type LoanUncheckedUpdateManyWithoutEmployeeNestedInput = {
+    create?: XOR<LoanCreateWithoutEmployeeInput, LoanUncheckedCreateWithoutEmployeeInput> | LoanCreateWithoutEmployeeInput[] | LoanUncheckedCreateWithoutEmployeeInput[]
+    connectOrCreate?: LoanCreateOrConnectWithoutEmployeeInput | LoanCreateOrConnectWithoutEmployeeInput[]
+    upsert?: LoanUpsertWithWhereUniqueWithoutEmployeeInput | LoanUpsertWithWhereUniqueWithoutEmployeeInput[]
+    createMany?: LoanCreateManyEmployeeInputEnvelope
+    set?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    disconnect?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    delete?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    connect?: LoanWhereUniqueInput | LoanWhereUniqueInput[]
+    update?: LoanUpdateWithWhereUniqueWithoutEmployeeInput | LoanUpdateWithWhereUniqueWithoutEmployeeInput[]
+    updateMany?: LoanUpdateManyWithWhereWithoutEmployeeInput | LoanUpdateManyWithWhereWithoutEmployeeInput[]
+    deleteMany?: LoanScalarWhereInput | LoanScalarWhereInput[]
   }
 
   export type employeeCreateNestedOneWithoutRequirementsInput = {
@@ -48714,6 +58339,62 @@ export namespace Prisma {
     update?: XOR<XOR<SssLoanUpdateToOneWithWhereWithoutReportEntriesInput, SssLoanUpdateWithoutReportEntriesInput>, SssLoanUncheckedUpdateWithoutReportEntriesInput>
   }
 
+  export type ImportedSssLoanReportEntryCreateNestedManyWithoutReportInput = {
+    create?: XOR<ImportedSssLoanReportEntryCreateWithoutReportInput, ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput> | ImportedSssLoanReportEntryCreateWithoutReportInput[] | ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput | ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput[]
+    createMany?: ImportedSssLoanReportEntryCreateManyReportInputEnvelope
+    connect?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedCreateNestedManyWithoutReportInput = {
+    create?: XOR<ImportedSssLoanReportEntryCreateWithoutReportInput, ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput> | ImportedSssLoanReportEntryCreateWithoutReportInput[] | ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput | ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput[]
+    createMany?: ImportedSssLoanReportEntryCreateManyReportInputEnvelope
+    connect?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+  }
+
+  export type ImportedSssLoanReportEntryUpdateManyWithoutReportNestedInput = {
+    create?: XOR<ImportedSssLoanReportEntryCreateWithoutReportInput, ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput> | ImportedSssLoanReportEntryCreateWithoutReportInput[] | ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput | ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput[]
+    upsert?: ImportedSssLoanReportEntryUpsertWithWhereUniqueWithoutReportInput | ImportedSssLoanReportEntryUpsertWithWhereUniqueWithoutReportInput[]
+    createMany?: ImportedSssLoanReportEntryCreateManyReportInputEnvelope
+    set?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    disconnect?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    delete?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    connect?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    update?: ImportedSssLoanReportEntryUpdateWithWhereUniqueWithoutReportInput | ImportedSssLoanReportEntryUpdateWithWhereUniqueWithoutReportInput[]
+    updateMany?: ImportedSssLoanReportEntryUpdateManyWithWhereWithoutReportInput | ImportedSssLoanReportEntryUpdateManyWithWhereWithoutReportInput[]
+    deleteMany?: ImportedSssLoanReportEntryScalarWhereInput | ImportedSssLoanReportEntryScalarWhereInput[]
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedUpdateManyWithoutReportNestedInput = {
+    create?: XOR<ImportedSssLoanReportEntryCreateWithoutReportInput, ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput> | ImportedSssLoanReportEntryCreateWithoutReportInput[] | ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput | ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput[]
+    upsert?: ImportedSssLoanReportEntryUpsertWithWhereUniqueWithoutReportInput | ImportedSssLoanReportEntryUpsertWithWhereUniqueWithoutReportInput[]
+    createMany?: ImportedSssLoanReportEntryCreateManyReportInputEnvelope
+    set?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    disconnect?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    delete?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    connect?: ImportedSssLoanReportEntryWhereUniqueInput | ImportedSssLoanReportEntryWhereUniqueInput[]
+    update?: ImportedSssLoanReportEntryUpdateWithWhereUniqueWithoutReportInput | ImportedSssLoanReportEntryUpdateWithWhereUniqueWithoutReportInput[]
+    updateMany?: ImportedSssLoanReportEntryUpdateManyWithWhereWithoutReportInput | ImportedSssLoanReportEntryUpdateManyWithWhereWithoutReportInput[]
+    deleteMany?: ImportedSssLoanReportEntryScalarWhereInput | ImportedSssLoanReportEntryScalarWhereInput[]
+  }
+
+  export type ImportedSssLoanReportCreateNestedOneWithoutEntriesInput = {
+    create?: XOR<ImportedSssLoanReportCreateWithoutEntriesInput, ImportedSssLoanReportUncheckedCreateWithoutEntriesInput>
+    connectOrCreate?: ImportedSssLoanReportCreateOrConnectWithoutEntriesInput
+    connect?: ImportedSssLoanReportWhereUniqueInput
+  }
+
+  export type ImportedSssLoanReportUpdateOneRequiredWithoutEntriesNestedInput = {
+    create?: XOR<ImportedSssLoanReportCreateWithoutEntriesInput, ImportedSssLoanReportUncheckedCreateWithoutEntriesInput>
+    connectOrCreate?: ImportedSssLoanReportCreateOrConnectWithoutEntriesInput
+    upsert?: ImportedSssLoanReportUpsertWithoutEntriesInput
+    connect?: ImportedSssLoanReportWhereUniqueInput
+    update?: XOR<XOR<ImportedSssLoanReportUpdateToOneWithWhereWithoutEntriesInput, ImportedSssLoanReportUpdateWithoutEntriesInput>, ImportedSssLoanReportUncheckedUpdateWithoutEntriesInput>
+  }
+
   export type UserCreateNestedOneWithoutSssReportDraftsInput = {
     create?: XOR<UserCreateWithoutSssReportDraftsInput, UserUncheckedCreateWithoutSssReportDraftsInput>
     connectOrCreate?: UserCreateOrConnectWithoutSssReportDraftsInput
@@ -49204,6 +58885,158 @@ export namespace Prisma {
     update?: XOR<XOR<PhilHealthReportUpdateToOneWithWhereWithoutPaymentInput, PhilHealthReportUpdateWithoutPaymentInput>, PhilHealthReportUncheckedUpdateWithoutPaymentInput>
   }
 
+  export type employeeCreateNestedOneWithoutLoansInput = {
+    create?: XOR<employeeCreateWithoutLoansInput, employeeUncheckedCreateWithoutLoansInput>
+    connectOrCreate?: employeeCreateOrConnectWithoutLoansInput
+    connect?: employeeWhereUniqueInput
+  }
+
+  export type LoanPaymentCreateNestedManyWithoutLoanInput = {
+    create?: XOR<LoanPaymentCreateWithoutLoanInput, LoanPaymentUncheckedCreateWithoutLoanInput> | LoanPaymentCreateWithoutLoanInput[] | LoanPaymentUncheckedCreateWithoutLoanInput[]
+    connectOrCreate?: LoanPaymentCreateOrConnectWithoutLoanInput | LoanPaymentCreateOrConnectWithoutLoanInput[]
+    createMany?: LoanPaymentCreateManyLoanInputEnvelope
+    connect?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+  }
+
+  export type LoanPaymentUncheckedCreateNestedManyWithoutLoanInput = {
+    create?: XOR<LoanPaymentCreateWithoutLoanInput, LoanPaymentUncheckedCreateWithoutLoanInput> | LoanPaymentCreateWithoutLoanInput[] | LoanPaymentUncheckedCreateWithoutLoanInput[]
+    connectOrCreate?: LoanPaymentCreateOrConnectWithoutLoanInput | LoanPaymentCreateOrConnectWithoutLoanInput[]
+    createMany?: LoanPaymentCreateManyLoanInputEnvelope
+    connect?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+  }
+
+  export type EnumLoanProviderFieldUpdateOperationsInput = {
+    set?: $Enums.LoanProvider
+  }
+
+  export type EnumLoanStatusFieldUpdateOperationsInput = {
+    set?: $Enums.LoanStatus
+  }
+
+  export type employeeUpdateOneWithoutLoansNestedInput = {
+    create?: XOR<employeeCreateWithoutLoansInput, employeeUncheckedCreateWithoutLoansInput>
+    connectOrCreate?: employeeCreateOrConnectWithoutLoansInput
+    upsert?: employeeUpsertWithoutLoansInput
+    disconnect?: employeeWhereInput | boolean
+    delete?: employeeWhereInput | boolean
+    connect?: employeeWhereUniqueInput
+    update?: XOR<XOR<employeeUpdateToOneWithWhereWithoutLoansInput, employeeUpdateWithoutLoansInput>, employeeUncheckedUpdateWithoutLoansInput>
+  }
+
+  export type LoanPaymentUpdateManyWithoutLoanNestedInput = {
+    create?: XOR<LoanPaymentCreateWithoutLoanInput, LoanPaymentUncheckedCreateWithoutLoanInput> | LoanPaymentCreateWithoutLoanInput[] | LoanPaymentUncheckedCreateWithoutLoanInput[]
+    connectOrCreate?: LoanPaymentCreateOrConnectWithoutLoanInput | LoanPaymentCreateOrConnectWithoutLoanInput[]
+    upsert?: LoanPaymentUpsertWithWhereUniqueWithoutLoanInput | LoanPaymentUpsertWithWhereUniqueWithoutLoanInput[]
+    createMany?: LoanPaymentCreateManyLoanInputEnvelope
+    set?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    disconnect?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    delete?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    connect?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    update?: LoanPaymentUpdateWithWhereUniqueWithoutLoanInput | LoanPaymentUpdateWithWhereUniqueWithoutLoanInput[]
+    updateMany?: LoanPaymentUpdateManyWithWhereWithoutLoanInput | LoanPaymentUpdateManyWithWhereWithoutLoanInput[]
+    deleteMany?: LoanPaymentScalarWhereInput | LoanPaymentScalarWhereInput[]
+  }
+
+  export type LoanPaymentUncheckedUpdateManyWithoutLoanNestedInput = {
+    create?: XOR<LoanPaymentCreateWithoutLoanInput, LoanPaymentUncheckedCreateWithoutLoanInput> | LoanPaymentCreateWithoutLoanInput[] | LoanPaymentUncheckedCreateWithoutLoanInput[]
+    connectOrCreate?: LoanPaymentCreateOrConnectWithoutLoanInput | LoanPaymentCreateOrConnectWithoutLoanInput[]
+    upsert?: LoanPaymentUpsertWithWhereUniqueWithoutLoanInput | LoanPaymentUpsertWithWhereUniqueWithoutLoanInput[]
+    createMany?: LoanPaymentCreateManyLoanInputEnvelope
+    set?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    disconnect?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    delete?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    connect?: LoanPaymentWhereUniqueInput | LoanPaymentWhereUniqueInput[]
+    update?: LoanPaymentUpdateWithWhereUniqueWithoutLoanInput | LoanPaymentUpdateWithWhereUniqueWithoutLoanInput[]
+    updateMany?: LoanPaymentUpdateManyWithWhereWithoutLoanInput | LoanPaymentUpdateManyWithWhereWithoutLoanInput[]
+    deleteMany?: LoanPaymentScalarWhereInput | LoanPaymentScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutLoanMonitorReportsInput = {
+    create?: XOR<UserCreateWithoutLoanMonitorReportsInput, UserUncheckedCreateWithoutLoanMonitorReportsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutLoanMonitorReportsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type LoanMonitorReportEntryCreateNestedManyWithoutReportInput = {
+    create?: XOR<LoanMonitorReportEntryCreateWithoutReportInput, LoanMonitorReportEntryUncheckedCreateWithoutReportInput> | LoanMonitorReportEntryCreateWithoutReportInput[] | LoanMonitorReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: LoanMonitorReportEntryCreateOrConnectWithoutReportInput | LoanMonitorReportEntryCreateOrConnectWithoutReportInput[]
+    createMany?: LoanMonitorReportEntryCreateManyReportInputEnvelope
+    connect?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+  }
+
+  export type LoanMonitorReportEntryUncheckedCreateNestedManyWithoutReportInput = {
+    create?: XOR<LoanMonitorReportEntryCreateWithoutReportInput, LoanMonitorReportEntryUncheckedCreateWithoutReportInput> | LoanMonitorReportEntryCreateWithoutReportInput[] | LoanMonitorReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: LoanMonitorReportEntryCreateOrConnectWithoutReportInput | LoanMonitorReportEntryCreateOrConnectWithoutReportInput[]
+    createMany?: LoanMonitorReportEntryCreateManyReportInputEnvelope
+    connect?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+  }
+
+  export type UserUpdateOneWithoutLoanMonitorReportsNestedInput = {
+    create?: XOR<UserCreateWithoutLoanMonitorReportsInput, UserUncheckedCreateWithoutLoanMonitorReportsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutLoanMonitorReportsInput
+    upsert?: UserUpsertWithoutLoanMonitorReportsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutLoanMonitorReportsInput, UserUpdateWithoutLoanMonitorReportsInput>, UserUncheckedUpdateWithoutLoanMonitorReportsInput>
+  }
+
+  export type LoanMonitorReportEntryUpdateManyWithoutReportNestedInput = {
+    create?: XOR<LoanMonitorReportEntryCreateWithoutReportInput, LoanMonitorReportEntryUncheckedCreateWithoutReportInput> | LoanMonitorReportEntryCreateWithoutReportInput[] | LoanMonitorReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: LoanMonitorReportEntryCreateOrConnectWithoutReportInput | LoanMonitorReportEntryCreateOrConnectWithoutReportInput[]
+    upsert?: LoanMonitorReportEntryUpsertWithWhereUniqueWithoutReportInput | LoanMonitorReportEntryUpsertWithWhereUniqueWithoutReportInput[]
+    createMany?: LoanMonitorReportEntryCreateManyReportInputEnvelope
+    set?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    disconnect?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    delete?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    connect?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    update?: LoanMonitorReportEntryUpdateWithWhereUniqueWithoutReportInput | LoanMonitorReportEntryUpdateWithWhereUniqueWithoutReportInput[]
+    updateMany?: LoanMonitorReportEntryUpdateManyWithWhereWithoutReportInput | LoanMonitorReportEntryUpdateManyWithWhereWithoutReportInput[]
+    deleteMany?: LoanMonitorReportEntryScalarWhereInput | LoanMonitorReportEntryScalarWhereInput[]
+  }
+
+  export type LoanMonitorReportEntryUncheckedUpdateManyWithoutReportNestedInput = {
+    create?: XOR<LoanMonitorReportEntryCreateWithoutReportInput, LoanMonitorReportEntryUncheckedCreateWithoutReportInput> | LoanMonitorReportEntryCreateWithoutReportInput[] | LoanMonitorReportEntryUncheckedCreateWithoutReportInput[]
+    connectOrCreate?: LoanMonitorReportEntryCreateOrConnectWithoutReportInput | LoanMonitorReportEntryCreateOrConnectWithoutReportInput[]
+    upsert?: LoanMonitorReportEntryUpsertWithWhereUniqueWithoutReportInput | LoanMonitorReportEntryUpsertWithWhereUniqueWithoutReportInput[]
+    createMany?: LoanMonitorReportEntryCreateManyReportInputEnvelope
+    set?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    disconnect?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    delete?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    connect?: LoanMonitorReportEntryWhereUniqueInput | LoanMonitorReportEntryWhereUniqueInput[]
+    update?: LoanMonitorReportEntryUpdateWithWhereUniqueWithoutReportInput | LoanMonitorReportEntryUpdateWithWhereUniqueWithoutReportInput[]
+    updateMany?: LoanMonitorReportEntryUpdateManyWithWhereWithoutReportInput | LoanMonitorReportEntryUpdateManyWithWhereWithoutReportInput[]
+    deleteMany?: LoanMonitorReportEntryScalarWhereInput | LoanMonitorReportEntryScalarWhereInput[]
+  }
+
+  export type LoanMonitorReportCreateNestedOneWithoutEntriesInput = {
+    create?: XOR<LoanMonitorReportCreateWithoutEntriesInput, LoanMonitorReportUncheckedCreateWithoutEntriesInput>
+    connectOrCreate?: LoanMonitorReportCreateOrConnectWithoutEntriesInput
+    connect?: LoanMonitorReportWhereUniqueInput
+  }
+
+  export type LoanMonitorReportUpdateOneRequiredWithoutEntriesNestedInput = {
+    create?: XOR<LoanMonitorReportCreateWithoutEntriesInput, LoanMonitorReportUncheckedCreateWithoutEntriesInput>
+    connectOrCreate?: LoanMonitorReportCreateOrConnectWithoutEntriesInput
+    upsert?: LoanMonitorReportUpsertWithoutEntriesInput
+    connect?: LoanMonitorReportWhereUniqueInput
+    update?: XOR<XOR<LoanMonitorReportUpdateToOneWithWhereWithoutEntriesInput, LoanMonitorReportUpdateWithoutEntriesInput>, LoanMonitorReportUncheckedUpdateWithoutEntriesInput>
+  }
+
+  export type LoanCreateNestedOneWithoutPaymentsInput = {
+    create?: XOR<LoanCreateWithoutPaymentsInput, LoanUncheckedCreateWithoutPaymentsInput>
+    connectOrCreate?: LoanCreateOrConnectWithoutPaymentsInput
+    connect?: LoanWhereUniqueInput
+  }
+
+  export type LoanUpdateOneRequiredWithoutPaymentsNestedInput = {
+    create?: XOR<LoanCreateWithoutPaymentsInput, LoanUncheckedCreateWithoutPaymentsInput>
+    connectOrCreate?: LoanCreateOrConnectWithoutPaymentsInput
+    upsert?: LoanUpsertWithoutPaymentsInput
+    connect?: LoanWhereUniqueInput
+    update?: XOR<XOR<LoanUpdateToOneWithWhereWithoutPaymentsInput, LoanUpdateWithoutPaymentsInput>, LoanUncheckedUpdateWithoutPaymentsInput>
+  }
+
   export type employeeCreateNestedOneWithoutOfficeContactsInput = {
     create?: XOR<employeeCreateWithoutOfficeContactsInput, employeeUncheckedCreateWithoutOfficeContactsInput>
     connectOrCreate?: employeeCreateOrConnectWithoutOfficeContactsInput
@@ -49536,6 +59369,40 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumLoanProviderFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanProvider | EnumLoanProviderFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanProviderFilter<$PrismaModel> | $Enums.LoanProvider
+  }
+
+  export type NestedEnumLoanStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanStatus | EnumLoanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanStatusFilter<$PrismaModel> | $Enums.LoanStatus
+  }
+
+  export type NestedEnumLoanProviderWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanProvider | EnumLoanProviderFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanProvider[] | ListEnumLoanProviderFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanProviderWithAggregatesFilter<$PrismaModel> | $Enums.LoanProvider
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLoanProviderFilter<$PrismaModel>
+    _max?: NestedEnumLoanProviderFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLoanStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LoanStatus | EnumLoanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LoanStatus[] | ListEnumLoanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumLoanStatusWithAggregatesFilter<$PrismaModel> | $Enums.LoanStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLoanStatusFilter<$PrismaModel>
+    _max?: NestedEnumLoanStatusFilter<$PrismaModel>
+  }
+
   export type PostCreateWithoutAuthorInput = {
     title: string
     content?: string | null
@@ -49827,6 +59694,50 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type LoanMonitorReportCreateWithoutCreatorInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdAt?: Date | string
+    entries?: LoanMonitorReportEntryCreateNestedManyWithoutReportInput
+  }
+
+  export type LoanMonitorReportUncheckedCreateWithoutCreatorInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdAt?: Date | string
+    entries?: LoanMonitorReportEntryUncheckedCreateNestedManyWithoutReportInput
+  }
+
+  export type LoanMonitorReportCreateOrConnectWithoutCreatorInput = {
+    where: LoanMonitorReportWhereUniqueInput
+    create: XOR<LoanMonitorReportCreateWithoutCreatorInput, LoanMonitorReportUncheckedCreateWithoutCreatorInput>
+  }
+
+  export type LoanMonitorReportCreateManyCreatorInputEnvelope = {
+    data: LoanMonitorReportCreateManyCreatorInput | LoanMonitorReportCreateManyCreatorInput[]
+    skipDuplicates?: boolean
+  }
+
   export type PostUpsertWithWhereUniqueWithoutAuthorInput = {
     where: PostWhereUniqueInput
     update: XOR<PostUpdateWithoutAuthorInput, PostUncheckedUpdateWithoutAuthorInput>
@@ -50073,6 +59984,42 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PhilHealthReport"> | Date | string
   }
 
+  export type LoanMonitorReportUpsertWithWhereUniqueWithoutCreatorInput = {
+    where: LoanMonitorReportWhereUniqueInput
+    update: XOR<LoanMonitorReportUpdateWithoutCreatorInput, LoanMonitorReportUncheckedUpdateWithoutCreatorInput>
+    create: XOR<LoanMonitorReportCreateWithoutCreatorInput, LoanMonitorReportUncheckedCreateWithoutCreatorInput>
+  }
+
+  export type LoanMonitorReportUpdateWithWhereUniqueWithoutCreatorInput = {
+    where: LoanMonitorReportWhereUniqueInput
+    data: XOR<LoanMonitorReportUpdateWithoutCreatorInput, LoanMonitorReportUncheckedUpdateWithoutCreatorInput>
+  }
+
+  export type LoanMonitorReportUpdateManyWithWhereWithoutCreatorInput = {
+    where: LoanMonitorReportScalarWhereInput
+    data: XOR<LoanMonitorReportUpdateManyMutationInput, LoanMonitorReportUncheckedUpdateManyWithoutCreatorInput>
+  }
+
+  export type LoanMonitorReportScalarWhereInput = {
+    AND?: LoanMonitorReportScalarWhereInput | LoanMonitorReportScalarWhereInput[]
+    OR?: LoanMonitorReportScalarWhereInput[]
+    NOT?: LoanMonitorReportScalarWhereInput | LoanMonitorReportScalarWhereInput[]
+    id?: StringFilter<"LoanMonitorReport"> | string
+    applicableDate?: DateTimeFilter<"LoanMonitorReport"> | Date | string
+    employerName?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    employerSssNumber?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    employerAddress?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    totalMonthly?: DecimalFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string
+    prn?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    paymentDate?: DateTimeNullableFilter<"LoanMonitorReport"> | Date | string | null
+    amountPaid?: DecimalNullableFilter<"LoanMonitorReport"> | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    transactionReference?: StringNullableFilter<"LoanMonitorReport"> | string | null
+    createdBy?: IntNullableFilter<"LoanMonitorReport"> | number | null
+    createdAt?: DateTimeFilter<"LoanMonitorReport"> | Date | string
+  }
+
   export type UserCreateWithoutPostsInput = {
     email: string
     username?: string | null
@@ -50092,6 +60039,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutPostsInput = {
@@ -50114,6 +60062,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutPostsInput = {
@@ -50151,6 +60100,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPostsInput = {
@@ -50173,6 +60123,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserCreateWithoutTasksInput = {
@@ -50194,6 +60145,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutTasksInput = {
@@ -50216,6 +60168,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutTasksInput = {
@@ -50339,6 +60292,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTasksInput = {
@@ -50361,6 +60315,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type TaskRescheduleUpsertWithWhereUniqueWithoutTaskInput = {
@@ -50970,6 +60925,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutDirectReportsInput = {
@@ -51022,6 +60978,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutDirectReportsInput = {
@@ -51078,6 +61035,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutSupervisorInput = {
@@ -51130,6 +61088,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutSupervisorInput = {
@@ -51611,6 +61570,50 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type LoanCreateWithoutEmployeeInput = {
+    id?: string
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    payments?: LoanPaymentCreateNestedManyWithoutLoanInput
+  }
+
+  export type LoanUncheckedCreateWithoutEmployeeInput = {
+    id?: string
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    payments?: LoanPaymentUncheckedCreateNestedManyWithoutLoanInput
+  }
+
+  export type LoanCreateOrConnectWithoutEmployeeInput = {
+    where: LoanWhereUniqueInput
+    create: XOR<LoanCreateWithoutEmployeeInput, LoanUncheckedCreateWithoutEmployeeInput>
+  }
+
+  export type LoanCreateManyEmployeeInputEnvelope = {
+    data: LoanCreateManyEmployeeInput | LoanCreateManyEmployeeInput[]
+    skipDuplicates?: boolean
+  }
+
   export type employerUpsertWithoutEmployeesInput = {
     update: XOR<employerUpdateWithoutEmployeesInput, employerUncheckedUpdateWithoutEmployeesInput>
     create: XOR<employerCreateWithoutEmployeesInput, employerUncheckedCreateWithoutEmployeesInput>
@@ -51747,6 +61750,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutDirectReportsInput = {
@@ -51799,6 +61803,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUpsertWithWhereUniqueWithoutSupervisorInput = {
@@ -52290,6 +62295,42 @@ export namespace Prisma {
     amount?: DecimalFilter<"PhilHealthReportEntry"> | Decimal | DecimalJsLike | number | string
   }
 
+  export type LoanUpsertWithWhereUniqueWithoutEmployeeInput = {
+    where: LoanWhereUniqueInput
+    update: XOR<LoanUpdateWithoutEmployeeInput, LoanUncheckedUpdateWithoutEmployeeInput>
+    create: XOR<LoanCreateWithoutEmployeeInput, LoanUncheckedCreateWithoutEmployeeInput>
+  }
+
+  export type LoanUpdateWithWhereUniqueWithoutEmployeeInput = {
+    where: LoanWhereUniqueInput
+    data: XOR<LoanUpdateWithoutEmployeeInput, LoanUncheckedUpdateWithoutEmployeeInput>
+  }
+
+  export type LoanUpdateManyWithWhereWithoutEmployeeInput = {
+    where: LoanScalarWhereInput
+    data: XOR<LoanUpdateManyMutationInput, LoanUncheckedUpdateManyWithoutEmployeeInput>
+  }
+
+  export type LoanScalarWhereInput = {
+    AND?: LoanScalarWhereInput | LoanScalarWhereInput[]
+    OR?: LoanScalarWhereInput[]
+    NOT?: LoanScalarWhereInput | LoanScalarWhereInput[]
+    id?: StringFilter<"Loan"> | string
+    employeeId?: IntNullableFilter<"Loan"> | number | null
+    provider?: EnumLoanProviderFilter<"Loan"> | $Enums.LoanProvider
+    loanType?: StringFilter<"Loan"> | string
+    loanAccountNumber?: StringFilter<"Loan"> | string
+    loanDate?: DateTimeNullableFilter<"Loan"> | Date | string | null
+    terms?: IntNullableFilter<"Loan"> | number | null
+    statusReason?: StringNullableFilter<"Loan"> | string | null
+    totalAmount?: DecimalNullableFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFilter<"Loan"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalNullableFilter<"Loan"> | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFilter<"Loan"> | $Enums.LoanStatus
+    createdAt?: DateTimeFilter<"Loan"> | Date | string
+    updatedAt?: DateTimeFilter<"Loan"> | Date | string
+  }
+
   export type employeeCreateWithoutRequirementsInput = {
     status?: string | null
     dateStarted?: Date | string | null
@@ -52339,6 +62380,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutRequirementsInput = {
@@ -52391,6 +62433,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutRequirementsInput = {
@@ -52489,6 +62532,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutRequirementsInput = {
@@ -52541,6 +62585,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type EmployeeRequirementAttachmentUpsertWithWhereUniqueWithoutEmployeeRequirementInput = {
@@ -52608,6 +62653,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutRequirementAttachmentsInput = {
@@ -52660,6 +62706,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutRequirementAttachmentsInput = {
@@ -52747,6 +62794,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutRequirementAttachmentsInput = {
@@ -52799,6 +62847,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type EmployeeRequirementUpsertWithoutAttachmentsInput = {
@@ -52876,6 +62925,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutBdoAccountNumbersInput = {
@@ -52928,6 +62978,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutBdoAccountNumbersInput = {
@@ -52995,6 +63046,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutBdoAccountNumbersInput = {
@@ -53047,6 +63099,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeCreateWithoutAttendanceRecordsInput = {
@@ -53098,6 +63151,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutAttendanceRecordsInput = {
@@ -53150,6 +63204,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutAttendanceRecordsInput = {
@@ -53248,6 +63303,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutAttendanceRecordsInput = {
@@ -53300,6 +63356,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type AttendancePunchUpsertWithWhereUniqueWithoutAttendanceInput = {
@@ -53414,6 +63471,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutAttendancePunchesInput = {
@@ -53466,6 +63524,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutAttendancePunchesInput = {
@@ -53589,6 +63648,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutAttendancePunchesInput = {
@@ -53641,6 +63701,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type AttendanceUpsertWithoutPunchesInput = {
@@ -53760,6 +63821,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutEmployerInput = {
@@ -53812,6 +63874,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutEmployerInput = {
@@ -54435,6 +64498,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutSssLoansInput = {
@@ -54487,6 +64551,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutSssLoansInput = {
@@ -54681,6 +64746,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutSssLoansInput = {
@@ -54733,6 +64799,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type SssReportEntryUpsertWithWhereUniqueWithoutSssLoanInput = {
@@ -54840,6 +64907,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutSssReportsInput = {
@@ -54862,6 +64930,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutSssReportsInput = {
@@ -55026,6 +65095,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSssReportsInput = {
@@ -55048,6 +65118,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type SssReportEntryUpsertWithWhereUniqueWithoutReportInput = {
@@ -55161,6 +65232,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutSssReportEntriesInput = {
@@ -55213,6 +65285,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutSssReportEntriesInput = {
@@ -55374,6 +65447,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutSssReportEntriesInput = {
@@ -55426,6 +65500,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type SssLoanUpsertWithoutReportEntriesInput = {
@@ -55476,6 +65551,203 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ImportedSssLoanReportEntryCreateWithoutReportInput = {
+    sourceEntryId: number
+    sourceEmployeeId?: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber?: string | null
+    sourceSssLoanId?: number | null
+    loanAccountNumber?: string | null
+    sourceEmployeeEmployerId?: number | null
+    employeeEmployerName?: string | null
+    salaryRange?: string | null
+    monthlySalaryCredit?: Decimal | DecimalJsLike | number | string | null
+    employeeSs: Decimal | DecimalJsLike | number | string
+    employerSs: Decimal | DecimalJsLike | number | string
+    employeeMpf: Decimal | DecimalJsLike | number | string
+    employerMpf: Decimal | DecimalJsLike | number | string
+    ec: Decimal | DecimalJsLike | number | string
+    loanAmount: Decimal | DecimalJsLike | number | string
+    totalAmount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput = {
+    sourceEntryId: number
+    sourceEmployeeId?: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber?: string | null
+    sourceSssLoanId?: number | null
+    loanAccountNumber?: string | null
+    sourceEmployeeEmployerId?: number | null
+    employeeEmployerName?: string | null
+    salaryRange?: string | null
+    monthlySalaryCredit?: Decimal | DecimalJsLike | number | string | null
+    employeeSs: Decimal | DecimalJsLike | number | string
+    employerSs: Decimal | DecimalJsLike | number | string
+    employeeMpf: Decimal | DecimalJsLike | number | string
+    employerMpf: Decimal | DecimalJsLike | number | string
+    ec: Decimal | DecimalJsLike | number | string
+    loanAmount: Decimal | DecimalJsLike | number | string
+    totalAmount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryCreateOrConnectWithoutReportInput = {
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+    create: XOR<ImportedSssLoanReportEntryCreateWithoutReportInput, ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput>
+  }
+
+  export type ImportedSssLoanReportEntryCreateManyReportInputEnvelope = {
+    data: ImportedSssLoanReportEntryCreateManyReportInput | ImportedSssLoanReportEntryCreateManyReportInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ImportedSssLoanReportEntryUpsertWithWhereUniqueWithoutReportInput = {
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+    update: XOR<ImportedSssLoanReportEntryUpdateWithoutReportInput, ImportedSssLoanReportEntryUncheckedUpdateWithoutReportInput>
+    create: XOR<ImportedSssLoanReportEntryCreateWithoutReportInput, ImportedSssLoanReportEntryUncheckedCreateWithoutReportInput>
+  }
+
+  export type ImportedSssLoanReportEntryUpdateWithWhereUniqueWithoutReportInput = {
+    where: ImportedSssLoanReportEntryWhereUniqueInput
+    data: XOR<ImportedSssLoanReportEntryUpdateWithoutReportInput, ImportedSssLoanReportEntryUncheckedUpdateWithoutReportInput>
+  }
+
+  export type ImportedSssLoanReportEntryUpdateManyWithWhereWithoutReportInput = {
+    where: ImportedSssLoanReportEntryScalarWhereInput
+    data: XOR<ImportedSssLoanReportEntryUpdateManyMutationInput, ImportedSssLoanReportEntryUncheckedUpdateManyWithoutReportInput>
+  }
+
+  export type ImportedSssLoanReportEntryScalarWhereInput = {
+    AND?: ImportedSssLoanReportEntryScalarWhereInput | ImportedSssLoanReportEntryScalarWhereInput[]
+    OR?: ImportedSssLoanReportEntryScalarWhereInput[]
+    NOT?: ImportedSssLoanReportEntryScalarWhereInput | ImportedSssLoanReportEntryScalarWhereInput[]
+    sourceEntryId?: IntFilter<"ImportedSssLoanReportEntry"> | number
+    sourceReportId?: IntFilter<"ImportedSssLoanReportEntry"> | number
+    sourceEmployeeId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeName?: StringFilter<"ImportedSssLoanReportEntry"> | string
+    employeeCode?: StringFilter<"ImportedSssLoanReportEntry"> | string
+    employeeSssNumber?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceSssLoanId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    loanAccountNumber?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    sourceEmployeeEmployerId?: IntNullableFilter<"ImportedSssLoanReportEntry"> | number | null
+    employeeEmployerName?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    salaryRange?: StringNullableFilter<"ImportedSssLoanReportEntry"> | string | null
+    monthlySalaryCredit?: DecimalNullableFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFilter<"ImportedSssLoanReportEntry"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportCreateWithoutEntriesInput = {
+    sourceReportId: number
+    sourceKind: string
+    sourceEmployerId: number
+    employerName: string
+    employerAddress?: string | null
+    employerSssNumber?: string | null
+    prn: string
+    applicableMonth: number
+    applicableYear: number
+    amountDue: Decimal | DecimalJsLike | number | string
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentType?: string | null
+    payDate?: Date | string | null
+    sssBranch?: string | null
+    transactionReference?: string | null
+    sourceCreatedBy?: number | null
+    sourceCreatedAt: Date | string
+    sourceUpdatedAt: Date | string
+    importedAt?: Date | string
+  }
+
+  export type ImportedSssLoanReportUncheckedCreateWithoutEntriesInput = {
+    sourceReportId: number
+    sourceKind: string
+    sourceEmployerId: number
+    employerName: string
+    employerAddress?: string | null
+    employerSssNumber?: string | null
+    prn: string
+    applicableMonth: number
+    applicableYear: number
+    amountDue: Decimal | DecimalJsLike | number | string
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentType?: string | null
+    payDate?: Date | string | null
+    sssBranch?: string | null
+    transactionReference?: string | null
+    sourceCreatedBy?: number | null
+    sourceCreatedAt: Date | string
+    sourceUpdatedAt: Date | string
+    importedAt?: Date | string
+  }
+
+  export type ImportedSssLoanReportCreateOrConnectWithoutEntriesInput = {
+    where: ImportedSssLoanReportWhereUniqueInput
+    create: XOR<ImportedSssLoanReportCreateWithoutEntriesInput, ImportedSssLoanReportUncheckedCreateWithoutEntriesInput>
+  }
+
+  export type ImportedSssLoanReportUpsertWithoutEntriesInput = {
+    update: XOR<ImportedSssLoanReportUpdateWithoutEntriesInput, ImportedSssLoanReportUncheckedUpdateWithoutEntriesInput>
+    create: XOR<ImportedSssLoanReportCreateWithoutEntriesInput, ImportedSssLoanReportUncheckedCreateWithoutEntriesInput>
+    where?: ImportedSssLoanReportWhereInput
+  }
+
+  export type ImportedSssLoanReportUpdateToOneWithWhereWithoutEntriesInput = {
+    where?: ImportedSssLoanReportWhereInput
+    data: XOR<ImportedSssLoanReportUpdateWithoutEntriesInput, ImportedSssLoanReportUncheckedUpdateWithoutEntriesInput>
+  }
+
+  export type ImportedSssLoanReportUpdateWithoutEntriesInput = {
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceKind?: StringFieldUpdateOperationsInput | string
+    sourceEmployerId?: IntFieldUpdateOperationsInput | number
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    prn?: StringFieldUpdateOperationsInput | string
+    applicableMonth?: IntFieldUpdateOperationsInput | number
+    applicableYear?: IntFieldUpdateOperationsInput | number
+    amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentType?: NullableStringFieldUpdateOperationsInput | string | null
+    payDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sssBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceCreatedBy?: NullableIntFieldUpdateOperationsInput | number | null
+    sourceCreatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sourceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    importedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ImportedSssLoanReportUncheckedUpdateWithoutEntriesInput = {
+    sourceReportId?: IntFieldUpdateOperationsInput | number
+    sourceKind?: StringFieldUpdateOperationsInput | string
+    sourceEmployerId?: IntFieldUpdateOperationsInput | number
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    prn?: StringFieldUpdateOperationsInput | string
+    applicableMonth?: IntFieldUpdateOperationsInput | number
+    applicableYear?: IntFieldUpdateOperationsInput | number
+    amountDue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentType?: NullableStringFieldUpdateOperationsInput | string | null
+    payDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sssBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceCreatedBy?: NullableIntFieldUpdateOperationsInput | number | null
+    sourceCreatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sourceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    importedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UserCreateWithoutSssReportDraftsInput = {
     email: string
     username?: string | null
@@ -55495,6 +65767,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutSssReportDraftsInput = {
@@ -55517,6 +65790,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutSssReportDraftsInput = {
@@ -55554,6 +65828,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSssReportDraftsInput = {
@@ -55576,6 +65851,7 @@ export namespace Prisma {
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type employerCreateWithoutPagibigEmployeeLoansInput = {
@@ -55880,6 +66156,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutPagibigEmployeeRecordsInput = {
@@ -55932,6 +66209,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutPagibigEmployeeRecordsInput = {
@@ -56085,6 +66363,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutPagibigEmployeeRecordsInput = {
@@ -56137,6 +66416,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employerUpsertWithoutPagibigEmployeeRecordsInput = {
@@ -56264,6 +66544,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutPagibigLoansInput = {
@@ -56316,6 +66597,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutPagibigLoansInput = {
@@ -56504,6 +66786,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutPagibigLoansInput = {
@@ -56556,6 +66839,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employerUpsertWithoutPagibigLoansInput = {
@@ -56669,6 +66953,7 @@ export namespace Prisma {
     sssReports?: SssReportCreateNestedManyWithoutCreatorInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutPagibigReportInput = {
@@ -56691,6 +66976,7 @@ export namespace Prisma {
     sssReports?: SssReportUncheckedCreateNestedManyWithoutCreatorInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutPagibigReportInput = {
@@ -56849,6 +67135,7 @@ export namespace Prisma {
     sssReports?: SssReportUpdateManyWithoutCreatorNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPagibigReportInput = {
@@ -56871,6 +67158,7 @@ export namespace Prisma {
     sssReports?: SssReportUncheckedUpdateManyWithoutCreatorNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type employerUpsertWithoutPagibigReportsInput = {
@@ -56984,6 +67272,7 @@ export namespace Prisma {
     sssReports?: SssReportCreateNestedManyWithoutCreatorInput
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutPagibigReportDraftInput = {
@@ -57006,6 +67295,7 @@ export namespace Prisma {
     sssReports?: SssReportUncheckedCreateNestedManyWithoutCreatorInput
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutPagibigReportDraftInput = {
@@ -57043,6 +67333,7 @@ export namespace Prisma {
     sssReports?: SssReportUpdateManyWithoutCreatorNestedInput
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPagibigReportDraftInput = {
@@ -57065,6 +67356,7 @@ export namespace Prisma {
     sssReports?: SssReportUncheckedUpdateManyWithoutCreatorNestedInput
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type employeeCreateWithoutPagibigReportEntriesInput = {
@@ -57116,6 +67408,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutPagibigReportEntriesInput = {
@@ -57168,6 +67461,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutPagibigReportEntriesInput = {
@@ -57321,6 +67615,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutPagibigReportEntriesInput = {
@@ -57373,6 +67668,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type PagibigLoanUpsertWithoutPagibigReportEntryInput = {
@@ -57522,6 +67818,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryCreateNestedManyWithoutEmployeeInput
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutPhilHealthEmployeeRecordsInput = {
@@ -57574,6 +67871,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutPhilHealthEmployeeRecordsInput = {
@@ -57711,6 +68009,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUpdateManyWithoutEmployeeNestedInput
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutPhilHealthEmployeeRecordsInput = {
@@ -57763,6 +68062,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employerUpsertWithoutPhilHealthEmployeeRecordsInput = {
@@ -57930,6 +68230,7 @@ export namespace Prisma {
     sssReports?: SssReportCreateNestedManyWithoutCreatorInput
     PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
+    loanMonitorReports?: LoanMonitorReportCreateNestedManyWithoutCreatorInput
   }
 
   export type UserUncheckedCreateWithoutPhilHealthReportsInput = {
@@ -57952,6 +68253,7 @@ export namespace Prisma {
     sssReports?: SssReportUncheckedCreateNestedManyWithoutCreatorInput
     PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
     PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
+    loanMonitorReports?: LoanMonitorReportUncheckedCreateNestedManyWithoutCreatorInput
   }
 
   export type UserCreateOrConnectWithoutPhilHealthReportsInput = {
@@ -58128,6 +68430,7 @@ export namespace Prisma {
     sssReports?: SssReportUpdateManyWithoutCreatorNestedInput
     PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
+    loanMonitorReports?: LoanMonitorReportUpdateManyWithoutCreatorNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPhilHealthReportsInput = {
@@ -58150,6 +68453,7 @@ export namespace Prisma {
     sssReports?: SssReportUncheckedUpdateManyWithoutCreatorNestedInput
     PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
     PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
+    loanMonitorReports?: LoanMonitorReportUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type PhilHealthReportEntryUpsertWithWhereUniqueWithoutReportInput = {
@@ -58291,6 +68595,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryCreateNestedManyWithoutEmployeeInput
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutPhilHealthReportEntriesInput = {
@@ -58343,6 +68648,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutPhilHealthReportEntriesInput = {
@@ -58448,6 +68754,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUpdateManyWithoutEmployeeNestedInput
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutPhilHealthReportEntriesInput = {
@@ -58500,6 +68807,7 @@ export namespace Prisma {
     pagibigReportEntries?: PagibigReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type PhilHealthReportCreateWithoutPaymentInput = {
@@ -58572,6 +68880,650 @@ export namespace Prisma {
     entries?: PhilHealthReportEntryUncheckedUpdateManyWithoutReportNestedInput
   }
 
+  export type employeeCreateWithoutLoansInput = {
+    status?: string | null
+    dateStarted?: Date | string | null
+    address?: string | null
+    age?: number | null
+    biometricNo?: string | null
+    branch?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    dateOfBirth?: Date | string | null
+    email?: string | null
+    emergencyAddress?: string | null
+    emergencyName?: string | null
+    emergencyNumber?: string | null
+    emergencyRelation?: string | null
+    employeeCode: string
+    endDate?: Date | string | null
+    firstName: string
+    gender?: string | null
+    jobLevel?: string | null
+    lastName: string
+    maritalStatus?: string | null
+    middleName?: string | null
+    mobileNumber?: string | null
+    pagIbigNumber?: string | null
+    philHealth?: string | null
+    photoUrl?: string | null
+    remarks?: string | null
+    sssNumber?: string | null
+    tinNumber?: string | null
+    updatedAt?: Date | string
+    assignedBy?: string | null
+    assignedAt?: Date | string | null
+    requirementsBypassed?: boolean
+    employer?: employerCreateNestedOneWithoutEmployeesInput
+    supervisor?: employeeCreateNestedOneWithoutDirectReportsInput
+    directReports?: employeeCreateNestedManyWithoutSupervisorInput
+    attendanceRecords?: AttendanceCreateNestedManyWithoutEmployeeInput
+    attendancePunches?: AttendancePunchCreateNestedManyWithoutEmployeeInput
+    officeContacts?: OfficeContactCreateNestedManyWithoutEmployeeInput
+    requirements?: EmployeeRequirementCreateNestedManyWithoutEmployeeInput
+    requirementAttachments?: EmployeeRequirementAttachmentCreateNestedManyWithoutEmployeeInput
+    bdoAccountNumbers?: EmployeeBdoAccountNumberCreateNestedManyWithoutEmployeeInput
+    sssReportEntries?: SssReportEntryCreateNestedManyWithoutEmployeeInput
+    sssLoans?: SssLoanCreateNestedManyWithoutEmployeeInput
+    pagibigEmployeeRecords?: PagibigEmployeeRecordCreateNestedManyWithoutEmployeeInput
+    pagibigReportEntries?: PagibigReportEntryCreateNestedManyWithoutEmployeeInput
+    pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
+    philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
+    philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+  }
+
+  export type employeeUncheckedCreateWithoutLoansInput = {
+    id?: number
+    status?: string | null
+    dateStarted?: Date | string | null
+    employerId?: number | null
+    address?: string | null
+    age?: number | null
+    biometricNo?: string | null
+    branch?: string | null
+    position?: string | null
+    createdAt?: Date | string
+    dateOfBirth?: Date | string | null
+    email?: string | null
+    emergencyAddress?: string | null
+    emergencyName?: string | null
+    emergencyNumber?: string | null
+    emergencyRelation?: string | null
+    employeeCode: string
+    endDate?: Date | string | null
+    firstName: string
+    gender?: string | null
+    jobLevel?: string | null
+    lastName: string
+    maritalStatus?: string | null
+    middleName?: string | null
+    mobileNumber?: string | null
+    pagIbigNumber?: string | null
+    philHealth?: string | null
+    photoUrl?: string | null
+    remarks?: string | null
+    sssNumber?: string | null
+    tinNumber?: string | null
+    updatedAt?: Date | string
+    supervisorId?: number | null
+    assignedBy?: string | null
+    assignedAt?: Date | string | null
+    requirementsBypassed?: boolean
+    directReports?: employeeUncheckedCreateNestedManyWithoutSupervisorInput
+    attendanceRecords?: AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+    attendancePunches?: AttendancePunchUncheckedCreateNestedManyWithoutEmployeeInput
+    officeContacts?: OfficeContactUncheckedCreateNestedManyWithoutEmployeeInput
+    requirements?: EmployeeRequirementUncheckedCreateNestedManyWithoutEmployeeInput
+    requirementAttachments?: EmployeeRequirementAttachmentUncheckedCreateNestedManyWithoutEmployeeInput
+    bdoAccountNumbers?: EmployeeBdoAccountNumberUncheckedCreateNestedManyWithoutEmployeeInput
+    sssReportEntries?: SssReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    sssLoans?: SssLoanUncheckedCreateNestedManyWithoutEmployeeInput
+    pagibigEmployeeRecords?: PagibigEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
+    pagibigReportEntries?: PagibigReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
+    philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
+    philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+  }
+
+  export type employeeCreateOrConnectWithoutLoansInput = {
+    where: employeeWhereUniqueInput
+    create: XOR<employeeCreateWithoutLoansInput, employeeUncheckedCreateWithoutLoansInput>
+  }
+
+  export type LoanPaymentCreateWithoutLoanInput = {
+    id?: string
+    payrollPeriodId: string
+    amountPaid: Decimal | DecimalJsLike | number | string
+    paymentDate: Date | string
+    source?: string
+    createdAt?: Date | string
+  }
+
+  export type LoanPaymentUncheckedCreateWithoutLoanInput = {
+    id?: string
+    payrollPeriodId: string
+    amountPaid: Decimal | DecimalJsLike | number | string
+    paymentDate: Date | string
+    source?: string
+    createdAt?: Date | string
+  }
+
+  export type LoanPaymentCreateOrConnectWithoutLoanInput = {
+    where: LoanPaymentWhereUniqueInput
+    create: XOR<LoanPaymentCreateWithoutLoanInput, LoanPaymentUncheckedCreateWithoutLoanInput>
+  }
+
+  export type LoanPaymentCreateManyLoanInputEnvelope = {
+    data: LoanPaymentCreateManyLoanInput | LoanPaymentCreateManyLoanInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type employeeUpsertWithoutLoansInput = {
+    update: XOR<employeeUpdateWithoutLoansInput, employeeUncheckedUpdateWithoutLoansInput>
+    create: XOR<employeeCreateWithoutLoansInput, employeeUncheckedCreateWithoutLoansInput>
+    where?: employeeWhereInput
+  }
+
+  export type employeeUpdateToOneWithWhereWithoutLoansInput = {
+    where?: employeeWhereInput
+    data: XOR<employeeUpdateWithoutLoansInput, employeeUncheckedUpdateWithoutLoansInput>
+  }
+
+  export type employeeUpdateWithoutLoansInput = {
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    dateStarted?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    biometricNo?: NullableStringFieldUpdateOperationsInput | string | null
+    branch?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyRelation?: NullableStringFieldUpdateOperationsInput | string | null
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstName?: StringFieldUpdateOperationsInput | string
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    jobLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    maritalStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    pagIbigNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    philHealth?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    remarks?: NullableStringFieldUpdateOperationsInput | string | null
+    sssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    tinNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    assignedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requirementsBypassed?: BoolFieldUpdateOperationsInput | boolean
+    employer?: employerUpdateOneWithoutEmployeesNestedInput
+    supervisor?: employeeUpdateOneWithoutDirectReportsNestedInput
+    directReports?: employeeUpdateManyWithoutSupervisorNestedInput
+    attendanceRecords?: AttendanceUpdateManyWithoutEmployeeNestedInput
+    attendancePunches?: AttendancePunchUpdateManyWithoutEmployeeNestedInput
+    officeContacts?: OfficeContactUpdateManyWithoutEmployeeNestedInput
+    requirements?: EmployeeRequirementUpdateManyWithoutEmployeeNestedInput
+    requirementAttachments?: EmployeeRequirementAttachmentUpdateManyWithoutEmployeeNestedInput
+    bdoAccountNumbers?: EmployeeBdoAccountNumberUpdateManyWithoutEmployeeNestedInput
+    sssReportEntries?: SssReportEntryUpdateManyWithoutEmployeeNestedInput
+    sssLoans?: SssLoanUpdateManyWithoutEmployeeNestedInput
+    pagibigEmployeeRecords?: PagibigEmployeeRecordUpdateManyWithoutEmployeeNestedInput
+    pagibigReportEntries?: PagibigReportEntryUpdateManyWithoutEmployeeNestedInput
+    pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
+    philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
+    philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+  }
+
+  export type employeeUncheckedUpdateWithoutLoansInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    dateStarted?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    employerId?: NullableIntFieldUpdateOperationsInput | number | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    biometricNo?: NullableStringFieldUpdateOperationsInput | string | null
+    branch?: NullableStringFieldUpdateOperationsInput | string | null
+    position?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyRelation?: NullableStringFieldUpdateOperationsInput | string | null
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstName?: StringFieldUpdateOperationsInput | string
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    jobLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    maritalStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    mobileNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    pagIbigNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    philHealth?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    remarks?: NullableStringFieldUpdateOperationsInput | string | null
+    sssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    tinNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisorId?: NullableIntFieldUpdateOperationsInput | number | null
+    assignedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requirementsBypassed?: BoolFieldUpdateOperationsInput | boolean
+    directReports?: employeeUncheckedUpdateManyWithoutSupervisorNestedInput
+    attendanceRecords?: AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+    attendancePunches?: AttendancePunchUncheckedUpdateManyWithoutEmployeeNestedInput
+    officeContacts?: OfficeContactUncheckedUpdateManyWithoutEmployeeNestedInput
+    requirements?: EmployeeRequirementUncheckedUpdateManyWithoutEmployeeNestedInput
+    requirementAttachments?: EmployeeRequirementAttachmentUncheckedUpdateManyWithoutEmployeeNestedInput
+    bdoAccountNumbers?: EmployeeBdoAccountNumberUncheckedUpdateManyWithoutEmployeeNestedInput
+    sssReportEntries?: SssReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    sssLoans?: SssLoanUncheckedUpdateManyWithoutEmployeeNestedInput
+    pagibigEmployeeRecords?: PagibigEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
+    pagibigReportEntries?: PagibigReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
+    philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
+    philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+  }
+
+  export type LoanPaymentUpsertWithWhereUniqueWithoutLoanInput = {
+    where: LoanPaymentWhereUniqueInput
+    update: XOR<LoanPaymentUpdateWithoutLoanInput, LoanPaymentUncheckedUpdateWithoutLoanInput>
+    create: XOR<LoanPaymentCreateWithoutLoanInput, LoanPaymentUncheckedCreateWithoutLoanInput>
+  }
+
+  export type LoanPaymentUpdateWithWhereUniqueWithoutLoanInput = {
+    where: LoanPaymentWhereUniqueInput
+    data: XOR<LoanPaymentUpdateWithoutLoanInput, LoanPaymentUncheckedUpdateWithoutLoanInput>
+  }
+
+  export type LoanPaymentUpdateManyWithWhereWithoutLoanInput = {
+    where: LoanPaymentScalarWhereInput
+    data: XOR<LoanPaymentUpdateManyMutationInput, LoanPaymentUncheckedUpdateManyWithoutLoanInput>
+  }
+
+  export type LoanPaymentScalarWhereInput = {
+    AND?: LoanPaymentScalarWhereInput | LoanPaymentScalarWhereInput[]
+    OR?: LoanPaymentScalarWhereInput[]
+    NOT?: LoanPaymentScalarWhereInput | LoanPaymentScalarWhereInput[]
+    id?: StringFilter<"LoanPayment"> | string
+    loanId?: StringFilter<"LoanPayment"> | string
+    payrollPeriodId?: StringFilter<"LoanPayment"> | string
+    amountPaid?: DecimalFilter<"LoanPayment"> | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFilter<"LoanPayment"> | Date | string
+    source?: StringFilter<"LoanPayment"> | string
+    createdAt?: DateTimeFilter<"LoanPayment"> | Date | string
+  }
+
+  export type UserCreateWithoutLoanMonitorReportsInput = {
+    email: string
+    username?: string | null
+    name?: string | null
+    password: string
+    role?: string
+    canAccessEmployees?: boolean
+    accessiblePages?: UserCreateaccessiblePagesInput | string[]
+    emailVerified?: boolean
+    verificationTokenHash?: string | null
+    verificationTokenExpires?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    posts?: PostCreateNestedManyWithoutAuthorInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    sssReportDrafts?: SssReportDraftCreateNestedManyWithoutCreatorInput
+    sssReports?: SssReportCreateNestedManyWithoutCreatorInput
+    PagibigReport?: PagibigReportCreateNestedManyWithoutUserInput
+    PagibigReportDraft?: PagibigReportDraftCreateNestedManyWithoutUserInput
+    philHealthReports?: PhilHealthReportCreateNestedManyWithoutCreatorInput
+  }
+
+  export type UserUncheckedCreateWithoutLoanMonitorReportsInput = {
+    id?: number
+    email: string
+    username?: string | null
+    name?: string | null
+    password: string
+    role?: string
+    canAccessEmployees?: boolean
+    accessiblePages?: UserCreateaccessiblePagesInput | string[]
+    emailVerified?: boolean
+    verificationTokenHash?: string | null
+    verificationTokenExpires?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    sssReportDrafts?: SssReportDraftUncheckedCreateNestedManyWithoutCreatorInput
+    sssReports?: SssReportUncheckedCreateNestedManyWithoutCreatorInput
+    PagibigReport?: PagibigReportUncheckedCreateNestedManyWithoutUserInput
+    PagibigReportDraft?: PagibigReportDraftUncheckedCreateNestedManyWithoutUserInput
+    philHealthReports?: PhilHealthReportUncheckedCreateNestedManyWithoutCreatorInput
+  }
+
+  export type UserCreateOrConnectWithoutLoanMonitorReportsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutLoanMonitorReportsInput, UserUncheckedCreateWithoutLoanMonitorReportsInput>
+  }
+
+  export type LoanMonitorReportEntryCreateWithoutReportInput = {
+    id?: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    totalAmount: Decimal | DecimalJsLike | number | string
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance: Decimal | DecimalJsLike | number | string
+    status: string
+    statusReason?: string | null
+    employerName: string
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+  }
+
+  export type LoanMonitorReportEntryUncheckedCreateWithoutReportInput = {
+    id?: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    totalAmount: Decimal | DecimalJsLike | number | string
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance: Decimal | DecimalJsLike | number | string
+    status: string
+    statusReason?: string | null
+    employerName: string
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+  }
+
+  export type LoanMonitorReportEntryCreateOrConnectWithoutReportInput = {
+    where: LoanMonitorReportEntryWhereUniqueInput
+    create: XOR<LoanMonitorReportEntryCreateWithoutReportInput, LoanMonitorReportEntryUncheckedCreateWithoutReportInput>
+  }
+
+  export type LoanMonitorReportEntryCreateManyReportInputEnvelope = {
+    data: LoanMonitorReportEntryCreateManyReportInput | LoanMonitorReportEntryCreateManyReportInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithoutLoanMonitorReportsInput = {
+    update: XOR<UserUpdateWithoutLoanMonitorReportsInput, UserUncheckedUpdateWithoutLoanMonitorReportsInput>
+    create: XOR<UserCreateWithoutLoanMonitorReportsInput, UserUncheckedCreateWithoutLoanMonitorReportsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutLoanMonitorReportsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutLoanMonitorReportsInput, UserUncheckedUpdateWithoutLoanMonitorReportsInput>
+  }
+
+  export type UserUpdateWithoutLoanMonitorReportsInput = {
+    email?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    canAccessEmployees?: BoolFieldUpdateOperationsInput | boolean
+    accessiblePages?: UserUpdateaccessiblePagesInput | string[]
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationTokenExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    posts?: PostUpdateManyWithoutAuthorNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    sssReportDrafts?: SssReportDraftUpdateManyWithoutCreatorNestedInput
+    sssReports?: SssReportUpdateManyWithoutCreatorNestedInput
+    PagibigReport?: PagibigReportUpdateManyWithoutUserNestedInput
+    PagibigReportDraft?: PagibigReportDraftUpdateManyWithoutUserNestedInput
+    philHealthReports?: PhilHealthReportUpdateManyWithoutCreatorNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutLoanMonitorReportsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    email?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    canAccessEmployees?: BoolFieldUpdateOperationsInput | boolean
+    accessiblePages?: UserUpdateaccessiblePagesInput | string[]
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    verificationTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationTokenExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    sssReportDrafts?: SssReportDraftUncheckedUpdateManyWithoutCreatorNestedInput
+    sssReports?: SssReportUncheckedUpdateManyWithoutCreatorNestedInput
+    PagibigReport?: PagibigReportUncheckedUpdateManyWithoutUserNestedInput
+    PagibigReportDraft?: PagibigReportDraftUncheckedUpdateManyWithoutUserNestedInput
+    philHealthReports?: PhilHealthReportUncheckedUpdateManyWithoutCreatorNestedInput
+  }
+
+  export type LoanMonitorReportEntryUpsertWithWhereUniqueWithoutReportInput = {
+    where: LoanMonitorReportEntryWhereUniqueInput
+    update: XOR<LoanMonitorReportEntryUpdateWithoutReportInput, LoanMonitorReportEntryUncheckedUpdateWithoutReportInput>
+    create: XOR<LoanMonitorReportEntryCreateWithoutReportInput, LoanMonitorReportEntryUncheckedCreateWithoutReportInput>
+  }
+
+  export type LoanMonitorReportEntryUpdateWithWhereUniqueWithoutReportInput = {
+    where: LoanMonitorReportEntryWhereUniqueInput
+    data: XOR<LoanMonitorReportEntryUpdateWithoutReportInput, LoanMonitorReportEntryUncheckedUpdateWithoutReportInput>
+  }
+
+  export type LoanMonitorReportEntryUpdateManyWithWhereWithoutReportInput = {
+    where: LoanMonitorReportEntryScalarWhereInput
+    data: XOR<LoanMonitorReportEntryUpdateManyMutationInput, LoanMonitorReportEntryUncheckedUpdateManyWithoutReportInput>
+  }
+
+  export type LoanMonitorReportEntryScalarWhereInput = {
+    AND?: LoanMonitorReportEntryScalarWhereInput | LoanMonitorReportEntryScalarWhereInput[]
+    OR?: LoanMonitorReportEntryScalarWhereInput[]
+    NOT?: LoanMonitorReportEntryScalarWhereInput | LoanMonitorReportEntryScalarWhereInput[]
+    id?: StringFilter<"LoanMonitorReportEntry"> | string
+    reportId?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanId?: StringFilter<"LoanMonitorReportEntry"> | string
+    provider?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanType?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanAccountNumber?: StringFilter<"LoanMonitorReportEntry"> | string
+    employeeName?: StringFilter<"LoanMonitorReportEntry"> | string
+    loanDate?: DateTimeNullableFilter<"LoanMonitorReportEntry"> | Date | string | null
+    terms?: IntNullableFilter<"LoanMonitorReportEntry"> | number | null
+    totalAmount?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFilter<"LoanMonitorReportEntry"> | Decimal | DecimalJsLike | number | string
+    status?: StringFilter<"LoanMonitorReportEntry"> | string
+    statusReason?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    employerName?: StringFilter<"LoanMonitorReportEntry"> | string
+    employerSssNumber?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+    employerAddress?: StringNullableFilter<"LoanMonitorReportEntry"> | string | null
+  }
+
+  export type LoanMonitorReportCreateWithoutEntriesInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdAt?: Date | string
+    creator?: UserCreateNestedOneWithoutLoanMonitorReportsInput
+  }
+
+  export type LoanMonitorReportUncheckedCreateWithoutEntriesInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdBy?: number | null
+    createdAt?: Date | string
+  }
+
+  export type LoanMonitorReportCreateOrConnectWithoutEntriesInput = {
+    where: LoanMonitorReportWhereUniqueInput
+    create: XOR<LoanMonitorReportCreateWithoutEntriesInput, LoanMonitorReportUncheckedCreateWithoutEntriesInput>
+  }
+
+  export type LoanMonitorReportUpsertWithoutEntriesInput = {
+    update: XOR<LoanMonitorReportUpdateWithoutEntriesInput, LoanMonitorReportUncheckedUpdateWithoutEntriesInput>
+    create: XOR<LoanMonitorReportCreateWithoutEntriesInput, LoanMonitorReportUncheckedCreateWithoutEntriesInput>
+    where?: LoanMonitorReportWhereInput
+  }
+
+  export type LoanMonitorReportUpdateToOneWithWhereWithoutEntriesInput = {
+    where?: LoanMonitorReportWhereInput
+    data: XOR<LoanMonitorReportUpdateWithoutEntriesInput, LoanMonitorReportUncheckedUpdateWithoutEntriesInput>
+  }
+
+  export type LoanMonitorReportUpdateWithoutEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    creator?: UserUpdateOneWithoutLoanMonitorReportsNestedInput
+  }
+
+  export type LoanMonitorReportUncheckedUpdateWithoutEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanCreateWithoutPaymentsInput = {
+    id?: string
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employee?: employeeCreateNestedOneWithoutLoansInput
+  }
+
+  export type LoanUncheckedCreateWithoutPaymentsInput = {
+    id?: string
+    employeeId?: number | null
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LoanCreateOrConnectWithoutPaymentsInput = {
+    where: LoanWhereUniqueInput
+    create: XOR<LoanCreateWithoutPaymentsInput, LoanUncheckedCreateWithoutPaymentsInput>
+  }
+
+  export type LoanUpsertWithoutPaymentsInput = {
+    update: XOR<LoanUpdateWithoutPaymentsInput, LoanUncheckedUpdateWithoutPaymentsInput>
+    create: XOR<LoanCreateWithoutPaymentsInput, LoanUncheckedCreateWithoutPaymentsInput>
+    where?: LoanWhereInput
+  }
+
+  export type LoanUpdateToOneWithWhereWithoutPaymentsInput = {
+    where?: LoanWhereInput
+    data: XOR<LoanUpdateWithoutPaymentsInput, LoanUncheckedUpdateWithoutPaymentsInput>
+  }
+
+  export type LoanUpdateWithoutPaymentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employee?: employeeUpdateOneWithoutLoansNestedInput
+  }
+
+  export type LoanUncheckedUpdateWithoutPaymentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type employeeCreateWithoutOfficeContactsInput = {
     status?: string | null
     dateStarted?: Date | string | null
@@ -58621,6 +69573,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryCreateNestedManyWithoutEmployeeInput
+    loans?: LoanCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeUncheckedCreateWithoutOfficeContactsInput = {
@@ -58673,6 +69626,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedCreateNestedManyWithoutEmployeeInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedCreateNestedManyWithoutEmployeeInput
+    loans?: LoanUncheckedCreateNestedManyWithoutEmployeeInput
   }
 
   export type employeeCreateOrConnectWithoutOfficeContactsInput = {
@@ -58740,6 +69694,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutOfficeContactsInput = {
@@ -58792,6 +69747,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type PostCreateManyAuthorInput = {
@@ -58898,6 +69854,22 @@ export namespace Prisma {
     amountDue: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type LoanMonitorReportCreateManyCreatorInput = {
+    id?: string
+    applicableDate: Date | string
+    employerName?: string | null
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+    totalMonthly: Decimal | DecimalJsLike | number | string
+    totalOutstanding: Decimal | DecimalJsLike | number | string
+    prn?: string | null
+    paymentDate?: Date | string | null
+    amountPaid?: Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: string | null
+    transactionReference?: string | null
+    createdAt?: Date | string
   }
 
   export type PostUpdateWithoutAuthorInput = {
@@ -59227,6 +70199,56 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type LoanMonitorReportUpdateWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: LoanMonitorReportEntryUpdateManyWithoutReportNestedInput
+  }
+
+  export type LoanMonitorReportUncheckedUpdateWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    entries?: LoanMonitorReportEntryUncheckedUpdateManyWithoutReportNestedInput
+  }
+
+  export type LoanMonitorReportUncheckedUpdateManyWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    applicableDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    employerName?: NullableStringFieldUpdateOperationsInput | string | null
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    totalMonthly?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalOutstanding?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    prn?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountPaid?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paymentBranch?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type TaskRescheduleCreateManyTaskInput = {
     id?: number
     previousDueDate?: Date | string | null
@@ -59530,6 +70552,22 @@ export namespace Prisma {
     amount: Decimal | DecimalJsLike | number | string
   }
 
+  export type LoanCreateManyEmployeeInput = {
+    id?: string
+    provider: $Enums.LoanProvider
+    loanType: string
+    loanAccountNumber: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    statusReason?: string | null
+    totalAmount?: Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance?: Decimal | DecimalJsLike | number | string | null
+    status?: $Enums.LoanStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type employeeUpdateWithoutSupervisorInput = {
     status?: NullableStringFieldUpdateOperationsInput | string | null
     dateStarted?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -59579,6 +70617,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutSupervisorInput = {
@@ -59631,6 +70670,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateManyWithoutSupervisorInput = {
@@ -60181,6 +71221,56 @@ export namespace Prisma {
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type LoanUpdateWithoutEmployeeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payments?: LoanPaymentUpdateManyWithoutLoanNestedInput
+  }
+
+  export type LoanUncheckedUpdateWithoutEmployeeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payments?: LoanPaymentUncheckedUpdateManyWithoutLoanNestedInput
+  }
+
+  export type LoanUncheckedUpdateManyWithoutEmployeeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: EnumLoanProviderFieldUpdateOperationsInput | $Enums.LoanProvider
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    status?: EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type EmployeeRequirementAttachmentCreateManyEmployeeRequirementInput = {
     id?: number
     employeeId: number
@@ -60519,6 +71609,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateWithoutEmployerInput = {
@@ -60571,6 +71662,7 @@ export namespace Prisma {
     pagibigLoans?: PagibigLoanUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthEmployeeRecords?: PhilHealthEmployeeRecordUncheckedUpdateManyWithoutEmployeeNestedInput
     philHealthReportEntries?: PhilHealthReportEntryUncheckedUpdateManyWithoutEmployeeNestedInput
+    loans?: LoanUncheckedUpdateManyWithoutEmployeeNestedInput
   }
 
   export type employeeUncheckedUpdateManyWithoutEmployerInput = {
@@ -61149,6 +72241,90 @@ export namespace Prisma {
     totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type ImportedSssLoanReportEntryCreateManyReportInput = {
+    sourceEntryId: number
+    sourceEmployeeId?: number | null
+    employeeName: string
+    employeeCode: string
+    employeeSssNumber?: string | null
+    sourceSssLoanId?: number | null
+    loanAccountNumber?: string | null
+    sourceEmployeeEmployerId?: number | null
+    employeeEmployerName?: string | null
+    salaryRange?: string | null
+    monthlySalaryCredit?: Decimal | DecimalJsLike | number | string | null
+    employeeSs: Decimal | DecimalJsLike | number | string
+    employerSs: Decimal | DecimalJsLike | number | string
+    employeeMpf: Decimal | DecimalJsLike | number | string
+    employerMpf: Decimal | DecimalJsLike | number | string
+    ec: Decimal | DecimalJsLike | number | string
+    loanAmount: Decimal | DecimalJsLike | number | string
+    totalAmount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUpdateWithoutReportInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedUpdateWithoutReportInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ImportedSssLoanReportEntryUncheckedUpdateManyWithoutReportInput = {
+    sourceEntryId?: IntFieldUpdateOperationsInput | number
+    sourceEmployeeId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeName?: StringFieldUpdateOperationsInput | string
+    employeeCode?: StringFieldUpdateOperationsInput | string
+    employeeSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceSssLoanId?: NullableIntFieldUpdateOperationsInput | number | null
+    loanAccountNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEmployeeEmployerId?: NullableIntFieldUpdateOperationsInput | number | null
+    employeeEmployerName?: NullableStringFieldUpdateOperationsInput | string | null
+    salaryRange?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlySalaryCredit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    employeeSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerSs?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employeeMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    employerMpf?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    ec?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    loanAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
   export type PagibigEmployeeLoanCreateManyPagibigEmployeeRecordInput = {
     id?: number
     employerId: number
@@ -61405,6 +72581,118 @@ export namespace Prisma {
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type LoanPaymentCreateManyLoanInput = {
+    id?: string
+    payrollPeriodId: string
+    amountPaid: Decimal | DecimalJsLike | number | string
+    paymentDate: Date | string
+    source?: string
+    createdAt?: Date | string
+  }
+
+  export type LoanPaymentUpdateWithoutLoanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanPaymentUncheckedUpdateWithoutLoanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanPaymentUncheckedUpdateManyWithoutLoanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    payrollPeriodId?: StringFieldUpdateOperationsInput | string
+    amountPaid?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    paymentDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LoanMonitorReportEntryCreateManyReportInput = {
+    id?: string
+    loanId: string
+    provider: string
+    loanType: string
+    loanAccountNumber: string
+    employeeName: string
+    loanDate?: Date | string | null
+    terms?: number | null
+    totalAmount: Decimal | DecimalJsLike | number | string
+    monthlyAmortization: Decimal | DecimalJsLike | number | string
+    outstandingBalance: Decimal | DecimalJsLike | number | string
+    status: string
+    statusReason?: string | null
+    employerName: string
+    employerSssNumber?: string | null
+    employerAddress?: string | null
+  }
+
+  export type LoanMonitorReportEntryUpdateWithoutReportInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type LoanMonitorReportEntryUncheckedUpdateWithoutReportInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type LoanMonitorReportEntryUncheckedUpdateManyWithoutReportInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    loanId?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    loanType?: StringFieldUpdateOperationsInput | string
+    loanAccountNumber?: StringFieldUpdateOperationsInput | string
+    employeeName?: StringFieldUpdateOperationsInput | string
+    loanDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    terms?: NullableIntFieldUpdateOperationsInput | number | null
+    totalAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monthlyAmortization?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outstandingBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusReason?: NullableStringFieldUpdateOperationsInput | string | null
+    employerName?: StringFieldUpdateOperationsInput | string
+    employerSssNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    employerAddress?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
 
 
   /**
@@ -61447,6 +72735,10 @@ export namespace Prisma {
      */
     export type SssReportCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SssReportCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use ImportedSssLoanReportCountOutputTypeDefaultArgs instead
+     */
+    export type ImportedSssLoanReportCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ImportedSssLoanReportCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use PagibigEmployeeRecordCountOutputTypeDefaultArgs instead
      */
     export type PagibigEmployeeRecordCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PagibigEmployeeRecordCountOutputTypeDefaultArgs<ExtArgs>
@@ -61462,6 +72754,14 @@ export namespace Prisma {
      * @deprecated Use PhilHealthReportCountOutputTypeDefaultArgs instead
      */
     export type PhilHealthReportCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PhilHealthReportCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoanCountOutputTypeDefaultArgs instead
+     */
+    export type LoanCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoanCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoanMonitorReportCountOutputTypeDefaultArgs instead
+     */
+    export type LoanMonitorReportCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoanMonitorReportCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use UserDefaultArgs instead
      */
@@ -61535,6 +72835,14 @@ export namespace Prisma {
      */
     export type SssReportEntryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SssReportEntryDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use ImportedSssLoanReportDefaultArgs instead
+     */
+    export type ImportedSssLoanReportArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ImportedSssLoanReportDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ImportedSssLoanReportEntryDefaultArgs instead
+     */
+    export type ImportedSssLoanReportEntryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ImportedSssLoanReportEntryDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use SssReportDraftDefaultArgs instead
      */
     export type SssReportDraftArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SssReportDraftDefaultArgs<ExtArgs>
@@ -61578,6 +72886,22 @@ export namespace Prisma {
      * @deprecated Use PhilHealthPaymentDefaultArgs instead
      */
     export type PhilHealthPaymentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PhilHealthPaymentDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoanDefaultArgs instead
+     */
+    export type LoanArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoanDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoanMonitorReportDefaultArgs instead
+     */
+    export type LoanMonitorReportArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoanMonitorReportDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoanMonitorReportEntryDefaultArgs instead
+     */
+    export type LoanMonitorReportEntryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoanMonitorReportEntryDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LoanPaymentDefaultArgs instead
+     */
+    export type LoanPaymentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LoanPaymentDefaultArgs<ExtArgs>
     /**
      * @deprecated Use OfficeContactDefaultArgs instead
      */

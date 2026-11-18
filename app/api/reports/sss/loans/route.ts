@@ -4,6 +4,7 @@ import { authorizeSssReports } from "@/lib/sssReportAccess";
 import { calculateSssLoanOutstandingBalanceCents, calculateSssLoanPaymentAmountCents, getSssLoanReportTiming, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
 import { isSssLoanType } from "@/lib/sssLoanTypes";
 import { prisma } from "@/lib/prisma";
+import { getSssLoansPrisma } from "@/lib/sssReportPrisma";
 
 const parseMoneyCents = (value: unknown) => {
   if (typeof value !== "number" && typeof value !== "string") return null;
@@ -48,18 +49,33 @@ export async function GET(request: NextRequest) {
       ? null
       : await prisma.employer.findUnique({ where: { id: employerId }, select: { name: true } });
     if (employerId !== null && !employer) return NextResponse.json({ error: "Employer not found" }, { status: 404 });
-    const loans = await prisma.sssLoan.findMany({
+    const loans = await getSssLoansPrisma().sssLoan.findMany({
       where: employerId === null ? undefined : { employerId },
       orderBy: [{ employeeName: "asc" }, { loanAccountNumber: "asc" }],
-      include: {
-        employer: { select: { name: true } },
-        employee: { select: { employerId: true, status: true, employer: { select: { name: true } } } },
-      },
     });
+    const employerIds = [...new Set(loans.map((loan) => loan.employerId))];
+    const employeeIds = [...new Set(loans.flatMap((loan) => loan.employeeId === null ? [] : [loan.employeeId]))];
+    const [employers, employees] = await Promise.all([
+      prisma.employer.findMany({ where: { id: { in: employerIds } }, select: { id: true, name: true } }),
+      prisma.employee.findMany({
+        where: { id: { in: employeeIds } },
+        select: { id: true, employerId: true, status: true, sssNumber: true, employer: { select: { name: true } } },
+      }),
+    ]);
+    const employerById = new Map(employers.map((row) => [row.id, row]));
+    if (employerById.size !== employerIds.length) {
+      throw new Error("An SSS loan account references an employer that is missing from the central HR database.");
+    }
+    const employeeById = new Map(employees.map((row) => [row.id, row]));
+    const loansWithHr = loans.map((loan) => ({
+      ...loan,
+      employer: { name: employerById.get(loan.employerId)!.name },
+      employee: loan.employeeId === null ? null : employeeById.get(loan.employeeId) ?? null,
+    }));
     const asOfDate = applicableMonth !== null && applicableYear !== null
       ? new Date(Date.UTC(applicableYear, applicableMonth - 1, 1))
       : new Date();
-    const outstandingLoans = loans.flatMap((loan) => {
+    const outstandingLoans = loansWithHr.flatMap((loan) => {
       const outstandingBalanceCents = calculateSssLoanOutstandingBalanceCents(
         loan.loanAmount === null ? null : decimalToCents(loan.loanAmount),
       );
@@ -100,14 +116,9 @@ export async function GET(request: NextRequest) {
         }]
         : [];
     });
-    const employeeIds = [...new Set(outstandingLoans.map((loan) => loan.employeeId).filter((id): id is number => id !== null))];
-    const employees = employeeIds.length
-      ? await prisma.employee.findMany({ where: { id: { in: employeeIds } }, select: { id: true, sssNumber: true } })
-      : [];
-    const employeeSssNumbers = new Map(employees.map((employee) => [employee.id, employee.sssNumber]));
     const loansWithSssNumbers = outstandingLoans.map((loan) => ({
       ...loan,
-      employeeSssNumber: loan.employeeId === null ? null : employeeSssNumbers.get(loan.employeeId) ?? null,
+      employeeSssNumber: loan.employee?.sssNumber ?? null,
     }));
     return NextResponse.json({
       employerName: employer?.name ?? "All employers",
@@ -175,7 +186,7 @@ export async function POST(request: NextRequest) {
     }
 
     const middleInitial = employee.middleName?.trim().charAt(0);
-    const loan = await prisma.$transaction(async (transaction) => {
+    const loan = await getSssLoansPrisma().$transaction(async (transaction) => {
       await transaction.$queryRaw`WITH loan_account_lock AS MATERIALIZED (SELECT pg_advisory_xact_lock(hashtext(${loanAccountNumberKey})::bigint)) SELECT TRUE FROM loan_account_lock`;
       const duplicate = await transaction.sssLoan.findFirst({
         where: { loanAccountNumber: { equals: loanAccountNumber, mode: "insensitive" } },

@@ -29,6 +29,7 @@ model User {
   PagibigReport            PagibigReport[]
   PagibigReportDraft       PagibigReportDraft[]
   philHealthReports        PhilHealthReport[]
+  loanMonitorReports       LoanMonitorReport[]
 }
 
 model Post {
@@ -153,6 +154,7 @@ model employee {
   philHealthEmployeeRecords PhilHealthEmployeeRecord[]
   philHealthReportEntries   PhilHealthReportEntry[]
   requirementsBypassed      Boolean                         @default(false)
+  loans                     Loan[]
 
   @@index([employerId])
   @@index([supervisorId])
@@ -377,6 +379,58 @@ model SssReportEntry {
   @@index([sssLoanId])
 }
 
+model ImportedSssLoanReport {
+  sourceReportId       Int                          @id
+  sourceKind           String
+  sourceEmployerId     Int
+  employerName         String
+  employerAddress      String?
+  employerSssNumber    String?
+  prn                  String
+  applicableMonth      Int
+  applicableYear       Int
+  amountDue            Decimal                      @db.Decimal(12, 2)
+  amountPaid           Decimal?                     @db.Decimal(12, 2)
+  paymentType          String?
+  payDate              DateTime?                    @db.Date
+  sssBranch            String?
+  transactionReference String?
+  sourceCreatedBy      Int?
+  sourceCreatedAt      DateTime                     @db.Timestamp(3)
+  sourceUpdatedAt      DateTime                     @db.Timestamp(3)
+  importedAt           DateTime                     @default(now())
+  entries              ImportedSssLoanReportEntry[]
+
+  @@index([sourceEmployerId, applicableYear, applicableMonth])
+  @@index([importedAt])
+}
+
+model ImportedSssLoanReportEntry {
+  sourceEntryId            Int                   @id
+  sourceReportId           Int
+  sourceEmployeeId         Int?
+  employeeName             String
+  employeeCode             String
+  employeeSssNumber        String?
+  sourceSssLoanId          Int?
+  loanAccountNumber        String?
+  sourceEmployeeEmployerId Int?
+  employeeEmployerName     String?
+  salaryRange              String?
+  monthlySalaryCredit      Decimal?              @db.Decimal(12, 2)
+  employeeSs               Decimal               @db.Decimal(12, 2)
+  employerSs               Decimal               @db.Decimal(12, 2)
+  employeeMpf              Decimal               @db.Decimal(12, 2)
+  employerMpf              Decimal               @db.Decimal(12, 2)
+  ec                       Decimal               @db.Decimal(12, 2)
+  loanAmount               Decimal               @db.Decimal(12, 2)
+  totalAmount              Decimal               @db.Decimal(12, 2)
+  report                   ImportedSssLoanReport @relation(fields: [sourceReportId], references: [sourceReportId], onDelete: Cascade)
+
+  @@index([sourceReportId])
+  @@index([loanAccountNumber])
+}
+
 model SssReportDraft {
   id              Int       @id @default(autoincrement())
   createdBy       Int
@@ -470,6 +524,8 @@ model PagibigReport {
   employerName          String
   employerPagibigNumber String?
   pin                   String
+  manual                Boolean              @default(false)
+  adjustments           Decimal?             @db.Decimal(12, 2)
   applicableMonth       Int
   applicableYear        Int
   amountDue             Decimal              @db.Decimal(12, 2)
@@ -602,6 +658,95 @@ model PhilHealthPayment {
   report                        PhilHealthReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([transactionDate])
+}
+
+enum LoanProvider {
+  SSS
+  PAGIBIG
+}
+
+enum LoanStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Loan {
+  id                  String        @id @default(uuid())
+  employeeId          Int?
+  provider            LoanProvider
+  loanType            String
+  loanAccountNumber   String        @unique
+  loanDate            DateTime?     @db.Date
+  terms               Int?
+  statusReason        String?
+  totalAmount         Decimal?      @db.Decimal(12, 2)
+  monthlyAmortization Decimal       @db.Decimal(12, 2)
+  outstandingBalance  Decimal?      @db.Decimal(12, 2)
+  status              LoanStatus    @default(ACTIVE)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  employee            employee?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  payments            LoanPayment[]
+
+  @@index([employeeId])
+  @@index([provider, status])
+}
+
+model LoanMonitorReport {
+  id                   String                   @id @default(uuid())
+  applicableDate       DateTime                 @db.Date
+  employerName         String?
+  employerSssNumber    String?
+  employerAddress      String?
+  totalMonthly         Decimal                  @db.Decimal(14, 2)
+  totalOutstanding     Decimal                  @db.Decimal(14, 2)
+  prn                  String?
+  paymentDate          DateTime?                @db.Date
+  amountPaid           Decimal?                 @db.Decimal(14, 2)
+  paymentBranch        String?
+  transactionReference String?
+  createdBy            Int?
+  createdAt            DateTime                 @default(now())
+  creator              User?                    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  entries              LoanMonitorReportEntry[]
+
+  @@index([applicableDate])
+}
+
+model LoanMonitorReportEntry {
+  id                  String            @id @default(uuid())
+  reportId            String
+  loanId              String
+  provider            String
+  loanType            String
+  loanAccountNumber   String
+  employeeName        String
+  loanDate            DateTime?         @db.Date
+  terms               Int?
+  totalAmount         Decimal           @db.Decimal(12, 2)
+  monthlyAmortization Decimal           @db.Decimal(12, 2)
+  outstandingBalance  Decimal           @db.Decimal(12, 2)
+  status              String
+  statusReason        String?
+  employerName        String
+  employerSssNumber   String?
+  employerAddress     String?
+  report              LoanMonitorReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model LoanPayment {
+  id              String   @id @default(uuid())
+  loanId          String
+  payrollPeriodId String
+  amountPaid      Decimal  @db.Decimal(12, 2)
+  paymentDate     DateTime @db.Date
+  source          String   @default("MANUAL_ENTRY")
+  createdAt       DateTime @default(now())
+  loan            Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId, paymentDate])
 }
 
 model OfficeContact {

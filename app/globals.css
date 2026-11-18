@@ -25,6 +25,21 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+.page-header-surface {
+  background-color: #fff;
+  background-image: none;
+  color: #000;
+}
+
+.page-header-surface :is(h1, h2, h3, p, span, time) {
+  color: #000;
+}
+
+#app-page-card > main {
+  min-height: 0 !important;
+  background-color: transparent !important;
+}
+
 .benefit-report-page {
   background-color: #f8fafc;
   color: #0f172a;
@@ -61,8 +76,13 @@ body {
   justify-content: space-between;
   gap: 0.5rem;
   border-bottom: 1px solid #f1f5f9;
-  background-color: #f8fafc;
+  background-color: #fff;
   padding: 0.75rem 1rem;
+  color: #000;
+}
+
+.benefit-report-section-heading :is(h1, h2, h3, p, span, time) {
+  color: #000;
 }
 
 .benefit-report-title {
@@ -147,6 +167,42 @@ body {
   font-weight: 500;
 }
 
+.list-card-table-scroll {
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+}
+
+.list-card-table-content {
+  display: flex;
+  min-width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.list-card-table-content [role="row"] > :is([role="cell"], [role="columnheader"]) {
+  min-width: 0;
+}
+
+.list-card-table-header,
+.list-card-table-footer {
+  flex: 0 0 auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.list-card-table-rows {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .benefit-report-notice {
   display: flex;
   align-items: center;
@@ -188,6 +244,12 @@ body {
 }
 
 /* Print only the per-employee attendance report when it is open. */
+.sss-loan-report-print-label,
+.sss-loan-report-print-value,
+.sss-loan-report-print-total {
+  display: none;
+}
+
 @media print {
   @page {
     margin: 0.5in 0.25in;
@@ -195,6 +257,300 @@ body {
 
   body:has(#attendance-print-overlay) > *:not(#attendance-print-overlay) {
     display: none !important;
+  }
+}
+
+@media print {
+  body:has(#loan-report-print-overlay) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#loan-report-print-overlay) #loan-report-print-overlay,
+  body:has(#loan-report-print-overlay) #loan-report-print-overlay * {
+    visibility: visible !important;
+  }
+
+  #loan-report-print-overlay {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  #loan-report-print-overlay > .loan-report-print-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .loan-report-preview-actions {
+    display: none !important;
+  }
+
+  .loan-report-print-content {
+    flex: none !important;
+    overflow: visible !important;
+    padding: 0.25in 0 !important;
+  }
+
+  .loan-report-preview-table {
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  .loan-report-preview-table table {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 8pt !important;
+  }
+
+  .loan-report-preview-table tr {
+    break-inside: avoid;
+  }
+
+  .sss-loan-report-print-label,
+  .sss-loan-report-print-value,
+  .sss-loan-report-print-total {
+    display: none !important;
+  }
+
+  #loan-report-print-overlay > .sss-loan-report-print-dialog {
+    font-size: 8pt !important;
+  }
+
+  .sss-loan-report-print-header {
+    display: block !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: white !important;
+  }
+
+  .sss-loan-report-print-dialog h2 {
+    margin: 0 0 5px !important;
+    font-size: 14pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .sss-loan-report-posted-has-reference h2 {
+    display: none !important;
+  }
+
+  .sss-loan-report-print-employer {
+    margin-top: 0 !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .sss-loan-report-print-employer > p {
+    margin: 0 !important;
+    font-size: 8pt !important;
+  }
+
+  .sss-loan-report-print-label {
+    display: inline !important;
+  }
+
+  .sss-loan-report-print-content {
+    padding: 0 !important;
+  }
+
+  .sss-loan-report-print-details {
+    margin: 8px 0 !important;
+    padding: 4px 2px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #f1f1f1 !important;
+  }
+
+  .sss-loan-report-print-details dl {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) !important;
+    grid-template-rows: repeat(3, auto) !important;
+    grid-auto-flow: column !important;
+    gap: 1px 14px !important;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-month {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-prn {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-amount {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-branch {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-reference {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-employees {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .sss-loan-report-print-details.sss-loan-report-print-no-reference .sss-loan-report-print-reference {
+    display: none !important;
+  }
+
+  .sss-loan-report-print-details .loan-report-preview-detail {
+    display: grid !important;
+    align-items: baseline !important;
+    gap: 4px !important;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-month,
+  .sss-loan-report-print-details .sss-loan-report-print-prn,
+  .sss-loan-report-print-details .sss-loan-report-print-amount {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-branch,
+  .sss-loan-report-print-details .sss-loan-report-print-reference,
+  .sss-loan-report-print-details .sss-loan-report-print-employees {
+    grid-template-columns: minmax(0, 0.65fr) minmax(0, 1fr) !important;
+  }
+
+  .sss-loan-report-print-details dt,
+  .sss-loan-report-print-details dd {
+    display: inline !important;
+    margin: 0 !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+  }
+
+  .sss-loan-report-print-details dt {
+    font-weight: 400 !important;
+  }
+
+  .sss-loan-report-print-details dt::after {
+    content: ":" !important;
+  }
+
+  .sss-loan-report-print-details .sss-loan-report-print-month dd {
+    font-weight: 700 !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table {
+    margin: 0 !important;
+    border: 0 !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table table {
+    table-layout: fixed !important;
+    font-size: 8pt !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th,
+  .sss-loan-report-print-dialog .loan-report-preview-table td {
+    padding: 3px 4px !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+    color: #111 !important;
+    border: 0 !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th {
+    background: #e9e9e9 !important;
+    font-weight: 700 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th:nth-child(1),
+  .sss-loan-report-print-dialog .loan-report-preview-table td:nth-child(1) {
+    width: 31% !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th:nth-child(2),
+  .sss-loan-report-print-dialog .loan-report-preview-table td:nth-child(2) {
+    width: 12% !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th:nth-child(3),
+  .sss-loan-report-print-dialog .loan-report-preview-table td:nth-child(3) {
+    width: 21% !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th:nth-child(4),
+  .sss-loan-report-print-dialog .loan-report-preview-table td:nth-child(4) {
+    width: 14% !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th:nth-child(5),
+  .sss-loan-report-print-dialog .loan-report-preview-table td:nth-child(5) {
+    width: 12% !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table th:nth-child(6),
+  .sss-loan-report-print-dialog .loan-report-preview-table td:nth-child(6) {
+    width: 10% !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table tbody tr:nth-child(even) {
+    background: #f2f2f2 !important;
+  }
+
+  .sss-loan-report-print-dialog .loan-report-preview-table td.font-mono {
+    font-size: 8pt !important;
+  }
+
+  .sss-loan-report-print-dialog .sss-loan-report-print-value {
+    display: inline !important;
+  }
+
+  .sss-loan-report-print-dialog .sss-loan-report-screen-value,
+  .sss-loan-report-print-dialog .sss-loan-report-screen-label {
+    display: none !important;
+  }
+
+  .sss-loan-report-print-footer {
+    padding: 6px 0 0 !important;
+    border: 0 !important;
+  }
+
+  .sss-loan-report-print-footer .loan-report-preview-totals,
+  .sss-loan-report-print-footer .loan-report-preview-created {
+    display: none !important;
+  }
+
+  .sss-loan-report-print-total {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 24px !important;
+    padding: 4px 8px 0 !important;
+    font-size: 9pt !important;
+  }
+
+  .sss-loan-report-print-total strong {
+    min-width: 90px;
+    text-align: right;
+  }
+
+  .sss-loan-report-print-details,
+  .sss-loan-report-print-dialog .loan-report-preview-table th,
+  .sss-loan-report-print-dialog .loan-report-preview-table tbody tr:nth-child(even) {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
@@ -241,12 +597,18 @@ body {
   .sss-loan-report-table table {
     width: 100% !important;
     min-width: 0 !important;
-    font-size: 8pt !important;
+    font-size: 12pt !important;
   }
 
   .sss-loan-report-table th,
   .sss-loan-report-table td {
-    padding: 4px 3px !important;
+    padding: 6px 6px !important;
+  }
+
+  /* The Loan Account Number cell carries its own text-xs class, which
+     bypasses the table's 12pt print size — restore it when printing. */
+  .sss-loan-report-table td.font-mono {
+    font-size: 12pt !important;
   }
 
   .sss-loan-report-table tr {
@@ -486,5 +848,184 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in {
     animation: none;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  body:has(#sss-contribution-report-print-overlay) * {
+    visibility: hidden !important;
+  }
+
+  body:has(#sss-contribution-report-print-overlay) #sss-contribution-report-print-overlay,
+  body:has(#sss-contribution-report-print-overlay) #sss-contribution-report-print-overlay * {
+    visibility: visible !important;
+  }
+
+  #sss-contribution-report-print-overlay {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  #sss-contribution-report-print-overlay > .sss-contribution-report-print-dialog {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-print-dialog > header {
+    align-items: flex-start !important;
+    border-bottom: 1pt solid #475569 !important;
+    padding: 0 0 0.1in !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-print-dialog > header h2 {
+    color: #111827 !important;
+    font-size: 15pt !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-print-dialog > header p {
+    color: #111827 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-print-content {
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0.12in 0 0 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-details {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr) !important;
+    gap: 0.08in !important;
+    margin: 0.08in 0 !important;
+    padding: 0.08in !important;
+    border: 0.5pt solid #d1d5db !important;
+    border-radius: 0 !important;
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-details > div {
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-details > section:nth-child(2) {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-payment-card {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-employee-total {
+    display: block !important;
+    text-align: right !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-details > div:last-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-details p,
+  #sss-contribution-report-print-overlay .sss-contribution-report-details dt,
+  #sss-contribution-report-print-overlay .sss-contribution-report-details dd {
+    font-size: 8pt !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-details .text-xl {
+    font-size: 16pt !important;
+    line-height: 1.15 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-content {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-header,
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-rows,
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-footer {
+    display: block !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    scrollbar-gutter: auto !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table [role="table"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 9pt !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table [role="row"] {
+    display: grid !important;
+    grid-template-columns: 4% 30% 16.5% 16.5% 16.5% 16.5% !important;
+    break-inside: avoid;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-header [role="columnheader"]:nth-child(1) {
+    text-align: center !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-provider-table .sss-contribution-print-row-number {
+    display: block !important;
+    text-align: center !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table [role="columnheader"],
+  #sss-contribution-report-print-overlay .sss-contribution-report-table [role="cell"] {
+    position: static !important;
+    padding: 4px 5px !important;
+    background: transparent !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-header [role="columnheader"] {
+    border-bottom: 1pt solid #475569 !important;
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-rows [role="cell"] {
+    border-bottom: 0.5pt solid #d1d5db !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-rows [role="row"]:nth-child(even) [role="cell"] {
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #sss-contribution-report-print-overlay .sss-contribution-report-table .list-card-table-rows [role="cell"]:first-child {
+    text-align: center !important;
   }
 }

@@ -1,8 +1,9 @@
 "use client";
 
+import ScrollableListTable from "@/components/ScrollableListTable";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
+import BackButton from "@/components/BackButton";
 
 interface Loan {
   id: number;
@@ -176,9 +177,7 @@ export default function PagIbigLoansPage() {
     <div className="flex h-[calc(100dvh-7.5rem)] min-h-[24rem] w-full flex-col gap-3 overflow-hidden bg-gray-50 p-4 sm:p-6 md:h-[calc(100dvh-7.75rem)]">
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <div className="flex items-center gap-3">
-          <HistoryBackLink fallbackHref={`/employees/${employeeId}?tab=Government`} aria-label="Back to employee profile" className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" /></svg>
-          </HistoryBackLink>
+          <BackButton fallbackHref={`/employees/${employeeId}?tab=Government`} label="Back to employee profile" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Pag-IBIG Loans</h1>
             {employee && (
@@ -224,42 +223,43 @@ export default function PagIbigLoansPage() {
           <p className="text-sm text-gray-600">No Pag-IBIG loans found for this employee.</p>
         )}
         {filteredLoans.length > 0 && (
-          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-gray-200 bg-white">
-            <table className="min-w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-gray-100 text-left font-bold text-gray-800">
-                <tr>
-                  <th className="px-3 py-1">Employee</th>
-                  <th className="px-3 py-1">Loan Type</th>
-                  <th className="px-3 py-1">Application No.</th>
-                  <th className="px-3 py-1">Loan Date</th>
-                  <th className="px-3 py-1">Term (Yrs)</th>
-                  <th className="px-3 py-1 text-right">Amount</th>
-                  <th className="px-3 py-1">Status</th>
-                  <th className="px-3 py-1 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredLoans.map((loan) => (
-                  <tr key={loan.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-1 font-semibold text-gray-900">{loan.employeeName}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.loanType}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.applicationNo || "-"}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.loanDate}</td>
-                    <td className="px-3 py-1 text-gray-700">{loan.termYears}</td>
-                    <td className="px-3 py-1 text-right tabular-nums text-gray-900">{formatMoney(loan.amount)}</td>
-                    <td className="px-3 py-1">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${loan.status === "ACTIVE" ? "bg-emerald-100 text-emerald-800" : loan.status === "PAID" ? "bg-sky-100 text-sky-800" : loan.status === "INACTIVE" ? "bg-gray-100 text-gray-700" : "bg-amber-100 text-amber-800"}`}>
-                        {loan.status}
-                      </span>
-                    </td>
-                    <td className="px-3 py-1 text-center">
-                      <button onClick={() => openEdit(loan)} className="inline-flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-700 hover:bg-gray-100">Edit</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ScrollableListTable
+            ariaLabel="Employee Pag-IBIG loans"
+            className="min-h-0 flex-1 rounded-xl border border-gray-200 bg-white"
+            contentClassName="min-w-[980px] text-sm"
+            header={
+              <div role="row" className="grid grid-cols-[1.5fr_1fr_1.25fr_0.8fr_0.8fr_1fr_1fr_0.8fr] bg-gray-100 text-left font-bold text-gray-800">
+                <div role="columnheader" className="px-3 py-1">Employee</div>
+                <div role="columnheader" className="px-3 py-1">Loan Type</div>
+                <div role="columnheader" className="px-3 py-1">Application No.</div>
+                <div role="columnheader" className="px-3 py-1">Loan Date</div>
+                <div role="columnheader" className="px-3 py-1">Term (Yrs)</div>
+                <div role="columnheader" className="px-3 py-1 text-right">Amount</div>
+                <div role="columnheader" className="px-3 py-1">Status</div>
+                <div role="columnheader" className="px-3 py-1 text-center">Action</div>
+              </div>
+            }
+            rowsClassName="divide-y divide-gray-100"
+          >
+            {filteredLoans.map((loan) => (
+              <div key={loan.id} role="row" className="grid grid-cols-[1.5fr_1fr_1.25fr_0.8fr_0.8fr_1fr_1fr_0.8fr] hover:bg-gray-50">
+                <div role="cell" className="px-3 py-1 font-semibold text-gray-900">{loan.employeeName}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.loanType}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.applicationNo || "-"}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.loanDate}</div>
+                <div role="cell" className="px-3 py-1 text-gray-700">{loan.termYears}</div>
+                <div role="cell" className="px-3 py-1 text-right tabular-nums text-gray-900">{formatMoney(loan.amount)}</div>
+                <div role="cell" className="px-3 py-1">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${loan.status === "ACTIVE" ? "bg-emerald-100 text-emerald-800" : loan.status === "PAID" ? "bg-sky-100 text-sky-800" : loan.status === "INACTIVE" ? "bg-gray-100 text-gray-700" : "bg-amber-100 text-amber-800"}`}>
+                    {loan.status}
+                  </span>
+                </div>
+                <div role="cell" className="px-3 py-1 text-center">
+                  <button onClick={() => openEdit(loan)} className="inline-flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-700 hover:bg-gray-100">Edit</button>
+                </div>
+              </div>
+            ))}
+          </ScrollableListTable>
         )}
       </div>
       {openDialog && (

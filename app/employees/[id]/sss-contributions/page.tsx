@@ -2,9 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ChevronLeftIcon, EyeIcon, InformationCircleIcon, ListBulletIcon, PencilSquareIcon, Squares2X2Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
-import { useAppHeaderActions } from "@/components/Sidebar";
+import { EyeIcon, InformationCircleIcon, ListBulletIcon, PencilSquareIcon, Squares2X2Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/PageHeader";
 import { buildSssContributionMatrix, type SssContributionHistory } from "@/lib/sssContributionHistory";
 import { getSssLoanFirstAmortizationDate, parseSssLoanDateOnly } from "@/lib/sssLoanBalance";
 import { getSssLoanTypeLabel, isSssLoanType, sssLoanTypes } from "@/lib/sssLoanTypes";
@@ -126,7 +126,6 @@ function buildSssLoanMatrix(reports: SssLoanReport[]) {
 export default function EmployeeSssContributionsPage() {
   const params = useParams<{ id: string }>();
   const employeeId = params.id;
-  const setAppHeaderActions = useAppHeaderActions();
   const [result, setResult] = useState<ContributionsResult | null>(null);
   const [failure, setFailure] = useState<ContributionsFailure | null>(null);
   const [view, setView] = useState<ContributionsView>("table");
@@ -154,11 +153,6 @@ export default function EmployeeSssContributionsPage() {
   });
   const [loanEditSaving, setLoanEditSaving] = useState(false);
   const [loanEditError, setLoanEditError] = useState("");
-
-  useEffect(() => {
-    setAppHeaderActions({ actions: null, backHref: `/employees/${employeeId}?tab=Government`, hideBack: true });
-    return () => setAppHeaderActions(null);
-  }, [employeeId, setAppHeaderActions]);
 
   useEffect(() => {
     const refreshHistory = () => {
@@ -340,6 +334,11 @@ export default function EmployeeSssContributionsPage() {
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
       <div className="flex w-full min-w-0 flex-1 flex-col">
+        <PageHeader
+          title="SSS Reports"
+          subtitle="Saved SSS contribution and loan history by period."
+          leadingContent={<BackButton fallbackHref={`/employees/${employeeId}?tab=Government`} label="Back to employee profile" />}
+        />
         {loading ? (
           <p role="status" className="text-sm text-gray-600">Loading SSS reports...</p>
         ) : currentFailure ? (
@@ -377,14 +376,6 @@ export default function EmployeeSssContributionsPage() {
             </div>
 
             <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
-              <HistoryBackLink
-                fallbackHref={`/employees/${employeeId}?tab=Government`}
-                aria-label="Back to employee profile"
-                title="Back to employee profile"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
-              </HistoryBackLink>
               <div role="group" aria-label="SSS report type" className="inline-flex h-9 items-center rounded-lg border border-gray-300 bg-white p-0.5">
                 <button type="button" aria-pressed={recordType === "CONTRIBUTION"} onClick={() => setRecordType("CONTRIBUTION")} title="Contribution reports" className={`h-8 rounded-md px-3 text-xs font-semibold transition ${recordType === "CONTRIBUTION" ? "bg-blue-700 text-white" : "text-gray-600 hover:bg-gray-100"}`}>Cont</button>
                 <button type="button" aria-pressed={recordType === "LOAN"} onClick={() => setRecordType("LOAN")} title="Loan reports" className={`h-8 rounded-md px-3 text-xs font-semibold transition ${recordType === "LOAN" ? "bg-blue-700 text-white" : "text-gray-600 hover:bg-gray-100"}`}>Loan</button>
@@ -630,7 +621,7 @@ export default function EmployeeSssContributionsPage() {
       </div>
       {loanEditTarget && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget && !loanEditSaving) setLoanEditTarget(null); }}>
         <section role="dialog" aria-modal="true" aria-labelledby="employee-loan-edit-title" className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-          <header className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:px-6">
+          <header className="page-header-surface flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:px-6">
             <div>
               <h2 id="employee-loan-edit-title" className="text-lg font-semibold text-gray-900">Update SSS Loan</h2>
               <p className="mt-1 text-sm text-gray-600">{loanEditTarget.loanAccountNumber}</p>
@@ -662,7 +653,7 @@ export default function EmployeeSssContributionsPage() {
       </div>}
       {paymentDetailsLoan?.employeeId === employeeId && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setPaymentDetailsLoan(null); }}>
         <section role="dialog" aria-modal="true" aria-labelledby="loan-payments-title" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-          <header className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:px-6">
+          <header className="page-header-surface flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 sm:px-6">
             <div>
               <h2 id="loan-payments-title" className="text-lg font-semibold text-gray-900">Payments Made</h2>
               <p className="mt-1 text-sm text-gray-600">Loan Account Number: <span className="font-semibold text-gray-900">{paymentDetailsLoan.loan.loanAccountNumber}</span></p>

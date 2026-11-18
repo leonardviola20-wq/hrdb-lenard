@@ -23,19 +23,36 @@ export function calculateAge(dateOfBirth: string) {
   return Math.max(0, age);
 }
 
+export const supportedEmployeePhotoTypes = ["image/jpeg", "image/png", "image/gif"] as const;
+export const maxEmployeePhotoSize = 2 * 1024 * 1024;
+
+export function getEmployeePhotoError(file: Pick<File, "type" | "size">) {
+  if (!supportedEmployeePhotoTypes.some((type) => type === file.type)) {
+    return "Please select a JPG, PNG, or GIF image.";
+  }
+  if (file.size > maxEmployeePhotoSize) {
+    return "Photo must be 2 MB or smaller.";
+  }
+  return null;
+}
+
+export function readPhotoAsDataUrl(file: File): Promise<string> {
+  const validationError = getEmployeePhotoError(file);
+  if (validationError) return Promise.reject(new Error(validationError));
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Unable to read the selected photo."));
+    };
+    reader.onerror = () => reject(new Error("Unable to read the selected photo."));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function readPhoto(file: File, onPhoto: (value: string) => void, onError: (value: string) => void) {
-  if (!file.type.startsWith("image/")) {
-    onError("Please select an image file.");
-    return;
-  }
-  if (file.size > 2 * 1024 * 1024) {
-    onError("Photo must be 2 MB or smaller.");
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = () => {
-    if (typeof reader.result === "string") onPhoto(reader.result);
-  };
-  reader.onerror = () => onError("Unable to read the selected photo.");
-  reader.readAsDataURL(file);
+  void readPhotoAsDataUrl(file).then(onPhoto, (error: unknown) => {
+    onError(error instanceof Error ? error.message : "Unable to read the selected photo.");
+  });
 }

@@ -2,9 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
-import { HistoryBackLink } from "@/components/HistoryBackLink";
-import { useAppHeaderActions } from "@/components/Sidebar";
+import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/PageHeader";
 import type {
   PhilHealthContributionHistoryEntry,
   PhilHealthContributionHistoryMonth,
@@ -84,20 +84,10 @@ function getMonthEntries(month: PhilHealthContributionHistoryMonth | undefined):
 export default function EmployeePhilHealthContributionsPage() {
   const params = useParams<{ id: string }>();
   const employeeId = params.id;
-  const setAppHeaderActions = useAppHeaderActions();
   const [result, setResult] = useState<HistoryResult | null>(null);
   const [failure, setFailure] = useState<HistoryFailure | null>(null);
   const [view, setView] = useState<HistoryView>("table");
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-
-  useEffect(() => {
-    setAppHeaderActions({
-      actions: null,
-      backHref: `/employees/${employeeId}?tab=Government`,
-      hideBack: true,
-    });
-    return () => setAppHeaderActions(null);
-  }, [employeeId, setAppHeaderActions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +147,11 @@ export default function EmployeePhilHealthContributionsPage() {
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-gray-50 p-4 sm:p-6">
       <div className="flex w-full min-w-0 flex-1 flex-col">
+        <PageHeader
+          title="PhilHealth Contributions"
+          subtitle="Saved PhilHealth contribution history by period."
+          leadingContent={<BackButton fallbackHref={`/employees/${employeeId}?tab=Government`} label="Back to employee profile" />}
+        />
         {loading ? (
           <p role="status" className="text-sm text-gray-600">Loading PhilHealth contributions...</p>
         ) : currentFailure ? (
@@ -181,16 +176,7 @@ export default function EmployeePhilHealthContributionsPage() {
                 </div>
               </div>
             </div>
-
             <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
-              <HistoryBackLink
-                fallbackHref={`/employees/${employeeId}?tab=Government`}
-                aria-label="Back to employee profile"
-                title="Back to employee profile"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
-              </HistoryBackLink>
               <div role="group" aria-label="PhilHealth contribution view" className="inline-flex h-9 items-center rounded-lg border border-gray-300 bg-white p-0.5">
                 <button
                   type="button"
